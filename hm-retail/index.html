@@ -371,21 +371,21 @@
 <p><b>結果：</b>以 2020 年 3 月 26 日為預測日，從預測日前半年內有購物的 70.2 萬名顧客中各挑 5 萬人。LightGBM 挑出的名單中有 68.4% 在之後半年真的沒回來，「挑最久沒來的人」是 57.5%，隨機挑選則是 35.0%（等於整體流失比例）；同樣 5 萬張券，模型多找到 <b>5,440 位</b>真正會流失的顧客。</p>
 
 <div class="card">
-  <div class="chart-title">LightGBM 的命中率與整體排序能力都最高（預測日 2020 年 3 月 26 日，70.2 萬名顧客）</div>
+  <div class="chart-title">LightGBM 的命中率、整體排序能力與 Accuracy 都最高（預測日 2020 年 3 月 26 日，70.2 萬名顧客）</div>
   <table>
-    <tr><th>方法</th><th class="num">命中率（前 5 萬名）</th><th class="num">AUC</th></tr>
-    <tr class="hi"><td>LightGBM（採用）</td><td class="num">68.4%</td><td class="num">0.767</td></tr>
-    <tr><td>XGBoost</td><td class="num">68.4%</td><td class="num">0.767</td></tr>
-    <tr><td>Random Forest</td><td class="num">66.7%</td><td class="num">0.763</td></tr>
-    <tr><td>決策樹</td><td class="num">66.2%</td><td class="num">0.760</td></tr>
-    <tr><td>邏輯迴歸</td><td class="num">66.2%</td><td class="num">0.761</td></tr>
-    <tr><td>BG/NBD（統計模型）</td><td class="num">57.3%</td><td class="num">0.717</td></tr>
-    <tr><td>挑最久沒來的人（規則）</td><td class="num">57.5%</td><td class="num">0.661</td></tr>
+    <tr><th>方法</th><th class="num">Precision@50K</th><th class="num">AUC</th><th class="num">Accuracy</th></tr>
+    <tr class="hi"><td>LightGBM（採用）</td><td class="num">68.4%</td><td class="num">0.767</td><td class="num">70.9%</td></tr>
+    <tr><td>XGBoost</td><td class="num">68.4%</td><td class="num">0.767</td><td class="num">70.9%</td></tr>
+    <tr><td>Random Forest</td><td class="num">66.7%</td><td class="num">0.763</td><td class="num">70.6%</td></tr>
+    <tr><td>決策樹</td><td class="num">66.2%</td><td class="num">0.760</td><td class="num">70.1%</td></tr>
+    <tr><td>邏輯迴歸</td><td class="num">66.2%</td><td class="num">0.761</td><td class="num">70.2%</td></tr>
+    <tr><td>BG/NBD（統計模型）</td><td class="num">57.3%</td><td class="num">0.717</td><td class="num">—</td></tr>
+    <tr><td>挑最久沒來的人（規則）</td><td class="num">57.5%</td><td class="num">0.661</td><td class="num">—</td></tr>
   </table>
-  <p class="howto">指標定義：<b>命中率</b>＝分數最高的 5 萬人中，之後半年實際流失的人數 ÷ 5 萬，直接對應 5 萬張券的預算；<b>AUC</b>＝隨機各抽一位流失與未流失的顧客，模型給流失者較高分數的機率（0.5 等於隨機猜，1 為完全正確），代表模型對全部顧客的整體排序能力。</p>
+  <p class="howto">指標定義：<b>Precision@50K</b>（本頁稱「命中率」）＝分數最高的 5 萬人中，之後半年實際流失的人數 ÷ 5 萬，直接對應 5 萬張券的預算，是選模型的主要依據；<b>AUC</b>＝隨機各抽一位流失與未流失的顧客，模型給流失者較高分數的機率（0.5 等於隨機猜，1 為完全正確），代表模型對全部顧客的整體排序能力；<b>Accuracy</b>＝以流失機率 ≥ 0.5 判斷時，判斷正確的人數 ÷ 全部人數，用來確認模型的整體判斷沒有偏差。BG/NBD 與規則只產生排序分數、不產生機率，所以沒有 Accuracy。</p>
 </div>
 <p><b>LightGBM 與 XGBoost 的測試結果相同，為什麼選 LightGBM？</b>依據兩點：① 在用來挑選方法的驗證資料（預測日 2019 年 12 月 26 日）上，LightGBM 的命中率略高（69.3%，XGBoost 為 69.2%）；② 在同一台電腦上的訓練時間較短（約 10 秒，XGBoost 約 12 秒），之後每月重新產生名單時較省時間。兩者的實際表現相當，改用 XGBoost 也不會改變結論。</p>
-<p><b>為什麼以命中率選模型，而不是 Accuracy？</b>預算固定 5 萬張，命中率直接代表「每張券發給真正要流失的人的比例」。Accuracy 則不適合：即使把所有人都判為「不流失」，Accuracy 也有 65.0%，各模型的 Accuracy 又都集中在 70%～71%，拉不開差距。</p>
+<p><b>為什麼以命中率選模型，而不是 Accuracy？</b>預算固定 5 萬張，命中率直接代表「每張券發給真正要流失的人的比例」。Accuracy 可以確認兩個最佳模型的整體判斷沒有偏差（都是 70.9%，其他模型也在 70%～71%），但不適合用來選模型：即使把所有人都判為「不流失」，Accuracy 也有 65.0%，各模型之間拉不開差距。</p>
 <p><b>為什麼比「挑最久沒來的人」準？</b>模型最看重兩件事：過去半年來買了幾天，以及「以這個人自己平常的習慣來說，現在是不是異常地久沒來」。例如一位平常每 30 天來一次的顧客，已經 90 天沒來，是正常間隔的 3 倍，很可能要流失了；另一位平常半年才來一次的顧客，90 天沒來其實很正常。只看「多久沒來」，會把後者誤判為比較可能流失。</p>
 
 <h3>第 4 步：最可能流失的，不一定是最值得挽留的</h3>
