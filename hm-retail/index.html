@@ -363,16 +363,7 @@
 <p>服飾不像訂閱制有「退訂」這個動作，顧客只是慢慢不來了，所以要自己訂標準。本專案定義為：<b>在某個時間點之後的 180 天內都沒有再買</b>。選 180 天有三個依據：① 看每位顧客平常多久回來買一次，90% 的顧客在 192 天內會回來，半年沒買已經超出大多數人的習慣；② 試過 60～180 天的不同標準，比較「被判定流失、但其實之後又回來買」的比例，180 天的誤判最少（約 22%～32%）；③ 業界服飾顧客一年約購買 2～4 次，本專案顧客的中位數為一年 2 次。三項依據都指向「半年左右」，因此取半年整數 180 天；誤判比較只測到 180 天，沒有比較更長的標準。</p>
 
 <h3>第 2 步：建模前的資料準備</h3>
-<p><b>① 類別比例：流失與未流失約 35：65，屬輕度不平衡，實驗後決定不處理。</b>以訓練資料來看，流失的顧客占 35.7%。依 Google 機器學習課程的分級，少數類別占 20%～40% 屬於輕度不平衡；相關研究也指出，平衡處理對 LightGBM 這類模型幫助有限，並可能讓預測機率失真（Elor &amp; Averbuch-Elor, 2022；van den Goorbergh et al., 2022）。為了確認，實際比較了 5 種做法，套用在 5 個機器學習模型上，以另一個預測日（2019 年 12 月 26 日）的資料評估：</p>
-<table>
-  <tr><th>LightGBM 搭配的處理方式</th><th class="num">命中率（Precision@5 萬）</th><th class="num">平均預測流失機率</th></tr>
-  <tr class="hi"><td>不處理</td><td class="num"><b>69.3%</b></td><td class="num">0.385</td></tr>
-  <tr><td>類別權重（加重流失者的權重）</td><td class="num">69.2%</td><td class="num">0.495</td></tr>
-  <tr><td>隨機過抽樣（複製流失者到 1：1）</td><td class="num">69.1%</td><td class="num">0.494</td></tr>
-  <tr><td>隨機欠抽樣（減少未流失者到 1：1）</td><td class="num">69.0%</td><td class="num">0.497</td></tr>
-  <tr><td>SMOTE（合成新的流失者到 1：1）</td><td class="num">68.2%</td><td class="num">0.410</td></tr>
-</table>
-<p class="howto">平均預測流失機率以 2020 年 3 月 26 日的測試資料計算，實際流失比例為 35.0%。25 種組合中，命中率最高的是「不處理的 LightGBM」；做了平衡處理後命中率沒有提升，平均預測機率卻從 0.385 升到約 0.50，明顯高於實際的 35.0%。</p>
+<p><b>① 類別比例：</b>流失與未流失的顧客約 35：65，比例並不懸殊。實際測試了 4 種常見的平衡處理方法（例如複製或減少其中一類顧客），命中率都沒有提升，反而讓模型預測的流失機率偏高，因此不做處理。</p>
 <p><b>② 避免模型學到不該學的規律。</b>以某個預測日之前的購買紀錄建立模型，再用之後半年的真實結果評估，避免模型「偷看到答案」。另外，2019 年春天的資料中，常買童裝的顧客「看起來」特別容易流失（實際是不再買童裝），因此只用童裝斷崖之後的資料建模；先用另一個預測日確認改善後才看最終測試結果，命中率由 66.4% 提升至 68.4%。</p>
 
 <h3>第 3 步：比較模型，選出最準的名單</h3>
@@ -380,19 +371,18 @@
 <p><b>結果：</b>以 2020 年 3 月 26 日為預測日，從預測日前半年內有購物的 70.2 萬名顧客中各挑 5 萬人。LightGBM 挑出的名單中有 68.4% 在之後半年真的沒回來，「挑最久沒來的人」是 57.5%，隨機挑選則是 35.0%（等於整體流失比例）；同樣 5 萬張券，模型多找到 <b>5,440 位</b>真正會流失的顧客。</p>
 
 <div class="card">
-  <div class="chart-title">各方法的完整評估指標（預測日 2020 年 3 月 26 日，70.2 萬名顧客）</div>
+  <div class="chart-title">LightGBM 的命中率與整體排序能力都最高（預測日 2020 年 3 月 26 日，70.2 萬名顧客）</div>
   <table>
-    <tr><th rowspan="2">方法</th><th class="num" colspan="2">名單評估（前 5 萬名）</th><th class="num">整體排序</th><th class="num" colspan="4">分類評估（流失機率 ≥ 0.5 判為流失）</th></tr>
-    <tr><th class="num">命中率（Precision@5 萬）</th><th class="num">Lift</th><th class="num">AUC</th><th class="num">Accuracy</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr>
-    <tr class="hi"><td>LightGBM（採用）</td><td class="num">68.4%</td><td class="num">1.95</td><td class="num">0.767</td><td class="num">70.9%</td><td class="num">57.7%</td><td class="num">63.3%</td><td class="num">0.604</td></tr>
-    <tr><td>XGBoost</td><td class="num">68.4%</td><td class="num">1.95</td><td class="num">0.767</td><td class="num">70.9%</td><td class="num">57.7%</td><td class="num">63.2%</td><td class="num">0.603</td></tr>
-    <tr><td>Random Forest</td><td class="num">66.7%</td><td class="num">1.90</td><td class="num">0.763</td><td class="num">70.6%</td><td class="num">57.0%</td><td class="num">64.8%</td><td class="num">0.607</td></tr>
-    <tr><td>決策樹</td><td class="num">66.2%</td><td class="num">1.89</td><td class="num">0.760</td><td class="num">70.1%</td><td class="num">56.6%</td><td class="num">63.3%</td><td class="num">0.597</td></tr>
-    <tr><td>邏輯迴歸</td><td class="num">66.2%</td><td class="num">1.89</td><td class="num">0.761</td><td class="num">70.2%</td><td class="num">56.3%</td><td class="num">67.4%</td><td class="num">0.613</td></tr>
-    <tr><td>BG/NBD（統計模型）</td><td class="num">57.3%</td><td class="num">1.64</td><td class="num">0.717</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
-    <tr><td>挑最久沒來的人（規則）</td><td class="num">57.5%</td><td class="num">1.64</td><td class="num">0.661</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+    <tr><th>方法</th><th class="num">命中率（前 5 萬名）</th><th class="num">AUC</th></tr>
+    <tr class="hi"><td>LightGBM（採用）</td><td class="num">68.4%</td><td class="num">0.767</td></tr>
+    <tr><td>XGBoost</td><td class="num">68.4%</td><td class="num">0.767</td></tr>
+    <tr><td>Random Forest</td><td class="num">66.7%</td><td class="num">0.763</td></tr>
+    <tr><td>決策樹</td><td class="num">66.2%</td><td class="num">0.760</td></tr>
+    <tr><td>邏輯迴歸</td><td class="num">66.2%</td><td class="num">0.761</td></tr>
+    <tr><td>BG/NBD（統計模型）</td><td class="num">57.3%</td><td class="num">0.717</td></tr>
+    <tr><td>挑最久沒來的人（規則）</td><td class="num">57.5%</td><td class="num">0.661</td></tr>
   </table>
-  <p class="howto">指標定義：<b>命中率（Precision@5 萬）</b>＝分數最高的 5 萬人中實際流失的人數 ÷ 5 萬，與表中的 Precision 公式相同（被選中的人中實際流失的比例），差別只在選人方式：命中率固定取分數最高的 5 萬人，對應 5 萬張券的預算；Precision 則把流失機率 ≥ 0.5 的人全部選入，LightGBM 會選出 26.97 萬人，範圍較廣、比例較低，也不對應實際發券的數量；<b>Lift</b>＝命中率 ÷ 整體流失比例（35.0%），代表名單比隨機挑選準幾倍，是業界評估名單常用的指標；<b>AUC</b>＝隨機各抽一位流失與未流失的顧客，模型給流失者較高分數的機率（0.5 等於隨機猜，1 為完全正確）；<b>Accuracy</b>＝判斷正確的人數 ÷ 全部人數；<b>Precision</b>＝判為流失的人中實際流失的比例；<b>Recall</b>＝實際流失的人中被判為流失的比例；<b>F1</b>＝Precision 與 Recall 的調和平均。BG/NBD 與規則只產生排序分數、不產生機率，所以沒有分類評估。</p>
+  <p class="howto">指標定義：<b>命中率</b>＝分數最高的 5 萬人中，之後半年實際流失的人數 ÷ 5 萬，直接對應 5 萬張券的預算；<b>AUC</b>＝隨機各抽一位流失與未流失的顧客，模型給流失者較高分數的機率（0.5 等於隨機猜，1 為完全正確），代表模型對全部顧客的整體排序能力。</p>
 </div>
 <p><b>為什麼以命中率選模型，而不是 Accuracy？</b>預算固定 5 萬張，命中率直接代表「每張券發給真正要流失的人的比例」。Accuracy 則不適合：即使把所有人都判為「不流失」，Accuracy 也有 65.0%，各模型的 Accuracy 又都集中在 70%～71%，拉不開差距。LightGBM 與 XGBoost 的命中率並列最高（差距不到 0.01 個百分點），最後選用訓練速度較快的 LightGBM。</p>
 <p><b>為什麼比「挑最久沒來的人」準？</b>模型最看重兩件事：過去半年來買了幾天，以及「以這個人自己平常的習慣來說，現在是不是異常地久沒來」。例如一位平常每 30 天來一次的顧客，已經 90 天沒來，是正常間隔的 3 倍，很可能要流失了；另一位平常半年才來一次的顧客，90 天沒來其實很正常。只看「多久沒來」，會把後者誤判為比較可能流失。</p>
