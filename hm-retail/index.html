@@ -409,73 +409,39 @@
 </table>
 <p class="howto">名詞說明：表中數字為未回購比例；「兩邊都有買」至少買 2 件，所以沒有 1 件這一列。</p>
 <p>買 1～9 件的每一組，網路顧客的未回購比例都比實體店高 5.1～12.0 個百分點，買得越多差距越小。整體只差 3.6 個百分點，是因為網路顧客中買 10 件以上的占 22.0%，實體店只占 8.0%，這些顧客本來就不容易流失，拉低了網路的整體比例。</p>
-<p>上表一次只控制購買件數。為了同時考慮購買件數與年齡，並得到一個整體的差距與可信範圍，再用<b>邏輯迴歸</b>（同時放入多個因素，估計每個因素對「是否流失」影響的統計方法）分析，結果如下圖：</p>
+<p>上表一次只控制購買件數。為了同時考慮購買件數與年齡，並得到一個整體的差距與可信範圍，再用<b>邏輯迴歸</b>（同時放入多個因素，估計每個因素對「是否流失」影響的統計方法）計算：假設所有顧客的購買件數與年齡分布都相同，只有通路不同時，各自的流失機率是多少。</p>
 <div class="card">
-  <div class="chart-title">其他條件相同時，只在網路買的顧客流失勝算是只在實體店買的 1.35 倍；購買件數的影響更大</div>
-  <svg viewBox="0 0 820 410" width="100%" role="img" aria-label="邏輯迴歸勝算比係數圖：只在網路買 1.35，兩邊都有買 0.51，購買件數越多勝算比越低">
-<line x1="260.0" x2="260.0" y1="10" y2="384" stroke="var(--line)"/><text x="260.0" y="400" text-anchor="middle" font-size="11" fill="var(--ink-3)">0.25</text>
-<line x1="367.5" x2="367.5" y1="10" y2="384" stroke="var(--line)"/><text x="367.5" y="400" text-anchor="middle" font-size="11" fill="var(--ink-3)">0.5</text>
-<line x1="475.0" x2="475.0" y1="10" y2="384" stroke="var(--ink-3)" stroke-dasharray="4 3"/><text x="475.0" y="400" text-anchor="middle" font-size="11" fill="var(--ink-3)">1</text>
-<line x1="582.5" x2="582.5" y1="10" y2="384" stroke="var(--line)"/><text x="582.5" y="400" text-anchor="middle" font-size="11" fill="var(--ink-3)">2</text>
-<line x1="690.0" x2="690.0" y1="10" y2="384" stroke="var(--line)"/><text x="690.0" y="400" text-anchor="middle" font-size="11" fill="var(--ink-3)">4</text>
-<text x="8" y="24" font-size="12" font-weight="700" fill="var(--ink)">通路（基準：只在實體店買）</text>
-<text x="22" y="48" font-size="12" fill="var(--ink-2)">只在網路買</text>
-<line x1="519.2" x2="523.2" y1="44" y2="44" stroke="var(--accent)" stroke-width="2"/>
-<circle cx="521.2" cy="44" r="5" fill="var(--accent)"><title>只在網路買：勝算比 1.35（95% 信賴區間 1.33～1.36）</title></circle>
-<text x="705" y="48" font-size="11" fill="var(--ink-2)">1.35（1.33～1.36）</text>
-<text x="22" y="72" font-size="12" fill="var(--ink-2)">兩邊都有買</text>
-<line x1="367.1" x2="373.0" y1="68" y2="68" stroke="var(--accent)" stroke-width="2"/>
-<circle cx="370.0" cy="68" r="5" fill="var(--accent)"><title>兩邊都有買：勝算比 0.51（95% 信賴區間 0.50～0.52）</title></circle>
-<text x="705" y="72" font-size="11" fill="var(--ink-2)">0.51（0.50～0.52）</text>
-<text x="8" y="104" font-size="12" font-weight="700" fill="var(--ink)">去年同季購買件數（基準：1 件）</text>
-<text x="22" y="128" font-size="12" fill="var(--ink-2)">2 件</text>
-<line x1="450.4" x2="456.8" y1="124" y2="124" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="453.6" cy="124" r="5" fill="var(--ink-3)"><title>2 件：勝算比 0.87（95% 信賴區間 0.85～0.89）</title></circle>
-<text x="705" y="128" font-size="11" fill="var(--ink-2)">0.87（0.85～0.89）</text>
-<text x="22" y="152" font-size="12" fill="var(--ink-2)">3～4 件</text>
-<line x1="426.0" x2="432.0" y1="148" y2="148" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="429.0" cy="148" r="5" fill="var(--ink-3)"><title>3～4 件：勝算比 0.74（95% 信賴區間 0.73～0.76）</title></circle>
-<text x="705" y="152" font-size="11" fill="var(--ink-2)">0.74（0.73～0.76）</text>
-<text x="22" y="176" font-size="12" fill="var(--ink-2)">5～9 件</text>
-<line x1="374.1" x2="380.0" y1="172" y2="172" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="377.0" cy="172" r="5" fill="var(--ink-3)"><title>5～9 件：勝算比 0.53（95% 信賴區間 0.52～0.54）</title></circle>
-<text x="705" y="176" font-size="11" fill="var(--ink-2)">0.53（0.52～0.54）</text>
-<text x="22" y="200" font-size="12" fill="var(--ink-2)">10 件以上</text>
-<line x1="282.6" x2="289.0" y1="196" y2="196" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="285.8" cy="196" r="5" fill="var(--ink-3)"><title>10 件以上：勝算比 0.30（95% 信賴區間 0.29～0.30）</title></circle>
-<text x="705" y="200" font-size="11" fill="var(--ink-2)">0.30（0.29～0.30）</text>
-<text x="8" y="232" font-size="12" font-weight="700" fill="var(--ink)">年齡（基準：25～34 歲）</text>
-<text x="22" y="256" font-size="12" fill="var(--ink-2)">24 歲以下</text>
-<line x1="466.3" x2="471.3" y1="252" y2="252" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="468.8" cy="252" r="5" fill="var(--ink-3)"><title>24 歲以下：勝算比 0.96（95% 信賴區間 0.95～0.98）</title></circle>
-<text x="705" y="256" font-size="11" fill="var(--ink-2)">0.96（0.95～0.98）</text>
-<text x="22" y="280" font-size="12" fill="var(--ink-2)">35～44 歲</text>
-<line x1="528.2" x2="534.2" y1="276" y2="276" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="531.2" cy="276" r="5" fill="var(--ink-3)"><title>35～44 歲：勝算比 1.44（95% 信賴區間 1.41～1.46）</title></circle>
-<text x="705" y="280" font-size="11" fill="var(--ink-2)">1.44（1.41～1.46）</text>
-<text x="22" y="304" font-size="12" fill="var(--ink-2)">45～54 歲</text>
-<line x1="483.6" x2="488.7" y1="300" y2="300" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="486.2" cy="300" r="5" fill="var(--ink-3)"><title>45～54 歲：勝算比 1.07（95% 信賴區間 1.06～1.09）</title></circle>
-<text x="705" y="304" font-size="11" fill="var(--ink-2)">1.07（1.06～1.09）</text>
-<text x="22" y="328" font-size="12" fill="var(--ink-2)">55 歲以上</text>
-<line x1="484.1" x2="490.1" y1="324" y2="324" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="487.1" cy="324" r="5" fill="var(--ink-3)"><title>55 歲以上：勝算比 1.08（95% 信賴區間 1.06～1.10）</title></circle>
-<text x="705" y="328" font-size="11" fill="var(--ink-2)">1.08（1.06～1.10）</text>
-<text x="22" y="352" font-size="12" fill="var(--ink-2)">未填年齡</text>
-<line x1="652.9" x2="674.5" y1="348" y2="348" stroke="var(--ink-3)" stroke-width="2"/>
-<circle cx="663.7" cy="348" r="5" fill="var(--ink-3)"><title>未填年齡：勝算比 3.38（95% 信賴區間 3.15～3.62）</title></circle>
-<text x="705" y="352" font-size="11" fill="var(--ink-2)">3.38（3.15～3.62）</text>
+  <div class="chart-title">控制購買件數與年齡後，網路與實體店顧客的流失機率差距從 3.6 擴大到 7.1 個百分點</div>
+  <p class="ax-y">Y 軸：流失機率（今年同季一件都沒買的機率，%）</p>
+  <svg viewBox="0 0 820 300" width="100%" role="img" aria-label="直接比較差 3.6 個百分點，控制購買件數與年齡後差 7.1 個百分點">
+<line x1="50" x2="800" y1="250.0" y2="250.0" stroke="var(--line)"/><text x="44" y="254.0" text-anchor="end" font-size="11" fill="var(--ink-3)">0%</text>
+<line x1="50" x2="800" y1="190.0" y2="190.0" stroke="var(--line)"/><text x="44" y="194.0" text-anchor="end" font-size="11" fill="var(--ink-3)">20%</text>
+<line x1="50" x2="800" y1="130.0" y2="130.0" stroke="var(--line)"/><text x="44" y="134.0" text-anchor="end" font-size="11" fill="var(--ink-3)">40%</text>
+<line x1="50" x2="800" y1="70.0" y2="70.0" stroke="var(--line)"/><text x="44" y="74.0" text-anchor="end" font-size="11" fill="var(--ink-3)">60%</text>
+<rect x="146" y="92.8" width="90" height="157.2" fill="var(--mute)" rx="3"><title>只在實體店買：52.4%</title></rect>
+<text x="191.0" y="82.8" text-anchor="middle" font-size="13" fill="var(--ink)">52.4%</text>
+<rect x="244" y="82.0" width="90" height="168.0" fill="var(--accent)" rx="3"><title>只在網路買：56.0%</title></rect>
+<text x="289.0" y="72.0" text-anchor="middle" font-size="13" fill="var(--ink)">56.0%</text>
+<text x="240" y="270" text-anchor="middle" font-size="12" fill="var(--ink-2)">直接比較（原始未回購比例）</text>
+<text x="240" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">差 3.6 個百分點</text>
+<rect x="486" y="104.5" width="90" height="145.5" fill="var(--mute)" rx="3"><title>只在實體店買：48.5%</title></rect>
+<line x1="531.0" x2="531.0" y1="103.9" y2="105.1" stroke="var(--ink)" stroke-width="1.5"/><line x1="525.0" x2="537.0" y1="103.9" y2="103.9" stroke="var(--ink)" stroke-width="1.5"/><line x1="525.0" x2="537.0" y1="105.1" y2="105.1" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="531.0" y="94.5" text-anchor="middle" font-size="13" fill="var(--ink)">48.5%</text>
+<rect x="584" y="83.2" width="90" height="166.8" fill="var(--accent)" rx="3"><title>只在網路買：55.6%</title></rect>
+<line x1="629.0" x2="629.0" y1="82.6" y2="83.8" stroke="var(--ink)" stroke-width="1.5"/><line x1="623.0" x2="635.0" y1="82.6" y2="82.6" stroke="var(--ink)" stroke-width="1.5"/><line x1="623.0" x2="635.0" y1="83.8" y2="83.8" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="629.0" y="73.2" text-anchor="middle" font-size="13" fill="var(--ink)">55.6%</text>
+<text x="580" y="270" text-anchor="middle" font-size="12" fill="var(--ink-2)">控制購買件數與年齡後（預測流失機率）</text>
+<text x="580" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">差 7.1 個百分點（95% 信賴區間 6.8～7.4）</text>
+<rect x="560" y="282" width="12" height="12" fill="var(--mute)" rx="2"/><text x="578" y="292" font-size="12" fill="var(--ink-2)">只在實體店買</text>
+<rect x="680" y="282" width="12" height="12" fill="var(--accent)" rx="2"/><text x="698" y="292" font-size="12" fill="var(--ink-2)">只在網路買</text>
 </svg>
-  <p class="ax-x">X 軸：勝算比（對數刻度；1 ＝ 與基準組相同，大於 1 代表比基準組容易流失；橫線為 95% 信賴區間）</p>
-  <p class="howto">怎麼讀：每個點是該組相對於基準組的勝算比，勝算比＝「流失 ÷ 未流失」的比值相對於基準組的倍數。每一列都已控制圖中其他因素；例如「只在網路買」是在購買件數與年齡相同時，與只在實體店買比較。信賴區間很窄，是因為樣本有 503,504 人；未填年齡的顧客（約 1%）另列一組，不刪除。</p>
+  <p class="howto">怎麼讀：左邊兩根是直接比較的未回購比例（第 1 步）；右邊兩根是控制購買件數與年齡後，模型算出的預測流失機率＝把全部 503,504 位顧客都當成該通路的顧客、用模型算出流失機率再取平均，黑線為 95% 信賴區間（差距的可信範圍，不包含 0，代表差距不太可能只是偶然，p 值小於 0.001）。實體店顧客的原始比例偏高，部分是因為他們買得比較少；拉到相同的購買件數與年齡後，差距才完整顯現。熟悉統計的讀者可參考：網路相對實體店的勝算比為 1.35（95% 信賴區間 1.33～1.36）；年齡未填的顧客（約 1%）另列一組，不刪除。</p>
 </div>
-<p>勝算比不容易直觀理解，換算成流失機率的差距：</p>
 <table>
-  <tr><th>比較（購買件數、年齡相同時）</th><th class="num">流失機率差（95% 信賴區間）</th></tr>
-  <tr class="hi"><td>只在網路買 vs 只在實體店買</td><td class="num"><b>+7.1 個百分點</b>（6.8～7.4）</td></tr>
+  <tr><th>其他比較（購買件數、年齡相同時）</th><th class="num">流失機率差（95% 信賴區間）</th></tr>
   <tr><td>兩邊都有買 vs 只在實體店買（只計買 2 件以上的顧客）</td><td class="num">−15.2 個百分點（−15.7～−14.8）</td></tr>
 </table>
-<p class="howto">名詞說明：流失機率差＝把每位顧客分別當成兩種通路的顧客，用模型算出流失機率後相減再取平均（第一列對全部 503,504 人；第二列只對買 2 件以上的 424,616 人，因為只買 1 件的人不可能兩邊都買）；95% 信賴區間＝差距的可信範圍，區間不包含 0，代表差距不太可能只是偶然，兩項的 p 值都小於 0.001。</p>
+<p class="howto">名詞說明：流失機率差＝同一批顧客分別當成兩種通路的顧客，模型算出的流失機率相減後取平均；只計買 2 件以上的 424,616 人，因為只買 1 件的人不可能兩邊都買。</p>
 <p>購買件數與年齡相同時，只在網路買的顧客流失機率平均高 7.1 個百分點，比整體直接比較的 3.6 個百分點更大。7.1 是全體顧客的平均；上表顯示差距會隨購買件數縮小，買 10 件以上時幾乎沒有差距。因此，<b>網路顧客確實比實體店顧客容易流失</b>，尤其是買得少的顧客。迴歸衡量的是差距有多大、是否可信，但不能證明差距是「網路」本身造成的。</p>
 <p>兩邊都有買的顧客，在每一個購買件數組都是三組中最低，迴歸控制購買件數與年齡後也低 15.2 個百分點，所以不只是因為他們買得多；但這是觀察到的關聯，不能直接推論「讓顧客跨通路購買」就能降低流失。</p>
 
