@@ -53,6 +53,12 @@
   .tldr { background: var(--accent-soft); border-radius: 10px; padding: 16px 20px; }
   .tldr p:last-child { margin: 0; }
   .ask { color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 8px 0 18px; }
+  .tree { font-size: 15px; }
+  .tree .node { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; display: inline-block; background: var(--card); }
+  .tree .node.hi { border-color: var(--accent); background: var(--accent-soft); }
+  .tree .kids { margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line); }
+  .tree .kids > div { margin: 10px 0; }
+  .tree .note { display: block; color: var(--ink-2); font-size: 14px; margin: 4px 0 0 4px; }
   .bridge { color: var(--ink-2); font-size: 15px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 14px; margin: 18px 0 8px; }
   .bridge b { color: var(--ink); }
   .howto { font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--line); padding: 4px 12px; margin: 6px 0 14px; }
@@ -117,14 +123,14 @@
 <section class="stats" aria-label="關鍵數字">
   <div class="stat"><b>−10.3%</b><span>FY2020 Q1 賣出的件數，比去年同一季少了 36.8 萬件</span></div>
   <div class="stat"><b>54%</b><span>減少的件數來自童裝；童裝原本只占銷量的 7.9%</span></div>
-  <div class="stat"><b>46%</b><span>其餘減少來自網路上賣的大人衣服；實體店持平</span></div>
+  <div class="stat"><b>46%</b><span>其餘減少來自深藍色與條紋的大人衣服；這兩類在實體店與網路都少了 44%</span></div>
   <div class="stat"><b>68.4%</b><span>流失預測模型（分析三）挑出的 5 萬名顧客中，之後半年真的沒再回來買的比例</span></div>
 </section>
 
 <div class="tldr">
   <p><b>結論摘要</b></p>
-  <p>表面上看起來是「顧客買得變少」，逐一拆解後發現，業績下滑其實是<b>兩件不相關的事</b>加在一起：一是<b>童裝</b>從 2019 年 3 月起突然少賣七成，占了減少量的一半以上；二是<b>網路上的大人衣服</b>，老顧客來得比較少、每次買得也比較少。至於挽留券，用預測模型挑名單，比「挑最久沒來的人」更能找到真正要流失的顧客；建議先小規模發放並保留一組不發券的顧客做比較，確認券真的有效再擴大。</p>
-  <p>童裝為什麼腰斬、網路顧客為什麼少買，交易資料無法回答；本頁最後列出繼續追查所需要的資料。</p>
+  <p>表面上看起來是「顧客買得變少」，逐一拆解後發現，業績下滑其實是<b>兩件不相關的事</b>加在一起：一是<b>童裝</b>從 2019 年 3 月起銷量突然腰斬，FY2020 Q1 比去年同季少了 70.8%，占減少量的一半以上；二是<b>深藍色、條紋的大人衣服</b>：兩個通路同時少了 44%，每款賣得比較少、新款也變少（深藍色的銷量占比從 2019 年 8～9 月起明顯下降），其他大人衣服的件數與去年相同。所以問題出在商品，不在銷售通路。至於挽留券，用預測模型挑名單，比「挑最久沒來的人」更能找到真正要流失的顧客；建議先小規模發放並保留一組不發券的顧客做比較，確認券真的有效再擴大。</p>
+  <p>童裝腰斬是業務變化還是資料收錄問題、深藍色與條紋商品減少是公司決策還是顧客偏好改變，交易資料無法分辨；本頁最後列出繼續追查所需要的資料。</p>
 </div>
 
 <h2>資料</h2>
@@ -132,7 +138,7 @@
   <tr><th>資料</th><th>規模</th><th>內容</th></tr>
   <tr><td>交易紀錄</td><td>3,179 萬筆（2018 年 9 月 20 日～2020 年 9 月 22 日）</td><td>哪天、哪位顧客、買了哪件商品、價格、在哪個通路買</td></tr>
   <tr><td>顧客</td><td>137 萬人</td><td>年齡、會員狀態</td></tr>
-  <tr><td>商品</td><td>10.6 萬款</td><td>商品大類（女裝、男裝、童裝等）、款式、顏色、花色等</td></tr>
+  <tr><td>商品</td><td>10.6 萬款</td><td>商品大類（女裝、男裝、童裝等）、商品部門（依品項劃分，例如褲裝、針織衫、襯衫，共 250 個）、款式、顏色、花色等</td></tr>
 </table>
 <p class="howto">名詞說明：H&amp;M 的會計年度從 12 月開始，所以 <b>FY2020 Q1 ＝ 2019 年 12 月～2020 年 2 月</b>，拿來比較的「去年同一季」是 2018 年 12 月～2019 年 2 月。資料裡的兩個銷售通路只標成 1 和 2，官方沒說哪個是實體店；本頁依資料推論通路 1 是實體店、通路 2 是網路（歐洲封城那個月，通路 1 的銷量占比從平常的三成掉到 14.6%，符合實體店關門的情況）。</p>
 
@@ -200,9 +206,26 @@
 
 <div class="bridge">下一步要問：<b>少賣的 36.8 萬件，集中在哪裡？</b>方法是依商品分類、顧客分類逐一拆開，看減少的件數集中在哪一類。</div>
 
-<h3>第 2 步：找出掉得最多的地方——童裝</h3>
+<h3>第 2 步：少賣的件數分成兩塊——童裝 54%、大人衣服 46%</h3>
+<p>先說結論全貌：依商品分類逐層拆開後，少賣的 36.8 萬件可以完整分成兩塊，兩塊的原因不同，本段接下來分別追查。</p>
+<div class="card tree">
+  <div class="chart-title">少賣的 36.8 萬件從哪裡來（分析一的結論地圖）</div>
+  <div class="node"><b>全部商品</b>：少 36.8 萬件，件數 −10.3%</div>
+  <div class="kids">
+    <div><span class="node hi"><b>童裝</b>（占去年銷量 7.9%）：件數 −70.8%，少 19.9 萬件＝<b>占總減少 54%</b></span><span class="note">→ 2019 年 3 月突然腰斬（第 3、4 步）</span></div>
+    <div><span class="node"><b>大人衣服</b>（占去年銷量 92.1%）：件數 −5.2%，少 16.9 萬件＝<b>占總減少 46%</b></span>
+      <div class="kids">
+        <div><span class="node hi"><b>深藍色或條紋商品</b>（占去年銷量 10.8%）：件數 −44.1%，少 16.9 萬件＝<b>占總減少 46%</b></span><span class="note">→ 每款賣得比較少、新款也變少（第 5、6 步）</span></div>
+        <div><span class="node">其他大人衣服（占去年銷量 81.3%）：件數 +0.0%，與去年持平</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="howto">怎麼讀：「占去年銷量」＝該類去年同季件數 ÷ 去年同季全部件數；「占總減少」＝該類減少件數 ÷ 全部減少的 36.8 萬件。童裝原本只占 7.9%，但件數少了七成，所以貢獻了一半以上的減少；「大人衣服」指童裝以外的四類（年輕系列、女裝、男裝、運動服）。</p>
+</div>
+<p>第一層先依商品大類拆開，結果如下圖：</p>
+
 <div class="card">
-  <div class="chart-title">今年減少的 36.8 萬件中，54.0% 來自童裝</div>
+  <div class="chart-title">今年減少的 36.8 萬件中，54.0% 來自童裝，其餘 45.9% 分散在四類大人衣服</div>
   <div class="row hi"><span class="name">童裝</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec-hi" style="left:8%;width:88.0%"></span></span><span class="val">54.0%</span></div>
   <div class="row"><span class="name">年輕系列</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:8%;width:47.6%"></span></span><span class="val">29.2%</span></div>
   <div class="row"><span class="name">女裝</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:8%;width:25.7%"></span></span><span class="val">15.8%</span></div>
@@ -214,14 +237,15 @@
     <tr><td>FY2020 Q1 vs FY2019 Q1</td><td class="num"><b>−70.8%</b></td><td class="num">−13.3%</td><td class="num">−2.7%</td><td class="num">−5.4%</td><td class="num">+4.8%</td></tr>
   </table>
   <p class="howto">怎麼算：長條＝該類今年比去年減少的件數 ÷ 全部減少的 36.8 萬件，五類合計 100%（運動服件數增加，貢獻為負；圖上數字四捨五入到小數點後一位，相加為 99.9%）。年增率＝該類今年同季件數 ÷ 去年同季件數 − 1。童裝不只貢獻最多的減少，本身也掉了七成，遠超過其他類別的 −13%～+5%。</p>
+  <p class="howto" style="margin-top:6px">童裝原本只占銷量的 7.9%，卻貢獻一半以上的減少，是最集中的異常，所以先追童裝（第 3、4 步），再回頭追大人衣服的 46%（第 5、6 步）。</p>
 </div>
 <p>另外也用顏色、花色、款式、年齡、通路、會員狀態等共 15 種分類各拆一次，並比較每一類「占減少的比例」與「原本占銷量的比例」的差距，童裝仍是差距最大、最集中的來源。本專案第一版只從「顧客類型」和「上衣／褲子」等角度拆解，童裝被分散在各類之中而沒有被發現，改為逐一比較所有分類後才找到。</p>
 <details>
   <summary>補充：原本的結論為什麼要修正</summary>
-  <p style="margin-top:8px">第一版的結論是「老顧客買得比較少，占減少的 64%」。這個數字沒有算錯，但它把兩件事混在一起：老顧客少買的 23.5 萬件中，有 6.5 萬件其實是不再買童裝。改用商品類別去切，才看得出童裝這個集中的異常。這次修正後，另外請一位沒看過任何結論的 AI 分析者，只拿原始資料重新分析，得到相同的結果（童裝 54%、網路大人衣服 46%）。</p>
+  <p style="margin-top:8px">第一版的結論是「老顧客買得比較少，占減少的 64%」。這個數字沒有算錯，但它把兩件事混在一起：老顧客少買的 23.5 萬件中，有 6.5 萬件其實是不再買童裝。改用商品類別去切，才看得出童裝這個集中的異常。這次修正後，另外請一位沒看過任何結論的 AI 分析者，只拿原始資料重新分析，得到相同的結果（童裝 54%、大人衣服 46%）。</p>
 </details>
 
-<div class="bridge">童裝掉得這麼多，下一步要問：<b>是什麼時候開始掉的？</b>如果是慢慢下滑，比較像需求改變；如果是某一天突然掉，就要懷疑有特定事件。</div>
+<div class="bridge">先追童裝。下一步要問：<b>是什麼時候開始掉的？</b>如果是慢慢下滑，比較像需求改變；如果是某一天突然掉，就要懷疑有特定事件。</div>
 
 <h3>第 3 步：童裝是在 2019 年 3 月突然腰斬</h3>
 <div class="card">
@@ -320,41 +344,168 @@
 </table>
 <p><b>結論：</b>這是只發生在童裝、而且整條童裝線一起下滑的事件；同一批顧客照樣買大人衣服，就是不再買童裝。能從交易資料排除的原因都已排除，剩下兩種可能這份資料無法分辨：<b>① H&amp;M 童裝業務本身的變化</b>（例如商品、行銷或市場調整）；<b>② 資料收錄範圍改變</b>（例如某些市場的童裝交易沒再收進來）。由於這份資料原本是為商品推薦競賽準備的，第 ② 種可能不能排除。</p>
 
-<div class="bridge">童裝說明了一半多的減少，<b>剩下的 46% 在大人衣服</b>（本頁的「大人衣服」指童裝以外的四類：年輕系列、女裝、男裝、運動服）。接著用同樣的方式，看大人衣服少在哪裡。</div>
+<div class="bridge">童裝的部分追查到此。回到第 2 步結論地圖的另一塊：<b>大人衣服的 46%</b>。接著用第 2 步同樣的方法，把大人衣服依顏色、花色、商品部門等欄位逐一拆開，找出減少比例遠超過銷量占比的分類。</div>
 
-<h3>第 5 步：大人衣服的減少，幾乎都在網路上</h3>
+<h3>第 5 步：大人衣服的減少，全部來自深藍色與條紋商品</h3>
+<p>拆開後最突出的是<b>深藍色</b>與<b>條紋花色</b>兩類。把兩類合併（同時是深藍色又是條紋的商品只算一次），和其他商品比較：</p>
 <table>
-  <tr><th>大人衣服（不含童裝）</th><th class="num">顧客人數年增率</th><th class="num">老顧客每人購買件數</th><th class="num">購物次數年增率</th><th class="num">件數年增率</th><th class="num">減少件數（占大人衣服總減少）</th></tr>
-  <tr><td>實體店（通路 1）</td><td class="num">+0.8%</td><td class="num">4.74 → 4.49</td><td class="num">+3.0%</td><td class="num">−0.1%</td><td class="num">1,547（1%）</td></tr>
-  <tr class="hi"><td>網路（通路 2）</td><td class="num">+3.5%</td><td class="num">9.61 → 8.57</td><td class="num">−3.8%</td><td class="num"><b>−7.5%</b></td><td class="num"><b>167,746（99%）</b></td></tr>
+  <tr><th>大人衣服（兩個通路合計）</th><th class="num">占去年同季大人衣服銷量</th><th class="num">去年同季件數</th><th class="num">今年同季件數</th><th class="num">件數年增率</th></tr>
+  <tr class="hi"><td>深藍色或條紋商品</td><td class="num">11.7%</td><td class="num">384,163</td><td class="num">214,816</td><td class="num"><b>−44.1%</b></td></tr>
+  <tr><td>其他商品</td><td class="num">88.3%</td><td class="num">2,899,582</td><td class="num">2,899,636</td><td class="num">+0.0%</td></tr>
+  <tr><td>大人衣服合計</td><td class="num">100%</td><td class="num">3,283,745</td><td class="num">3,114,452</td><td class="num">−5.2%</td></tr>
 </table>
-<p class="howto">名詞說明：年增率＝今年同季 ÷ 去年同季 − 1；減少件數＝去年同季件數 − 今年同季件數，括號為占大人衣服總減少件數（169,293 件）的比例；「老顧客」指去年同季和今年同季都有在這個通路購物的人；「購物次數」是同一個人同一天的購物算一次。</p>
-<p>實體店：老顧客每人少買了一些，但顧客人數與購物次數都增加，兩者抵銷後件數持平。網路：顧客人數雖然增加，但<b>購物次數減少、每次買的件數也變少</b>，件數下滑 7.5%。大人衣服共少了 169,293 件，其中網路占 167,746 件（99%）。</p>
-<p>再依商品的顏色與花色拆開，有少數幾類掉得遠比整體多：</p>
+<p>深藍色或條紋商品只占去年大人衣服銷量的 11.7%（占全部商品 10.8%），卻少了 169,347 件，等於大人衣服減少的全部（169,293 件）；其他商品的件數與去年幾乎相同。</p>
+<p>再分通路看，確認這是不是某個通路的問題：</p>
 <table>
-  <tr><th>大人衣服</th><th class="num">占去年同季銷量</th><th class="num">件數年增率</th></tr>
-  <tr><td>深藍色商品</td><td class="num">8.1%</td><td class="num">−41.5%</td></tr>
-  <tr><td>條紋花色商品</td><td class="num">4.4%</td><td class="num">−49.8%</td></tr>
-  <tr><td>大人衣服整體（對照）</td><td class="num">100%</td><td class="num">−5.2%</td></tr>
+  <tr><th>大人衣服的件數年增率</th><th class="num">實體店（通路 1）</th><th class="num">網路（通路 2）</th></tr>
+  <tr class="hi"><td>深藍色或條紋商品</td><td class="num">−44.1%</td><td class="num">−44.1%</td></tr>
+  <tr><td>其他商品</td><td class="num">+6.0%</td><td class="num">−2.8%</td></tr>
+  <tr><td>大人衣服合計</td><td class="num">−0.1%</td><td class="num">−7.5%</td></tr>
 </table>
+<p class="howto">名詞說明：年增率＝今年同季 ÷ 去年同季 − 1。</p>
+<p>深藍色與條紋商品在兩個通路的減幅相同，所以問題出在商品，不在通路。合計數字上網路下滑、實體店持平，差別在其他商品（見「分析二」第 3 步）。</p>
 
-<p>交易資料能回答「誰少買、少買了什麼、從什麼時候開始」，但無法回答「為什麼」；繼續追查所需的資料，整理在本頁最後的「若要繼續追查：需要的資料」。</p>
+<div class="bridge">深藍色與條紋商品兩個通路同時少了四成多，接著看它們從什麼時候開始少、為什麼少。</div>
+
+<h3>第 6 步：深藍色與條紋商品為什麼少賣——每款賣得比較少，新款也變少</h3>
+<div class="card">
+  <div class="chart-title">深藍色商品占大人衣服每月銷量的比例：2019 年 8～9 月從約 8% 降到約 5%，之後沒有回來</div>
+  <p class="ax-y">Y 軸：深藍色商品件數占當月大人衣服件數的比例（%）</p>
+  <svg viewBox="0 0 820 260" width="100%" role="img" aria-label="深藍色商品占大人衣服件數的比例，2019 年 8～9 月從約 8% 降到約 5%">
+<line x1="44" x2="810" y1="220.0" y2="220.0" stroke="var(--line)"/><text x="38" y="224.0" text-anchor="end" font-size="11" fill="var(--ink-3)">0%</text>
+<line x1="44" x2="810" y1="154.7" y2="154.7" stroke="var(--line)"/><text x="38" y="158.7" text-anchor="end" font-size="11" fill="var(--ink-3)">4%</text>
+<line x1="44" x2="810" y1="89.3" y2="89.3" stroke="var(--line)"/><text x="38" y="93.3" text-anchor="end" font-size="11" fill="var(--ink-3)">8%</text>
+<line x1="44" x2="810" y1="24.0" y2="24.0" stroke="var(--line)"/><text x="38" y="28.0" text-anchor="end" font-size="11" fill="var(--ink-3)">12%</text>
+<rect x="49.4" y="84.4" width="21.1" height="135.6" fill="var(--accent)" rx="2"><title>2018-10：8.3%</title></rect>
+<text x="60.0" y="80.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.3</text>
+<text x="60.0" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2018/10</text>
+<rect x="81.3" y="94.2" width="21.1" height="125.8" fill="var(--accent)" rx="2"><title>2018-11：7.7%</title></rect>
+<text x="91.8" y="90.2" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.7</text>
+<rect x="113.2" y="95.9" width="21.1" height="124.1" fill="var(--accent)" rx="2"><title>2018-12：7.6%</title></rect>
+<text x="123.7" y="91.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.6</text>
+<rect x="145.1" y="84.4" width="21.1" height="135.6" fill="var(--accent)" rx="2"><title>2019-01：8.3%</title></rect>
+<text x="155.7" y="80.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.3</text>
+<text x="155.7" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/1</text>
+<rect x="177.0" y="84.4" width="21.1" height="135.6" fill="var(--accent)" rx="2"><title>2019-02：8.3%</title></rect>
+<text x="187.6" y="80.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.3</text>
+<rect x="208.9" y="82.8" width="21.1" height="137.2" fill="var(--accent)" rx="2"><title>2019-03：8.4%</title></rect>
+<text x="219.5" y="78.8" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.4</text>
+<rect x="240.8" y="89.3" width="21.1" height="130.7" fill="var(--accent)" rx="2"><title>2019-04：8.0%</title></rect>
+<text x="251.3" y="85.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.0</text>
+<text x="251.3" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/4</text>
+<rect x="272.7" y="95.9" width="21.1" height="124.1" fill="var(--accent)" rx="2"><title>2019-05：7.6%</title></rect>
+<text x="283.2" y="91.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.6</text>
+<rect x="304.6" y="87.7" width="21.1" height="132.3" fill="var(--accent)" rx="2"><title>2019-06：8.1%</title></rect>
+<text x="315.1" y="83.7" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.1</text>
+<rect x="336.5" y="77.9" width="21.1" height="142.1" fill="var(--accent)" rx="2"><title>2019-07：8.7%</title></rect>
+<text x="347.0" y="73.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.7</text>
+<text x="347.0" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/7</text>
+<rect x="368.4" y="105.7" width="21.1" height="114.3" fill="var(--mute)" rx="2"><title>2019-08：7.0%</title></rect>
+<text x="378.9" y="101.7" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.0</text>
+<rect x="400.3" y="135.1" width="21.1" height="84.9" fill="var(--mute)" rx="2"><title>2019-09：5.2%</title></rect>
+<text x="410.8" y="131.1" text-anchor="middle" font-size="10" fill="var(--ink-2)">5.2</text>
+<rect x="432.2" y="133.4" width="21.1" height="86.6" fill="var(--mute)" rx="2"><title>2019-10：5.3%</title></rect>
+<text x="442.7" y="129.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">5.3</text>
+<text x="442.7" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/10</text>
+<rect x="464.1" y="141.6" width="21.1" height="78.4" fill="var(--mute)" rx="2"><title>2019-11：4.8%</title></rect>
+<text x="474.6" y="137.6" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.8</text>
+<rect x="496.0" y="133.4" width="21.1" height="86.6" fill="var(--mute)" rx="2"><title>2019-12：5.3%</title></rect>
+<text x="506.5" y="129.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">5.3</text>
+<rect x="527.9" y="138.3" width="21.1" height="81.7" fill="var(--mute)" rx="2"><title>2020-01：5.0%</title></rect>
+<text x="538.4" y="134.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">5.0</text>
+<text x="538.4" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/1</text>
+<rect x="559.8" y="144.9" width="21.1" height="75.1" fill="var(--mute)" rx="2"><title>2020-02：4.6%</title></rect>
+<text x="570.3" y="140.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.6</text>
+<rect x="591.7" y="144.9" width="21.1" height="75.1" fill="var(--mute)" rx="2"><title>2020-03：4.6%</title></rect>
+<text x="602.2" y="140.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.6</text>
+<rect x="623.6" y="143.2" width="21.1" height="76.8" fill="var(--mute)" rx="2"><title>2020-04：4.7%</title></rect>
+<text x="634.1" y="139.2" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.7</text>
+<text x="634.1" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/4</text>
+<rect x="655.5" y="144.9" width="21.1" height="75.1" fill="var(--mute)" rx="2"><title>2020-05：4.6%</title></rect>
+<text x="666.0" y="140.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.6</text>
+<rect x="687.4" y="141.6" width="21.1" height="78.4" fill="var(--mute)" rx="2"><title>2020-06：4.8%</title></rect>
+<text x="697.9" y="137.6" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.8</text>
+<rect x="719.3" y="143.2" width="21.1" height="76.8" fill="var(--mute)" rx="2"><title>2020-07：4.7%</title></rect>
+<text x="729.8" y="139.2" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.7</text>
+<text x="729.8" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/7</text>
+<rect x="751.2" y="146.5" width="21.1" height="73.5" fill="var(--mute)" rx="2"><title>2020-08：4.5%</title></rect>
+<text x="761.7" y="142.5" text-anchor="middle" font-size="10" fill="var(--ink-2)">4.5</text>
+<rect x="783.1" y="156.3" width="21.1" height="63.7" fill="var(--mute)" rx="2"><title>2020-09：3.9%</title></rect>
+<text x="793.6" y="152.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.9</text>
+<line x1="363.0" x2="363.0" y1="24" y2="220.0" stroke="var(--ink-3)" stroke-dasharray="4 3"/><text x="367.0" y="34" font-size="11" fill="var(--ink-2)">2019-08 起下降</text>
+</svg>
+  <p class="ax-x">X 軸：月份（2018 年 10 月～2020 年 9 月）</p>
+  <p class="howto">怎麼讀：藍色是 2019 年 8 月以前，灰色是之後。兩個通路分開看，下降的時間相同（2019 年 9 月：網路 5.3%、實體店 5.1%）。條紋商品春夏賣得多、秋冬賣得少，逐月比例會隨季節起伏，因此改用下表的同季比較。</p>
+</div>
+<p>一類商品賣得少，可能是<b>賣的款式變少</b>，也可能是<b>每一款賣得變少</b>。把件數拆成「有賣出的款數 × 每款平均件數」，另外列出其中的新款數：</p>
+<table>
+  <tr><th>大人衣服（兩個通路合計）</th><th class="num">有賣出的款數</th><th class="num">每款平均賣出件數</th><th class="num">其中：當季新款數</th></tr>
+  <tr class="hi"><td>深藍色</td><td class="num">2,453 → 2,133（−13.0%）</td><td class="num">107.8 → 72.5（−32.7%）</td><td class="num">545 → 421（−22.8%）</td></tr>
+  <tr class="hi"><td>條紋</td><td class="num">987 → 951（−3.6%）</td><td class="num">145.9 → 76.0（−47.9%）</td><td class="num">229 → 165（−27.9%）</td></tr>
+  <tr><td>其他商品（對照）</td><td class="num">14,042 → 15,434（+9.9%）</td><td class="num">206.5 → 187.9（−9.0%）</td><td class="num">2,857 → 3,426（+19.9%）</td></tr>
+</table>
+<p class="howto">名詞說明：箭頭左邊是去年同季、右邊是今年同季；「款」指同一個設計，不同顏色算同一款；每款平均賣出件數＝該類件數 ÷ 有賣出的款數；當季新款數＝這一季有賣出、但季前 72 天（9 月 20 日～11 月 30 日）沒有賣出紀錄的款數（資料從 2018 年 9 月 20 日開始，兩年都取同樣長度的回看期才能比較）。</p>
+<p>兩類的減少主要來自每款賣得少（−32.7%、−47.9%，其他商品只 −9.0%），款數也略減；其中新款的差異最明顯：其他商品的新款增加 19.9%，深藍色、條紋的新款卻分別減少 22.8% 與 27.9%。也就是說，<b>深藍色、條紋有賣出的新款變少，每款平均件數也下降</b>。另外排除了三種可能：</p>
+<ul>
+  <li><b>不是某一條商品線被砍：</b>減少分散在 145 個商品部門（例如褲裝、針織衫、襯衫），減少最多的 3 個部門合計只占 32.9%。</li>
+  <li><b>不是漲價：</b>深藍色或條紋商品每件平均售價反而下降 4.5%（其他商品 +0.5%）。</li>
+  <li><b>不是顏色分類方式改變：</b>如果只是原本標為深藍色的商品改標成其他顏色，相近的藍色、黑色新款占比應該同步上升；實際上藍色新款占比下降（3.5% → 2.6%），黑色只多 0.8 個百分點（30.8% → 31.6%），補不回深藍色減少的 3.4 個百分點（9.0% → 5.6%）。</li>
+</ul>
+<p><b>結論：</b>大人衣服的減少全部來自深藍色、條紋商品（第 5 步）；與去年同季比較，這兩類的新款減少、每款銷量也下降，深藍色的銷量占比從 2019 年 8～9 月起明顯下降。交易資料能確認到這一層，但無法分辨是<b>公司主動減少這兩類商品</b>（例如配色企劃調整），還是<b>顧客偏好先改變、公司跟著調整</b>；判斷所需的資料，整理在本頁最後的「若要繼續追查：需要的資料」。</p>
 
 
 
 <!-- ============ 分析二 ============ -->
 <h2>分析二：是不是某個銷售通路出了問題？</h2>
 <p class="ask">主管追問：「沒回來買的顧客，之前主要在實體店還是網路買？會不會是通路問題？」</p>
-<p>主管想知道的是：如果不回來的顧客集中在某個通路，問題可能出在那個通路（例如網站不好用），對策也會不同。所以把去年同季的顧客依「在哪裡買」分成三組，比較每一組今年同季沒回來買的比例（<b>未回購比例</b>＝該組中今年同季一件都沒買的人 ÷ 該組人數）。</p>
+<p>如果不回來的顧客集中在某個通路，問題可能出在那個通路（例如網站不好用），對策也會不同。以下分三步檢查：顧客有沒有回來、排除購買量的影響後差距還在不在、回來的顧客買得少是不是通路造成的。</p>
+
+<h3>第 1 步：各通路顧客的未回購比例</h3>
+<p>把去年同季的顧客依「在哪裡買」分成三組，比較每一組今年同季沒回來買的比例（<b>未回購比例</b>＝該組中今年同季一件都沒買的人 ÷ 該組人數）。</p>
 <div class="card">
-  <div class="chart-title">只在實體店或只在網路購物的顧客，未回購比例都超過 50%</div>
+  <div class="chart-title">只在實體店或只在網路購物的顧客，未回購比例都超過 50%，兩者只差 3.6 個百分點</div>
   <div class="row hi"><span class="name">只在實體店買</span><span class="track"><span class="bar" style="width:74.9%"></span></span><span class="val">52.4%</span></div>
   <div class="row hi"><span class="name">只在網路買</span><span class="track"><span class="bar" style="width:80%"></span></span><span class="val">56.0%</span></div>
   <div class="row"><span class="name">兩邊都有買</span><span class="track"><span class="bar" style="width:36.4%"></span></span><span class="val">25.5%</span></div>
   <p class="ax-x">X 軸：未回購比例（該組中今年同季一件都沒買的人 ÷ 該組人數）</p>
-  <p class="howto">怎麼讀：數字越高，代表這組顧客越多人沒回來。排除「只買童裝」的顧客後重算，結果幾乎一樣（50.9%、54.2%、25.2%）。兩邊都有買的顧客本來就購買得比較頻繁，未回購比例自然較低，不代表「讓顧客跨通路購買」就能提升忠誠度。</p>
+  <p class="howto">怎麼讀：數字越高，代表這組顧客越多人沒回來。排除「只買童裝」的顧客後重算，結果幾乎一樣（50.9%、54.2%、25.2%）。</p>
 </div>
-<p><b>結論：</b>分兩個角度看。① <b>顧客有沒有回來</b>：只在實體店或只在網路購物的顧客，未回購比例都超過 50%。表面上只差 3.6 個百分點，是因為網路的重度買家較多；在購買量相同的顧客之間比較，網路顧客的未回購比例仍高約 5～12 個百分點（買得越多差距越小）。差距存在但不大，<b>通路不是主要問題</b>。② <b>回來的顧客買多少</b>：分析一發現，扣掉童裝後，實體店的件數持平、網路少了 7.5%，原因是網路老顧客購物次數與每次件數都減少。所以要關注的是網路老顧客買得變少。</p>
+
+<div class="bridge">買得多的顧客本來就比較不容易流失，如果兩個通路的顧客購買量不同，直接比較整體比例會失真。所以接著在購買件數相同的顧客之間比較。</div>
+
+<h3>第 2 步：在購買件數相同的顧客之間比較</h3>
+<table>
+  <tr><th>去年同季購買件數</th><th class="num">只在實體店買</th><th class="num">只在網路買</th><th class="num">兩邊都有買</th><th class="num">網路 − 實體店（百分點）</th></tr>
+  <tr><td>1 件</td><td class="num">58.4%</td><td class="num">70.4%</td><td class="num">—</td><td class="num">+12.0</td></tr>
+  <tr><td>2 件</td><td class="num">56.5%</td><td class="num">65.9%</td><td class="num">41.7%</td><td class="num">+9.4</td></tr>
+  <tr><td>3～4 件</td><td class="num">54.0%</td><td class="num">61.1%</td><td class="num">36.5%</td><td class="num">+7.1</td></tr>
+  <tr><td>5～9 件</td><td class="num">46.9%</td><td class="num">52.0%</td><td class="num">29.9%</td><td class="num">+5.1</td></tr>
+  <tr><td>10 件以上</td><td class="num">37.4%</td><td class="num">37.6%</td><td class="num">18.6%</td><td class="num">+0.2</td></tr>
+</table>
+<p class="howto">名詞說明：表中數字為未回購比例；「兩邊都有買」至少買 2 件，所以沒有 1 件這一列。</p>
+<p>買 1～9 件的每一組，網路顧客的未回購比例都比實體店高 5.1～12.0 個百分點，買得越多差距越小。整體只差 3.6 個百分點，是因為網路顧客中買 10 件以上的占 22.0%，實體店只占 8.0%，這些顧客本來就不容易流失，拉低了網路的整體比例。另外把顧客再依年齡分組（5 個年齡層 × 4 個購買件數級距，共 20 組）各自比較，20 組中有 19 組是網路較高，所以差距也不是年齡造成的。</p>
+<p>兩邊都有買的顧客，在每一個購買件數組都是三組中最低，所以不只是因為他們買得多；但這是觀察到的關聯，不能直接推論「讓顧客跨通路購買」就能降低流失。</p>
+
+<div class="bridge">第 1、2 步看的是顧客「有沒有回來」；業績還取決於回來的顧客「買多少」。</div>
+
+<h3>第 3 步：回來的顧客買得少，是不是通路造成的</h3>
+<p>先看大人衣服（不含童裝）在兩個通路的購買行為：</p>
+<table>
+  <tr><th>大人衣服（不含童裝）</th><th class="num">顧客人數年增率</th><th class="num">老顧客每人購買件數</th><th class="num">購物次數年增率</th><th class="num">件數年增率</th></tr>
+  <tr><td>實體店（通路 1）</td><td class="num">+0.8%</td><td class="num">4.74 → 4.49</td><td class="num">+3.0%</td><td class="num">−0.1%</td></tr>
+  <tr class="hi"><td>網路（通路 2）</td><td class="num">+3.5%</td><td class="num">9.61 → 8.57</td><td class="num">−3.8%</td><td class="num"><b>−7.5%</b></td></tr>
+</table>
+<p class="howto">名詞說明：「老顧客」指去年同季和今年同季都有在這個通路購物的人；「購物次數」是同一個人同一天的購物算一次；箭頭左邊是去年同季、右邊是今年同季。</p>
+<p>網路的顧客人數增加，但購物次數減少、老顧客每人買的件數也變少（9.61 → 8.57 件），件數下滑 7.5%；實體店的老顧客也少買了一些，但顧客人數與購物次數增加，件數持平。表面上看起來是網路老顧客買得變少，但再看少掉的是哪些商品（依分析一第 5 步的分類）：</p>
+<table>
+  <tr><th>網路少賣的大人衣服</th><th class="num">減少件數</th><th class="num">占網路減少</th><th class="num">同類商品在實體店</th></tr>
+  <tr class="hi"><td>深藍色或條紋商品</td><td class="num">112,938</td><td class="num">67.3%</td><td class="num">同樣少了 44.1%（少 56,409 件）</td></tr>
+  <tr><td>其他商品</td><td class="num">54,808</td><td class="num">32.7%</td><td class="num">反而多賣 54,862 件（+6.0%）</td></tr>
+  <tr><td>合計</td><td class="num">167,746</td><td class="num">100%</td><td class="num">—</td></tr>
+</table>
+<p>網路少賣的件數中，67.3% 是深藍色或條紋商品，而這兩類在實體店也少了同樣的比例，是商品本身的問題；其餘 32.7% 是其他商品，而實體店的其他商品多賣了幾乎相同的件數，推測是購買從網路移到實體店，總量沒有減少（兩邊件數相近，但尚未追蹤同一批顧客確認）。所以網路買得變少，主要是因為深藍色、條紋商品在兩個通路都少賣，不是網路通路本身出了問題。</p>
+
+<p><b>結論：</b>網路顧客的未回購比例較高，但差距隨購買量縮小（買 1 件差 12.0 個百分點，買 10 件以上幾乎沒有差距）；網路買得變少，主要也是兩個通路都少賣的深藍色、條紋商品。<b>通路不是業績下滑的主要原因</b>。</p>
 
 
 <!-- ============ 分析三 ============ -->
@@ -410,7 +561,7 @@
 <ol>
   <li><b>用小規模實驗決定挽留券怎麼發：</b>A、B 兩份名單各發 2.5 萬張，每份再隨機留 10% 的人不發券當比較組。模型只能預測誰會流失，不能證明發券能留住人；比較「有發券」和「沒發券」兩組之後的回購率差距，才知道每張券實際帶來多少營收，再決定預算怎麼分。（10% 是業界常見的起始比例，實際需要多少人才看得出差異，會再用統計方法計算。）</li>
   <li><b>優先確認童裝腰斬是不是資料問題：</b>童裝是減少量最大的來源，而這項確認只需要向資料提供方詢問 2019 年 3 月前後的收錄範圍有沒有改變，不需要另外蒐集資料或分析，所需時間與人力最少。確認結果也決定後續方向：若是資料問題，業績分析應排除童裝重算；若不是，再進一步調查童裝業務（所需資料見「若要繼續追查：需要的資料」）。</li>
-  <li><b>調查網路老顧客為什麼少買：</b>所需資料見「若要繼續追查：需要的資料」。</li>
+  <li><b>向商品企劃部確認深藍色與條紋商品減少的原因：</b>這兩類造成大人衣服的全部減少。若是公司主動調整配色，需要評估調整後的新款是否補上了這部分銷量（目前沒有：其他商品總量持平）；若是跟隨顧客偏好改變，則應檢視新款的選色依據。所需資料見「若要繼續追查：需要的資料」。</li>
   </ol>
 
 <!-- ============ 品質控管 ============ -->
@@ -428,8 +579,7 @@
   <tr><th>尚未回答的問題</th><th>需要的資料</th><th>向誰取得</th><th>拿到後可以判斷</th></tr>
   <tr><td><b>童裝 2019 年 3 月腰斬，是資料問題還是業務問題？</b></td><td>這份資料集每個月涵蓋哪些市場、門市與通路（收錄範圍說明）</td><td>資料提供方（H&amp;M／Kaggle 競賽主辦）</td><td>若 3 月起少收錄了某些市場，童裝腰斬是資料問題，業績分析應排除童裝</td></tr>
   <tr><td><b>若是業務問題，童裝是供給還是需求出了狀況？</b></td><td>童裝各月的上架款數、庫存與缺貨紀錄；童裝商品企劃與行銷活動紀錄</td><td>童裝商品部、供應鏈、行銷部</td><td>上架或庫存同步減少 → 供給面（公司調整商品線）；上架正常但銷量下滑 → 需求面</td></tr>
-  <tr><td><b>網路老顧客為什麼來得少？</b></td><td>網站與 App 的造訪次數、搜尋紀錄、加入購物車與結帳轉換率；電子報、推播等行銷發送紀錄</td><td>電商部、數位行銷部</td><td>造訪變少 → 引流或行銷問題；造訪沒少但沒買 → 商品、價格或購物體驗問題</td></tr>
-  <tr><td><b>深藍色、條紋商品少賣，是喜好改變還是上架減少？</b></td><td>這些商品今年與去年的上架款數、庫存；顧客滿意度或偏好調查</td><td>商品企劃部、顧客研究</td><td>上架減少 → 公司決策造成；上架正常卻少賣 → 流行趨勢改變</td></tr>
+  <tr><td><b>深藍色、條紋新款為什麼減少，是公司決策還是顧客偏好改變？</b></td><td>2019 年秋冬與 2020 年春夏的配色企劃與趨勢預測文件；這兩類商品的上架款數、庫存、售罄率與降價紀錄；顧客偏好調查</td><td>商品企劃部、採購、顧客研究</td><td>企劃文件主動減少、且上架款數下降 → 公司決策；上架正常但售罄率低、降價多 → 顧客偏好改變（交易資料只看得到有賣出的款，上架了卻沒賣出的款看不到，所以需要上架紀錄）</td></tr>
   <tr><td><b>挽留券到底有沒有用？</b></td><td>依建議實際發券後，發券組與對照組的回購率與消費金額</td><td>行銷部、會員經營（CRM）</td><td>每張券帶來的增額營收，決定下一次的預算與名單分配</td></tr>
 </table>
 
