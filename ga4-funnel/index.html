@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電商轉換漏斗分析</title>
+<meta name="description" content="余家丞的自學專案：以 BigQuery SQL 分析 Google GA4 電商範例資料的購買漏斗，並檢查事件追蹤的資料品質。">
+<style>
+  /* 顏色一律用變數，深色模式換一組 */
+  :root {
+    color-scheme: light;
+    --bg: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+    --accent: #2a78d6; --accent-soft: #e8f1fc; --mute: #c9c8c2; --neg: #eb6834;
+    --warn-soft: #fdf3e2; --warn-ink: #7a5200;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+      --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+      --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+    --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.75 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font-size: 30px; line-height: 1.3; margin: 8px 0 12px; }
+  h2 { font-size: 22px; margin: 60px 0 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 1.3em; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; font-size: 13px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; margin-right: 6px; }
+  .meta { color: var(--ink-2); font-size: 15px; }
+  /* 關鍵數字 */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 28px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; margin-top: 6px; }
+  .tldr { background: var(--accent-soft); border-radius: 10px; padding: 16px 20px; }
+  .tldr p:last-child { margin: 0; }
+  .tldr.lead { margin: 0 0 24px; } .tldr.lead ul { margin: 4px 0 0; }
+  .ask { color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 8px 0 18px; }
+  .tree { font-size: 15px; }
+  .tree .node { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; display: inline-block; background: var(--card); }
+  .tree .node.hi { border-color: var(--accent); background: var(--accent-soft); }
+  .tree .kids { margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line); }
+  .tree .kids > div { margin: 10px 0; }
+  .tree .note { display: block; color: var(--ink-2); font-size: 14px; margin: 4px 0 0 4px; }
+  .bridge { color: var(--ink-2); font-size: 15px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 14px; margin: 18px 0 8px; }
+  .bridge b { color: var(--ink); }
+  .howto { font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--line); padding: 4px 12px; margin: 6px 0 14px; }
+  .caveat { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 12px 16px; font-size: 14.5px; }
+  .caveat p:last-child { margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin: 12px 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin-bottom: 10px; }
+  td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-3); font-weight: 600; font-size: 13px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.hi td { background: var(--accent-soft); }
+  tr.total td { font-weight: 600; border-bottom: none; }
+  .chart-title { font-size: 15.5px; font-weight: 600; margin: 4px 0 10px; }
+  .legend { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 12px; vertical-align: -1px; }
+  .legend i:first-child { margin-left: 0; }
+  /* 橫條圖 */
+  .row { display: grid; grid-template-columns: 170px 1fr 64px; align-items: center; gap: 10px; font-size: 14px; padding: 3px 0; }
+  .row .name { color: var(--ink-2); text-align: right; }
+  .row .track { height: 14px; }
+  .row .bar { display: block; height: 100%; background: var(--mute); border-radius: 0 4px 4px 0; }
+  .row.hi .bar { background: var(--accent); }
+  .row .bar.dec { background: var(--mute); }
+  .row.hi .bar.dec { background: var(--neg); }
+  .row.hi .name { color: var(--ink); font-weight: 600; }
+  .row .val { font-variant-numeric: tabular-nums; }
+  /* 成對長條：占去年銷量 vs 占減少 */
+  .pair { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
+  .pair .name { text-align: right; color: var(--ink-2); }
+  .pair.hi .name { color: var(--ink); font-weight: 600; }
+  .pair .bars { display: grid; gap: 3px; }
+  .pair .b { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); }
+  .pair .b span { display: block; height: 11px; border-radius: 0 3px 3px 0; }
+  .pair .base span { background: var(--mute); }
+  .pair .dec span { background: var(--neg); }
+  .ax-y { font-size: 12.5px; color: var(--ink-3); margin: 0 0 6px; }
+  .ax-x { font-size: 12.5px; color: var(--ink-3); text-align: center; margin: 4px 0 10px; }
+  .track.div { position: relative; }
+  .track.div .zero { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--ink-3); }
+  .track.div .dbar { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+  .dbar.dec { background: var(--mute); }
+  .dbar.dec-hi { background: var(--neg); }
+  .dbar.inc { background: var(--accent); }
+  details { margin-top: 10px; font-size: 15px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14.5px; }
+  /* 分頁 */
+  .tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; background: var(--bg); padding: 10px 0; margin: 4px 0 8px; border-bottom: 1px solid var(--line); }
+  .tabs a { text-decoration: none; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; font-size: 14.5px; background: var(--card); }
+  .tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .panel > h2:first-child { margin-top: 24px; border-top: none; }
+  .panel > p:first-child { margin-top: 16px; }
+  .toc li { margin-bottom: 10px; }
+  .toc a { text-decoration: none; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.55; overflow-x: auto; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .sqltags { margin: 4px 0 8px; } .sqltags .tag { font-size: 12.5px; }
+  /* 大標題可展開 */
+  details.sec { margin: 0; font-size: 16px; border-top: 1px solid var(--line); }
+  details.sec > summary { list-style: none; cursor: pointer; color: var(--ink); font-size: inherit; display: flex; align-items: center; gap: 10px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  details.sec[open] > summary::before { transform: rotate(45deg); }
+  details.sec > summary h2 { margin: 0; padding: 18px 0; border-top: none; }
+  details.sec > summary:hover h2 { color: var(--accent); }
+  details.sec[open] { padding-bottom: 24px; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <span class="tag">自學專案</span><span class="tag">2026 年 10 月</span>
+  <h1>電商網站轉換漏斗分析（BigQuery SQL）</h1>
+  <p class="meta">余家丞 ｜ Google 官方 GA4 電商範例資料 ｜ BigQuery SQL、Claude Code</p>
+</header>
+
+<p>本專案以 SQL 回答電商常見的問題：「<b>網站訪客在購買流程的哪一步流失最多？</b>」購買流程分成「看商品 → 加入購物車 → 開始結帳 → 購買」四步，每往下一步人數就變少，形狀像漏斗，因此稱為轉換漏斗。資料是 Google 官方周邊商品網路商店的網站行為紀錄，由 Google 的網站分析工具 GA4（Google Analytics 4）記錄。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，分析範圍與頁面呈現由本人決定，並逐段檢視每個查詢的邏輯與中間結果。</p>
+
+<div class="caveat">
+  <p><b>先說明資料的限制：</b>為保護隱私，Google 把這份資料的部分內容改成替代值（例如「(not set)」），官方也說明資料前後可能對不上，因此人數與金額<b>不能當成真實業績</b>；期間涵蓋黑色星期五與聖誕節，不代表平常月份。本頁的重點是示範「如何用 SQL 建立漏斗，並在過程中檢查資料品質」。</p>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+  <div class="stat"><b>45,107</b><span>分析期間看過商品的使用者</span></div>
+  <div class="stat"><b>6.11%</b><span>按照順序走完四步並購買（2,755 ÷ 45,107）</span></div>
+  <div class="stat"><b>26.6%</b><span>看過商品後加入購物車的比例（12,016 ÷ 45,107），各步中最低</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>結論：</b>2020-11-26～2021-01-31 看過商品的 45,107 位使用者中，6.11% 依序完成四個步驟並購買。流失最多的一步是「看商品→加入購物車」：轉換率 26.6%（走到這一步的人數 ÷ 走到上一步的人數），流失 33,091 人，用多種算法重新檢查（見分析三、四），它都仍是三個轉換中最低的。另外，依序走完四步的 2,755 位購買者中，92.4% 從某一次看商品到購買的每一步都在 30 分鐘內完成：購買前的最後一段流程多半是連續完成的（使用者在這之前是否考慮過好幾天，這個算法看不出來）。</p>
+  <p><b>建議：</b>① 目前沒有比較基準判斷 26.6% 是否偏低；下一步可依裝置、流量來源分組比較，找出明顯偏低的族群，再搭配商品頁的互動資料找原因（見「若要繼續追查：需要的資料」）。② 購買前的最後一段流程多半在短時間內連續完成，購物車與結帳流程應以當下操作的順暢為主（見分析三）。③ 「加入購物車」事件在 2020 年 11 月有多天沒有紀錄（見「資料品質檢查」第 1 項），真實環境中應先查追蹤設定，並建立每日監控（見「上線監控」）。</p>
+</div>
+
+<details class="sec">
+<summary><h2>資料</h2></summary>
+<p>來源：<code>bigquery-public-data.ga4_obfuscated_sample_ecommerce</code>，一天一張表（例如 <code>events_20201201</code>），每一列是一個「事件」，也就是使用者在網站上的一個動作，例如開啟一個商品頁。</p>
+<table>
+  <tr><th>期間</th><th class="num">天數</th><th class="num">事件數（所有事件類型）</th></tr>
+  <tr><td>全部資料（2020-11-01～2021-01-31）</td><td class="num">92</td><td class="num">4,295,584</td></tr>
+  <tr class="hi"><td>漏斗分析期間（2020-11-26～2021-01-31）</td><td class="num">67</td><td class="num">3,089,233</td></tr>
+</table>
+<table>
+  <tr><th>使用的欄位</th><th>意思</th></tr>
+  <tr><td><code>event_name</code></td><td>事件名稱（見下表）</td></tr>
+  <tr><td><code>user_pseudo_id</code></td><td>匿名使用者代號（以瀏覽器為單位；換裝置、清除 cookie 或使用無痕視窗都會變成新的代號）</td></tr>
+  <tr><td><code>event_timestamp</code></td><td>Google Analytics 收到事件的時間，單位是微秒（百萬分之一秒）</td></tr>
+  <tr><td><code>event_date</code></td><td>事件日期（文字，例如 20201201）</td></tr>
+  <tr><td><code>ecommerce.transaction_id</code></td><td>訂單編號</td></tr>
+  <tr><td><code>ecommerce.purchase_revenue</code></td><td>訂單金額（美元；與 <code>purchase_revenue_in_usd</code> 欄位在全部 5,242 筆有金額的購買中數值相同）</td></tr>
+</table>
+<p>漏斗的四個步驟對應四種事件：</p>
+<table>
+  <tr><th>步驟</th><th>事件名稱</th><th>意思</th></tr>
+  <tr><td>1 看商品</td><td><code>view_item</code></td><td>開啟商品頁</td></tr>
+  <tr><td>2 加入購物車</td><td><code>add_to_cart</code></td><td>把商品加入購物車</td></tr>
+  <tr><td>3 開始結帳</td><td><code>begin_checkout</code></td><td>進入結帳流程</td></tr>
+  <tr><td>4 購買</td><td><code>purchase</code></td><td>完成付款</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>資料品質檢查</h2></summary>
+<p>建立漏斗前，先檢查這四種事件的紀錄。11-26 之後每天都有「看商品」與「購買」的紀錄（分別為每天至少 1,390 筆、14 筆，依每日筆數統計）；以下四項中，第 1、4 項改變了漏斗的算法，第 2、3 項只影響營收的計算（漏斗算的是人數）。</p>
+
+<h3>1. 「加入購物車」在 11 月有 18 天沒有紀錄 → 分析期間從 11-26 開始</h3>
+<p>2020-11-02～11-15 與 11-21～11-24 共 18 天，「加入購物車」每天 0 筆，但同一期間「開始結帳」每天 132～605 筆。這不太可能是沒有人加入購物車，原因可能是追蹤缺漏，也可能是範例資料的處理方式，無法從資料區分。11-25 起恢復紀錄（之後每天 229～2,135 筆）。11-25 是恢復的第一天，無法確定當天是否整天都有記錄，保守起見，分析從隔天 11-26 開始（11-01 與 11-20 筆數也很低，同樣在排除範圍內）。</p>
+<details><summary>每日筆數與 SQL</summary>
+<table>
+  <tr><th>日期</th><th class="num">add_to_cart 每天筆數</th><th class="num">begin_checkout 每天筆數</th></tr>
+  <tr><td>2020-11-01</td><td class="num">4</td><td class="num">127</td></tr>
+  <tr class="hi"><td>2020-11-02～11-15（14 天）</td><td class="num">0</td><td class="num">132～605</td></tr>
+  <tr><td>2020-11-16～11-19</td><td class="num">85～621</td><td class="num">335～693</td></tr>
+  <tr><td>2020-11-20</td><td class="num">15</td><td class="num">318</td></tr>
+  <tr class="hi"><td>2020-11-21～11-24（4 天）</td><td class="num">0</td><td class="num">166～366</td></tr>
+  <tr><td>2020-11-25</td><td class="num">297</td><td class="num">387</td></tr>
+  <tr><td>2020-11-26～2021-01-31</td><td class="num">229～2,135</td><td class="num">140～1,016</td></tr>
+</table>
+<div class="sqltags"><span class="tag">COUNTIF 條件計數</span><span class="tag">萬用字元表 events_*</span></div>
+<pre><code>SELECT
+  event_date,
+  COUNTIF(event_name = 'add_to_cart')    AS n_cart,
+  COUNTIF(event_name = 'begin_checkout') AS n_checkout
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name IN ('add_to_cart', 'begin_checkout')
+GROUP BY event_date
+ORDER BY event_date;</code></pre>
+</details>
+
+<h3>2. 15.9% 的購買事件沒有訂單編號 → 計算營收時排除，計算人數時保留</h3>
+<p>全部 5,692 筆購買事件中，訂單編號為 <code>(not set)</code> 的有 883 筆、空值（NULL）的有 23 筆，合計 906 筆（15.9%）。其中 456 筆仍有大於 0 的購買金額，編號被替代值取代不代表沒有購買；漏斗計算人數用不到訂單編號，因此保留這些事件；計算營收時則需要依訂單編號合併重複紀錄，才排除這些事件（見下一項），因此下一項的營收是下限。若漏斗也排除這些事件，購買人數會從 2,755 變成 2,489，「開始結帳→購買」從 57.4% 變成 51.8%。</p>
+
+<h3>3. 同一張訂單被記錄多次 → 計算營收前要去重（重複的紀錄只留一筆）</h3>
+<table>
+  <tr><th>訂單編號的情況（全部 92 天，不含上一項的 906 筆）</th><th class="num">訂單數（使用者＋編號）</th><th class="num">被記錄的次數</th><th class="num">多出的重複紀錄</th></tr>
+  <tr><td>只出現一次</td><td class="num">4,125</td><td class="num">4,125</td><td class="num">0</td></tr>
+  <tr><td>同一使用者重複送出（例如訂單 119233 被記了 4 次）</td><td class="num">311</td><td class="num">628</td><td class="num">317</td></tr>
+  <tr><td>不同使用者出現同一個編號（15 個編號 × 2 位使用者）</td><td class="num">30</td><td class="num">33</td><td class="num">3</td></tr>
+  <tr class="total"><td>合計</td><td class="num">4,466</td><td class="num">4,786</td><td class="num">320</td></tr>
+</table>
+<p class="howto">多出的重複紀錄＝被記錄的次數 − 訂單數；「被記錄的次數」合計 4,786 ＝ 5,692 − 906。</p>
+<details><summary>補充：「不同使用者出現同一個編號」為什麼多出 3 筆？</summary>
+<p>15 個編號各被 2 位使用者用到，實際是 15 × 2 ＝ 30 張訂單，但共被記錄 33 次，33 − 30 ＝ 3 次是其中一位使用者自己重複送出。例如訂單 140428：</p>
+<table>
+  <tr><th>使用者</th><th>時間</th><th class="num">金額</th><th>說明</th></tr>
+  <tr><td>70837463…</td><td>2020-11-23 20:40:09.574</td><td class="num">13</td><td>A 的訂單</td></tr>
+  <tr class="hi"><td>70837463…</td><td>2020-11-23 20:40:09.606</td><td class="num">13</td><td>A 重複送出（多出的 1 筆）</td></tr>
+  <tr><td>86949711…</td><td>2020-12-18 15:28:10.972</td><td class="num">27</td><td>B 的另一張訂單</td></tr>
+</table>
+<p>因此去重時以「使用者＋訂單編號」為單位：刪掉 A 重複的那一筆，但保留 B 的訂單。</p>
+</details>
+<p>同一使用者、同一訂單編號的重複紀錄只保留一筆（同一使用者重複送出的 314 組紀錄〔表中 311 組，加上「不同使用者出現同一個編號」中的 3 組〕，每組各筆金額都相同，保留哪一筆不影響營收），刪掉多出的 320 筆後剩 4,466 筆，營收從 330,348 美元變成 308,830 美元；不處理會多算 7.0%（330,348 ÷ 308,830 − 1）。這 15 個編號中，每個編號的兩位使用者購買日期與金額都不同，較可能是替代值造成的編號重複，因此視為不同訂單、不合併。漏斗計算的是人數，不受這一項影響。</p>
+<details><summary>SQL：以「使用者＋訂單編號」去重</summary>
+<div class="sqltags"><span class="tag">視窗函數 ROW_NUMBER</span><span class="tag">QUALIFY</span><span class="tag">CTE</span></div>
+<pre><code>WITH p AS (
+  SELECT ecommerce.transaction_id AS tx, user_pseudo_id, event_timestamp,
+         ecommerce.purchase_revenue AS revenue
+  FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+  WHERE event_name = 'purchase'
+    AND ecommerce.transaction_id != '(not set)'  -- 空值在這個比較下也會被排除
+  -- 同一使用者、同一訂單編號只留一筆（重複紀錄金額相同，依時間排序只為結果固定）
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY user_pseudo_id, ecommerce.transaction_id ORDER BY event_timestamp) = 1
+)
+SELECT COUNT(*) AS n_rows, ROUND(SUM(revenue)) AS revenue
+FROM p;</code></pre>
+</details>
+
+<h3>4. 部分「看商品」與「加入購物車」的時間完全相同 → 同時也算有順序</h3>
+<p>分析期間有 6,569 位使用者（佔走到「加入購物車」的 12,016 人的 54.7%），至少有一次「看商品」和「加入購物車」的時間完全相同。依 Google 官方說明，網頁版的事件時間是 Google Analytics「收到」事件的時間，同一次傳送的多個事件會共用同一個時間，所以無法從時間分出先後（2024 年之後的 GA4 資料另有記錄批次內順序的欄位，這份 2020 年的資料沒有）。若規定後一步必須「晚於」前一步，走到「加入購物車」的人數會從 12,016 人變成 11,535 人，少算 481 人，因此本分析把「同時」也視為依序發生。</p>
+</details>
+
+<details class="sec" open>
+<summary><h2>分析</h2></summary>
+
+<h3>分析一：每一步各有多少人做過</h3>
+<p>先照問題的字面，計算分析期間內做過每一種事件的人數（結果列在分析二表格的「沒順序」欄）。這個算法只看「期間內有沒有做過」，不看先後：先結帳、隔天才看商品的人，也會被算進第 3 步（開始結帳）。結果：看商品 45,107 人、購買 3,351 人，整體 7.43%（完整數字見分析二表格「沒順序」欄）。</p>
+<p><b>結論：不檢查順序時整體轉換率為 7.43%，但這個數字包含沒有依序走完的人，需要再加上順序檢查。</b></p>
+<details><summary>SQL：一次掃描算出四步人數</summary>
+<div class="sqltags"><span class="tag">條件聚合 COUNT(DISTINCT IF(...))</span><span class="tag">_TABLE_SUFFIX 篩選日期</span></div>
+<pre><code>SELECT
+  COUNT(DISTINCT IF(event_name = 'view_item',      user_pseudo_id, NULL)) AS s1_view_item,
+  COUNT(DISTINCT IF(event_name = 'add_to_cart',    user_pseudo_id, NULL)) AS s2_add_to_cart,
+  COUNT(DISTINCT IF(event_name = 'begin_checkout', user_pseudo_id, NULL)) AS s3_begin_checkout,
+  COUNT(DISTINCT IF(event_name = 'purchase', user_pseudo_id, NULL)) AS s4_purchase
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name IN ('view_item', 'add_to_cart', 'begin_checkout', 'purchase')
+  AND _TABLE_SUFFIX &gt;= '20201126';</code></pre>
+</details>
+
+<p class="bridge"><b>為什麼接著看這個：</b>沒有檢查順序時，跳著走的人會被算進後面的步驟，第 2～4 步的人數都會被高估。</p>
+
+<h3>分析二：加上先後順序</h3>
+<p>規則：每一步都必須發生在上一步之後（或同一時間，見資料品質檢查第 4 項）才算。例如看商品之前就加入購物車的那一次不算，但看商品之後若再加入購物車，仍然算數。</p>
+<table>
+  <tr><th>步驟</th><th class="num">沒順序：人數</th><th class="num">沒順序：人數 ÷ 上一步</th><th class="num">有順序：人數</th><th class="num">有順序：轉換率（÷ 上一步）</th><th class="num">有順序：流失人數</th></tr>
+  <tr><td>1 看商品</td><td class="num">45,107</td><td class="num">—</td><td class="num">45,107</td><td class="num">—</td><td class="num">—</td></tr>
+  <tr class="hi"><td>2 加入購物車</td><td class="num">12,023</td><td class="num">26.7%</td><td class="num">12,016</td><td class="num">26.6%</td><td class="num">33,091</td></tr>
+  <tr><td>3 開始結帳</td><td class="num">6,509</td><td class="num">54.1%</td><td class="num">4,802</td><td class="num">40.0%</td><td class="num">7,214</td></tr>
+  <tr><td>4 購買</td><td class="num">3,351</td><td class="num">51.5%</td><td class="num">2,755</td><td class="num">57.4%</td><td class="num">2,047</td></tr>
+  <tr class="total"><td>整體（第 4 步 ÷ 第 1 步）</td><td class="num"></td><td class="num">7.43%</td><td class="num"></td><td class="num">6.11%</td><td class="num"></td></tr>
+</table>
+<p class="howto">流失人數＝上一步人數 − 這一步人數。「沒順序」的人數比不是真正的轉換率：例如 3,351 位購買者中，有人沒有依序走完前面的步驟。</p>
+<p>加上順序後，第 2 步（加入購物車）幾乎沒有變化（12,023 → 12,016），差異集中在第 3 步（開始結帳）：從 6,509 人變成 4,802 人，少了 1,707 人，拆解如下：</p>
+<table>
+  <tr><th>開始結帳的人</th><th class="num">人數</th></tr>
+  <tr><td>分析期間內有開始結帳（沒順序）</td><td class="num">6,509</td></tr>
+  <tr><td>　其中在看商品之後開始結帳</td><td class="num">6,441</td></tr>
+  <tr><td>　　其中依序「看商品→加入購物車→開始結帳」（有順序）</td><td class="num">4,802</td></tr>
+  <tr class="hi"><td>　　看商品之後開始結帳，但中間沒有加入購物車</td><td class="num">1,639</td></tr>
+  <tr><td>　其餘（期間內沒有看商品紀錄，或開始結帳都在第一次看商品之前）</td><td class="num">68</td></tr>
+</table>
+<p>不檢查順序時，「加入購物車→開始結帳」看起來高於「開始結帳→購買」（54.1% 對 51.5%）；檢查順序後則是 40.0% 對 57.4%，判斷相反。</p>
+<p><b>結論：加上順序後，流失最多的仍是「看商品→加入購物車」（26.6%，流失 33,091 人）；順序檢查會改變後兩步的高低判斷，因此之後的分析一律使用有順序的版本。</b></p>
+<details><summary>補充：沒有加入購物車紀錄就結帳的人，是不是更早就加入購物車了？</summary>
+<p>1,639 人中有 1,141 人在 92 天內完全沒有加入購物車的紀錄。一種可能是他們更早就把商品加入購物車（11-01 之前，或 11 月沒有紀錄的那幾天），考慮一段時間才回來結帳。如果是這樣，他們的結帳時間應該集中在分析期間前段。</p>
+<table>
+  <tr><th>開始結帳的時間</th><th class="num">依序走完到結帳的人</th><th class="num">沒有加入購物車紀錄的人</th></tr>
+  <tr><td>2020-11-26～12-20（前 25 天）</td><td class="num">3,001（62.5%）</td><td class="num">624（54.7%）</td></tr>
+  <tr class="hi"><td>2020-12-21～2021-01-31（後 42 天）</td><td class="num">1,801（37.5%）</td><td class="num">517（45.3%）</td></tr>
+  <tr class="total"><td>合計</td><td class="num">4,802</td><td class="num">1,141</td></tr>
+</table>
+<p>實際上，沒有加入購物車紀錄的人在後 42 天結帳的比例（45.3%）反而高於正常走完流程的人（37.5%），因此「更早就加入購物車」不是主要原因。剩下的可能是紀錄遺漏，或網站有不經購物車的結帳方式，資料無法區分（影響程度見分析四）。</p>
+</details>
+<details><summary>SQL：有順序的漏斗</summary>
+<div class="sqltags"><span class="tag">CTE 串接</span><span class="tag">非等值 JOIN（ON 條件含 &gt;=）</span><span class="tag">MIN + GROUP BY</span></div>
+<pre><code>WITH ev AS (
+  SELECT user_pseudo_id AS user, event_name, event_timestamp AS ts
+  FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+  WHERE event_name IN ('view_item', 'add_to_cart', 'begin_checkout', 'purchase')
+    AND _TABLE_SUFFIX &gt;= '20201126'
+),
+s1 AS (  -- 每人第一次看商品的時間
+  SELECT user, MIN(ts) AS t1 FROM ev WHERE event_name = 'view_item' GROUP BY user
+),
+s2 AS (  -- 看商品之後（含同時），第一次加入購物車的時間
+  SELECT s1.user, MIN(ev.ts) AS t2
+  FROM s1 JOIN ev
+    ON ev.user = s1.user AND ev.event_name = 'add_to_cart' AND ev.ts &gt;= s1.t1
+  GROUP BY s1.user
+),
+s3 AS (
+  SELECT s2.user, MIN(ev.ts) AS t3
+  FROM s2 JOIN ev
+    ON ev.user = s2.user AND ev.event_name = 'begin_checkout' AND ev.ts &gt;= s2.t2
+  GROUP BY s2.user
+),
+s4 AS (  -- 開始結帳之後有購買的人（每人一列）
+  SELECT DISTINCT s3.user
+  FROM s3 JOIN ev
+    ON ev.user = s3.user AND ev.event_name = 'purchase' AND ev.ts &gt;= s3.t3
+)
+SELECT
+  (SELECT COUNT(*) FROM s1) AS s1_view_item,
+  (SELECT COUNT(*) FROM s2) AS s2_add_to_cart,
+  (SELECT COUNT(*) FROM s3) AS s3_begin_checkout,
+  (SELECT COUNT(*) FROM s4) AS s4_purchase;</code></pre>
+<p class="howto">每一步都取「上一步第一次發生之後最早的一次」。不限時間時，從最早的一次開始接，能接上的機會最大，所以這個寫法不會漏算。</p>
+</details>
+
+<p class="bridge"><b>為什麼接著看這個：</b>分析二只要求「之後」發生，相隔兩個月也算。間隔太久的動作可能與當初的瀏覽無關，例如兩個月前看過、這次因為看到廣告才回來購買，算進同一條流程會高估轉換率。實務上的漏斗報表通常會設定時限（GA4 的漏斗報表也提供「在幾分鐘／幾天內完成下一步」的設定），而時限要依想回答的問題選擇。因此用 30 分鐘、24 小時、7 天三種時限各算一次，分別回答不同的問題，並與不限時間（分析二）比較，確認結論是否改變。</p>
+
+<h3>分析三：限定每一步在上一步之後多久內完成</h3>
+<p>規則：每一步都必須在上一步之後的限定時間內完成（例如 30 分鐘內加入購物車、再 30 分鐘內開始結帳）。使用者看過商品好幾次時，任何一次都可以當起點；因此這裡量的是「從某一次看商品到購買」這一段，看不出使用者在那之前考慮了多久。</p>
+<details><summary>四種時間限制的完整結果</summary>
+<table>
+  <tr><th>每一步須在上一步之後</th><th class="num">加入購物車人數</th><th class="num">開始結帳人數</th><th class="num">購買人數</th><th class="num">看商品→加購</th><th class="num">加購→結帳</th><th class="num">結帳→購買</th><th class="num">整體</th></tr>
+  <tr><td>30 分鐘內</td><td class="num">12,011</td><td class="num">4,609</td><td class="num">2,546</td><td class="num">26.6%</td><td class="num">38.4%</td><td class="num">55.2%</td><td class="num">5.64%</td></tr>
+  <tr><td>1 天內</td><td class="num">12,014</td><td class="num">4,731</td><td class="num">2,682</td><td class="num">26.6%</td><td class="num">39.4%</td><td class="num">56.7%</td><td class="num">5.95%</td></tr>
+  <tr><td>7 天內</td><td class="num">12,016</td><td class="num">4,775</td><td class="num">2,726</td><td class="num">26.6%</td><td class="num">39.7%</td><td class="num">57.1%</td><td class="num">6.04%</td></tr>
+  <tr class="hi"><td>不限（＝分析二）</td><td class="num">12,016</td><td class="num">4,802</td><td class="num">2,755</td><td class="num">26.6%</td><td class="num">40.0%</td><td class="num">57.4%</td><td class="num">6.11%</td></tr>
+</table>
+<p class="howto">轉換率＝該步驟人數 ÷ 上一步人數；整體＝購買人數 ÷ 看商品人數 45,107。</p>
+</details>
+<table>
+  <tr><th>時限</th><th>回答的問題</th><th>結果</th><th>代表什麼</th></tr>
+  <tr><td>30 分鐘</td><td>短時間內連續完成的比例有多高</td><td>30 分鐘內加入購物車的 12,011 人中，38.4% 再於 30 分鐘內開始結帳；這 4,609 人中，55.2% 再於 30 分鐘內購買；不限時間的 2,755 位購買者中，2,546 人（92.4%）每一步都在 30 分鐘內完成（整段最長 3 × 30 ＝ 90 分鐘），其餘 209 人（2,755 − 2,546）至少有一步超過 30 分鐘</td><td>購買前的最後一段流程多半是連續完成的</td></tr>
+  <tr><td>24 小時</td><td>每一步隔了一段時間（但在 24 小時內）才完成的人有多少（整段最長 3 天）</td><td>購買 2,682 人，比 30 分鐘多 136 人；整體 5.95%</td><td>24 小時內完成購買的人中，94.9%（2,546 ÷ 2,682）每一步都在 30 分鐘內完成，隔一段時間才完成某一步的很少</td></tr>
+  <tr><td>7 天</td><td>每一步隔了幾天才完成的人有多少（整段最長 21 天）</td><td>購買 2,726 人，比 1 天只多 44 人；整體 6.04%</td><td>每一步隔了幾天才完成的情況很少；但使用者在第一次看商品後考慮多久，這個算法看不出來</td></tr>
+</table>
+<p><b>結論：時限不改變三個轉換的高低順序；依序完成的購買中，購買前的最後一段流程多半是連續完成的（每一步都在 30 分鐘內：92.4%）。</b></p>
+<p>因此改善購物車與結帳流程時，應以使用者當下操作的順暢為主。這個發現有三個限制：① 只涵蓋依序走完四步的 2,755 位購買者，另外 596 位購買者（3,351 − 2,755）沒有依序走完，無法判斷；② 看不出使用者在最後一次看商品之前考慮了多久；③ 使用者換裝置、清除 cookie 或使用無痕視窗會變成新的代號，跨天回來的流程可能被切斷。寄送提醒能否把人帶回來，這份資料沒有相關紀錄，無法判斷。</p>
+<details><summary>SQL：一次計算四種時間限制</summary>
+<div class="sqltags"><span class="tag">UNNEST 自訂清單</span><span class="tag">CROSS JOIN</span><span class="tag">非等值 JOIN（時間區間）</span><span class="tag">SELECT DISTINCT</span></div>
+<p class="howto">接在分析二的 <code>WITH ev AS (...)</code> 之後（以逗號接續）。r2 找出「在某一次看商品之後 w 分鐘內」的加購事件，r3、r4 再從這些事件往下接，所以每一段的起點都可以是任何一次上一步。</p>
+<pre><code>wins AS (SELECT win FROM UNNEST([30, 60 * 24, 60 * 24 * 7, 999999]) AS win),  -- 分鐘；999999 ≈ 不限
+v AS (SELECT DISTINCT user, ts FROM ev WHERE event_name = 'view_item'),  -- 同一時間的重複看商品只留一筆，避免下面 JOIN 列數暴增
+r2 AS (
+  SELECT DISTINCT wins.win, c.user, c.ts
+  FROM ev c CROSS JOIN wins
+  JOIN v ON v.user = c.user AND v.ts &lt;= c.ts AND c.ts - v.ts &lt;= wins.win * 60 * 1000000  -- 分鐘換成微秒
+  WHERE c.event_name = 'add_to_cart'
+),
+r3 AS (
+  SELECT DISTINCT r2.win, k.user, k.ts
+  FROM ev k JOIN r2
+    ON r2.user = k.user AND r2.ts &lt;= k.ts AND k.ts - r2.ts &lt;= r2.win * 60 * 1000000
+  WHERE k.event_name = 'begin_checkout'
+),
+r4 AS (
+  SELECT r3.win, p.user
+  FROM ev p JOIN r3
+    ON r3.user = p.user AND r3.ts &lt;= p.ts AND p.ts - r3.ts &lt;= r3.win * 60 * 1000000
+  WHERE p.event_name = 'purchase'
+)
+SELECT win,
+  (SELECT COUNT(DISTINCT user) FROM v) AS s1_view_item,
+  n2.n AS s2_add_to_cart, n3.n AS s3_begin_checkout, n4.n AS s4_purchase
+FROM (SELECT win, COUNT(DISTINCT user) AS n FROM r2 GROUP BY win) n2
+JOIN (SELECT win, COUNT(DISTINCT user) AS n FROM r3 GROUP BY win) n3 USING (win)
+JOIN (SELECT win, COUNT(DISTINCT user) AS n FROM r4 GROUP BY win) n4 USING (win)
+ORDER BY win;</code></pre>
+</details>
+
+<p class="bridge"><b>為什麼接著看這個：</b>分析二的拆解中，有 1,639 人在看商品之後開始結帳，卻沒有走完「看商品→加入購物車→開始結帳」的順序。原因可能是「加入購物車」事件漏記，也可能是網站有不經過購物車的結帳方式；若是漏記，「加入購物車→開始結帳」的轉換率就會被低估，因此檢查結論對這個問題有多敏感。</p>
+
+<h3>分析四：「加入購物車」漏記對結論的影響</h3>
+<p>這 1,639 人分成三類，三類之後的購買比例差異很大：</p>
+<table>
+  <tr><th>類別</th><th class="num">人數</th><th class="num">看商品後第一次開始結帳之後有購買的人數</th><th class="num">購買比例</th></tr>
+  <tr class="hi"><td>1 全部 92 天都沒有加入購物車的紀錄</td><td class="num">1,141</td><td class="num">551</td><td class="num">48.3%</td></tr>
+  <tr><td>2 只在 11-26 之前有加入購物車（分析期間開始前）</td><td class="num">6</td><td class="num">3</td><td class="num">50.0%</td></tr>
+  <tr><td>3 分析期間內有加入購物車，但看商品之後的加購都發生在開始結帳之後</td><td class="num">492</td><td class="num">8</td><td class="num">1.6%</td></tr>
+</table>
+<p>把這些人當成「有加入購物車、只是沒被記到」補回漏斗，分成兩種假設重算（不限時間）：</p>
+<table>
+  <tr><th>算法</th><th class="num">加入購物車</th><th class="num">開始結帳</th><th class="num">購買</th><th class="num">看商品→加購</th><th class="num">加購→結帳</th><th class="num">結帳→購買</th><th class="num">後兩步差距（百分點，以表上百分比相減）</th></tr>
+  <tr><td>依現有紀錄（分析二）</td><td class="num">12,016</td><td class="num">4,802</td><td class="num">2,755</td><td class="num">26.6%</td><td class="num">40.0%</td><td class="num">57.4%</td><td class="num">17.4</td></tr>
+  <tr class="hi"><td>只補第 1 類（1,141 人）</td><td class="num">13,157</td><td class="num">5,943</td><td class="num">3,306</td><td class="num">29.2%</td><td class="num">45.2%</td><td class="num">55.6%</td><td class="num">10.4</td></tr>
+  <tr><td>三類全部補回（1,639 人，上限）</td><td class="num">13,163</td><td class="num">6,441</td><td class="num">3,325</td><td class="num">29.2%</td><td class="num">48.9%</td><td class="num">51.6%</td><td class="num">2.7</td></tr>
+</table>
+<details><summary>各欄的算法</summary>
+<p class="howto">只補第 1 類：加入購物車＝12,016 ＋ 1,141；開始結帳＝4,802 ＋ 1,141；購買＝2,755 ＋ 551。三類全部補回：第 3 類的 492 人原本就在 12,016 人之中，加入購物車只增加 1,147 人（1,141 ＋ 6），合計 12,016 ＋ 1,147 ＝ 13,163；開始結帳＝看商品之後有開始結帳的所有人（4,802 ＋ 1,639 ＝ 6,441）；購買＝其中在看商品後第一次開始結帳之後有購買的人（3,325；以「看商品後第一次開始結帳」為起點重新計算，比把上表人數直接相加的 2,755 ＋ 551 ＋ 3 ＋ 8 ＝ 3,317 多 8 人，因為原本 4,802 人中有 8 人只在較早那次結帳之後購買）。</p>
+</details>
+<p><b>結論：漏記會影響數字，但不改變「看商品→加入購物車」最低的排序。</b></p>
+<ul>
+  <li><b>「看商品→加入購物車」的數字會變，但仍是最低：</b>三種算法下從 26.6% 變成 29.2%，都是三個轉換中最低。這項檢查補不到「漏記了加購、之後也沒結帳」的人；若假設所有加購者都和結帳者一樣，有 19.2%（1,141 ÷ 5,943）的加購被漏記，加購人數約為 12,016 ÷ (1 − 19.2%) ≈ 14,871 人，「看商品→加入購物車」約 33.0%，仍低於後兩步。</li>
+  <li><b>「加入購物車→開始結帳」可能被低估：</b>補回漏記後從 40.0% 升到 45.2%～48.9%，增加 5.2～8.9 個百分點（以表上百分比相減）。</li>
+  <li><b>後兩步的高低方向不變，但不夠確定：</b>「加入購物車→開始結帳」仍低於「開始結帳→購買」，但差距從 17.4 個百分點縮小到最小 2.7 個百分點，因此這兩步的高低只能當作初步結果。</li>
+</ul>
+<p class="howto">第 3 類開始結帳後只有 8 人購買，行為與第 1 類差異很大，較不像漏記，所以「全部補回」只當作上限參考。這項檢查也只能補回「之後有開始結帳」的漏記：漏記了加入購物車、之後也沒有結帳的人，在資料中看不出來。</p>
+</details>
+
+<details class="sec">
+<summary><h2>BigQuery 查詢成本</h2></summary>
+<p>BigQuery 的隨選（on-demand）方案依每次查詢處理的資料量計費。這一節示範兩種常見的省錢做法對處理量的影響（使用簡化的查詢，不是上面的漏斗查詢）。本專案另外測試了兩種常見的省錢做法：依日期「分區」（把表按日期分格，只讀需要的日期）與依欄位「叢集」（把同類資料排在一起，只讀相關區段）。本次測試中，篩選條件剛好是分區或叢集所用的欄位時（例如依日期分區、篩 92 天中的 7 天），處理量減少約 90%。</p>
+<details><summary>測試方法與結果</summary>
+<p>處理量由「讀了哪些欄位」與「讀了哪些日期」決定；實際計費另有下限（每次查詢、每張被查詢的表最少以 10 MB 計），資料量小時計費金額會高於下表的處理量。本專案在練習帳號中建立三張內容相同（4,295,584 列、211.5 MB）、儲存方式不同的表，用兩個查詢比較處理量：查詢 A 計算 2020-12-01～12-07 的不重複使用者數，查詢 B 計算有 purchase 事件的不重複使用者數。</p>
+<table>
+  <tr><th>篩選條件（處理量）</th><th class="num">一般表</th><th class="num">依日期分區</th><th class="num">依事件名稱叢集</th></tr>
+  <tr><td>查詢 A：只篩日期</td><td class="num">117.46 MB</td><td class="num"><b>12.13 MB</b></td><td class="num">117.46 MB</td></tr>
+  <tr><td>查詢 B：只篩事件</td><td class="num">138.05 MB</td><td class="num">138.05 MB</td><td class="num"><b>13.76 MB</b></td></tr>
+</table>
+<p>篩選條件用到哪個欄位，就要以那個欄位分區或叢集才能減少處理量。分區的效果在執行前的估價就看得到；叢集的效果要執行後才看得到（只篩事件時估價 138.05 MB，實際處理 13.76 MB）。Google 的原始資料是一天一張表，篩日期要用表名 <code>_TABLE_SUFFIX</code>：對原始資料執行查詢 A，用 <code>_TABLE_SUFFIX</code> 篩選處理 8.75 MB（只讀使用者代號一欄；自建分區表的 12.13 MB 還多讀了日期欄），用表內的 <code>event_date</code> 欄位篩選則是 125.66 MB，推測是 92 張表全部讀取、並多讀了日期欄位。</p>
+<details><summary>SQL：建立分區表與叢集表</summary>
+<div class="sqltags"><span class="tag">PARTITION BY</span><span class="tag">CLUSTER BY</span><span class="tag">CREATE TABLE AS SELECT</span></div>
+<pre><code>CREATE TABLE IF NOT EXISTS `josh-bq-learning.ga4_learning.events_part`
+PARTITION BY event_dt                              -- 依日期分區
+OPTIONS (partition_expiration_days = 3650)         -- 延長分區過期時間（原因見下方說明）
+AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;
+
+CREATE TABLE IF NOT EXISTS `josh-bq-learning.ga4_learning.events_clu`
+CLUSTER BY event_name                              -- 依事件名稱叢集
+AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
+<p class="howto"><code>events_plain</code> 由原始資料取出 6 個欄位建立（event_dt、event_name、user_pseudo_id、event_timestamp、transaction_id、purchase_revenue），<code>event_dt</code> 是把文字日期轉成日期型態。練習帳號（BigQuery 沙盒）的表與分區預設 60 天後過期，2020 年的分區會被立即刪除，因此分區表另設 10 年的過期時間。沙盒限制分區過期時間要少於 60 天，這個設定只在第一次建立時成功（第一次為何成功，原因不明）、之後重建會被拒絕，無法再建一張同時分區又叢集的表，所以分成兩張表比較。</p>
+</details>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>上線監控</h2></summary>
+<p>若把這個漏斗做成每日報表，建議同時監控每一種漏斗事件的每日筆數：某一種事件掉到 0（或遠低於前幾週同一天），而前後步驟的筆數正常時就發出警示。資料品質檢查第 1 項的追蹤中斷，就是這類監控可以在當天發現的問題。</p>
+</details>
+
+<details class="sec">
+<summary><h2>若要繼續追查：需要的資料</h2></summary>
+<table>
+  <tr><th>需要的資料</th><th>可以判斷什麼</th></tr>
+  <tr><td>追蹤設定的變更紀錄（何時新增或修改 add_to_cart 事件）</td><td>11 月的缺漏是否由追蹤設定造成；1,141 位結帳者完全沒有加購紀錄的原因（漏記或不經購物車的結帳方式），以及購物車與結帳兩步實際的高低</td></tr>
+  <tr><td>商品頁的互動事件（例如選擇尺寸、查看庫存、捲動到評價）</td><td>看過商品卻沒有加入購物車的 33,091 人停在商品頁的哪個環節</td></tr>
+  <tr><td>記錄批次內事件順序的欄位（2024 年後的 GA4 資料才有）</td><td>時間相同的「看商品」與「加入購物車」實際的先後順序</td></tr>
+  <tr><td>登入會員的 <code>user_id</code></td><td>跨裝置合併同一人，避免同一人在手機加購、在電腦結帳時被算成兩個人</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>限制</h2></summary>
+<ul>
+  <li>使用者以瀏覽器為單位（<code>user_id</code> 全部為空值），同一人跨裝置會被算成不同人。</li>
+  <li>漏斗以「人」為單位，不限定同一商品或同一次造訪：看了 A 商品、之後把 B 商品加入購物車，也算往下走了一步。因此轉換率通常會高於以「單次造訪」計算的轉換率，兩者不能直接比較。</li>
+  <li>資料在 2021-01-31 結束：越接近結束日才開始的流程，越可能來不及走完，各種時間限制下的轉換率都可能略為低估。漏斗人數不納入 11-26 之前的行為（分析四分類時例外）。</li>
+</ul>
+</details>
+
+<footer>
+  <p>工具：BigQuery（GoogleSQL）、Python（google-cloud-bigquery，送出查詢並保存結果）、Claude Code。資料：Google <a href="https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset" target="_blank" rel="noopener">GA4 電商範例資料集</a>。查詢日期：2026-10-09。</p>
+</footer>
+
+</main>
+</body>
+</html>
