@@ -17,9 +17,30 @@
   a.card:hover { border-color: var(--accent); }
   a.card b { color: var(--accent); font-size: 18px; }
   a.card span { display:block; color: var(--ink-2); font-size: 15px; margin-top: 4px; }
+  /* i18n:start 語言切換 */
+  .lang-switch { position: absolute; top: 12px; right: 16px; z-index: 10; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  html.lang-pending main { visibility: hidden; }
+  /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
+  html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
+  html[lang="en"] th.num { white-space: normal; }
+  html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
+  /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
+  /* i18n:end */
 </style>
+<!-- i18n:start --><script>
+// 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文
+(function () { var l = null; try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('lang'); } catch (e) {} if (l === 'en') document.documentElement.classList.add('lang-pending'); })();
+</script><!-- i18n:end -->
 </head>
 <body>
+<!-- i18n:start --><div class="lang-switch">
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div><!-- i18n:end -->
 <main>
   <h1>余家丞的作品集</h1>
   <p class="meta">資料分析｜<a href="https://www.linkedin.com/in/jiachengyu" target="_blank" rel="noopener">LinkedIn</a></p>
@@ -36,5 +57,61 @@
     <span>由我主導、以 Claude Code 協助開發，從規劃到上線的網頁 App：支援 Google 登入、雲端同步與離線使用；上線前以 20 多支自動化測試做安全稽核，上線後處理 50 多件使用者回報的問題。</span>
   </a>
 </main>
+<!-- i18n:start --><template id="main-en" data-title="Jiacheng (Josh) Yu — Portfolio" data-desc="Jiacheng (Josh) Yu's data analytics portfolio">
+  <h1>Jiacheng (Josh) Yu — Portfolio</h1>
+  <p class="meta">Data analytics | <a href="https://www.linkedin.com/in/jiachengyu" target="_blank" rel="noopener">LinkedIn</a></p>
+  <a class="card" href="hm-retail/">
+    <b>Retail Sales Decline Investigation and Customer Churn Prediction</b>
+    <span>Using H&amp;M's public transaction data to pinpoint what actually drove a sales decline and flag the data's limitations, build a customer churn prediction model, and propose how to target and test retention coupons.</span>
+  </a>
+  <a class="card" href="ga4-funnel/">
+    <b>E-commerce Conversion Funnel Analysis (BigQuery SQL)</b>
+    <span>Using SQL to analyze the purchase funnel in Google's official GA4 e-commerce data, check data quality issues such as tracking gaps and duplicate orders, and compare query costs with partitioning and clustering.</span>
+  </a>
+  <a class="card" href="https://poker-records.web.app" target="_blank" rel="noopener">
+    <b>Poker Hand Tracker Web App (live)</b>
+    <span>A web app I led from planning to launch, built with help from Claude Code: Google sign-in, cloud sync, and offline use. Before launch I ran a security audit with 20+ automated tests; after launch I handled 50+ user-reported issues.</span>
+  </a>
+</template>
+<script>
+// 語言切換：中文寫在 <main>，英文版放在 template#main-en，切換時整塊替換；選擇記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }  // 從帶參數的連結進來，也記住語言
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;  // 第一次載入且是中文就不用重建
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    // 站內連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || a.getAttribute('href').startsWith('#')) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    if (!first) document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);  // 網址同步，分享出去的連結語言一致
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+</script><!-- i18n:end -->
 </body>
 </html>

@@ -114,9 +114,30 @@
   .toc li { margin-bottom: 10px; }
   .toc a { text-decoration: none; }
   footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+  /* i18n:start 語言切換 */
+  .lang-switch { position: absolute; top: 12px; right: 16px; z-index: 10; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  html.lang-pending main { visibility: hidden; }
+  /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
+  html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
+  html[lang="en"] th.num { white-space: normal; }
+  html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
+  /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
+  /* i18n:end */
 </style>
+<!-- i18n:start --><script>
+// 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文
+(function () { var l = null; try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('lang'); } catch (e) {} if (l === 'en') document.documentElement.classList.add('lang-pending'); })();
+</script><!-- i18n:end -->
 </head>
 <body>
+<!-- i18n:start --><div class="lang-switch">
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div><!-- i18n:end -->
 <main>
 
 <header>
@@ -140,7 +161,7 @@
 
 
 <section class="stats" aria-label="關鍵數字">
-  <div class="stat"><b>−10.3%</b><span>FY2020 Q1 賣出的件數，比去年同一季少了 36.8 萬件</span></div>
+  <div class="stat"><b>−10.3%</b><span>FY2020 Q1 賣出的件數與去年同一季相比的變化（少賣 36.8 萬件）</span></div>
   <div class="stat"><b>54%</b><span>減少的件數來自童裝；童裝原本只占銷量的 7.9%</span></div>
   <div class="stat"><b>46%</b><span>其餘減少來自大人衣服，集中在深藍色、條紋、蕾絲款式（−48%），其他款式反而 +2.4%</span></div>
   <div class="stat"><b>68.4%</b><span>流失預測模型（<a href="#analysis-3">分析三</a>）挑出的 5 萬名顧客中，之後半年真的沒再回來買的比例</span></div>
@@ -739,18 +760,679 @@
 </section>
 
 </main>
+<!-- i18n:start --><template id="main-en" data-title="Retail Sales Decline Investigation and Customer Churn Prediction" data-desc="Jiacheng (Josh) Yu's self-directed project: tracing a retail sales decline in H&M public transaction data, predicting customer churn, and designing an A/B test for retention coupons.">
+<header>
+  <span class="tag">Self-directed project</span><span class="tag">September 2026</span>
+  <h1>Retail Sales Decline Investigation and Customer Churn Prediction</h1>
+  <p class="meta">Jiacheng (Josh) Yu | H&amp;M public transaction data | Python, Claude Code</p>
+</header>
+<nav class="tabs" aria-label="Tabs">
+  <a href="#overview">Overview</a>
+  <a href="#analysis-1">1 · Sales decline</a>
+  <a href="#analysis-2">2 · Channels</a>
+  <a href="#analysis-3">3 · Retention list</a>
+  <a href="#analysis-4">4 · A/B test</a>
+</nav>
+
+<section class="panel" id="overview">
+<p>This project simulates the work of an e-commerce business analyst whose manager says: "Sales dropped a lot this quarter. Find out why." The focus is on <b>finding where the decline really comes from, and separating the questions this data can answer from those that need other data</b>. The work then extends to predicting which customers may not come back, recommending who should get retention coupons, and how to confirm the coupons actually work. I was responsible for the analysis direction, the checks, and the conclusions; the Python code was written with help from AI (Claude Code).</p>
+  <div class="caveat">
+    <p><b>Data limitations first:</b> This data was released by H&amp;M for a Kaggle "product recommendation" competition. It covers only some customers, and H&amp;M did not explain how they were selected. H&amp;M's official financial reports show the same quarter actually grew, so the "sales decline" on this page only describes the customers in this dataset and <b>does not represent H&amp;M's real performance</b>. The point of this project is to show how to trace a cause step by step from data and check whether the conclusions hold up.</p>
+  </div>
+
+
+<section class="stats" aria-label="Key figures">
+  <div class="stat"><b>−10.3%</b><span>Change in FY2020 Q1 units sold vs the same quarter last year (368K fewer units)</span></div>
+  <div class="stat"><b>54%</b><span>of the lost units came from kidswear, which was only 7.9% of unit sales</span></div>
+  <div class="stat"><b>46%</b><span>The remaining 46% came from adult apparel, concentrated in dark blue, striped, and lace styles (−48%); other styles grew +2.4%</span></div>
+  <div class="stat"><b>68.4%</b><span>of the 50,000 customers picked by the churn model (<a href="#analysis-3">Analysis 3</a>) actually did not buy again in the next six months</span></div>
+</section>
+
+<div class="tldr">
+  <p><b>Summary</b></p>
+  <p>On the surface it looks like "customers are buying less." Breaking it down shows the decline is actually <b>two unrelated things</b> added together. First, <b>kidswear</b> unit sales were suddenly cut in half from March 2019; FY2020 Q1 was down 70.8% year over year, more than half of the total decline. Second, <b>adult apparel</b> fell slightly (−5.2%), concentrated in three styles — dark blue, striped, and lace (down 48.4%) — while all other styles grew 2.4%. This is a shift in the product mix, and these three styles fell both in stores and online. On channels: among customers who bought the same number of items, online customers churn more than in-store customers, which is worth improving, but more than half of customers in both channels did not return, so churn is common to both channels. For retention coupons, a list picked by the prediction model finds more customers who will actually churn than "picking whoever has been away the longest." When sending coupons, I recommend randomly holding back a group that gets no coupon, and scaling up only after confirming the coupon works. Analysis 4 designs this test: the control group for the "most likely to churn" list needs 5,000 people (the planned 10% is not enough), judged on 180-day results. A simulated result shows how to decide: the "most likely to churn" list has a positive expected net profit, so keep sending; the "highest churn loss" list has a negative expected net profit, so stop. Both decisions carry a risk of being wrong.</p>
+  <p>Transaction data cannot tell whether the kidswear drop is a business change or a data-coverage problem, or whether the decline in dark blue, striped, and lace styles is a company decision or a shift in customer taste. The data needed to dig further is listed at the end of each analysis.</p>
+</div>
+
+<h2>On this page</h2>
+<ul class="toc">
+  <li><a href="#analysis-1"><b>Analysis 1: Why did sales fall?</b></a> — Kidswear halved in March 2019, plus a style shift in adult apparel</li>
+  <li><a href="#analysis-2"><b>Analysis 2: Is one sales channel the problem?</b></a> — Churn of online vs in-store customers (logistic regression)</li>
+  <li><a href="#analysis-3"><b>Analysis 3: Which customers should get retention coupons?</b></a> — Churn prediction model (LightGBM) and two lists</li>
+  <li><a href="#analysis-4"><b>Analysis 4: After sending coupons, how do we prove they work?</b></a> — A/B test design and interpretation</li>
+</ul>
+
+<h2>Data</h2>
+<table>
+  <tr><th>Data</th><th>Size</th><th>Contents</th></tr>
+  <tr><td>Transactions</td><td>31.79 million rows (Sep 20, 2018 – Sep 22, 2020)</td><td>Date, customer, item bought, price, and sales channel</td></tr>
+  <tr><td>Customers</td><td>1.37 million</td><td>Age, membership status</td></tr>
+  <tr><td>Products</td><td>106K items</td><td>Product group (e.g. Ladieswear, Menswear, kidswear), department (by product type, e.g. trousers, knitwear, shirts; 250 in total), style, color, pattern, etc.</td></tr>
+</table>
+<p class="howto">Terms: H&amp;M's fiscal year starts in December, so <b>FY2020 Q1 = Dec 2019 – Feb 2020</b>, and "the same quarter last year" is Dec 2018 – Feb 2019. The two sales channels in the data are only labeled 1 and 2, and H&amp;M did not say which is in-store. This page infers channel 1 is in-store and channel 2 is online (in the month Europe went into lockdown, channel 1's share of units fell from its usual ~30% to 14.6%, consistent with stores closing).</p>
+
+<h3>Data quality checks</h3>
+<p>Before the analysis, I checked data quality following CRISP-DM, a widely used analytics process (business understanding, data understanding, data preparation, modeling, evaluation, deployment), and decided whether each type of issue needed handling:</p>
+<table>
+  <tr><th>Check</th><th>Result</th><th>Handling</th></tr>
+  <tr><td>Missing values</td><td>None in any of the 5 transaction columns</td><td>No action needed</td></tr>
+  <tr><td>Fully duplicated transaction rows</td><td>5.519 million rows (17.4%)</td><td><b>Kept</b>: the official description says duplicate rows mean several of the same item bought on the same day, which are normal transactions</td></tr>
+  <tr><td>Invalid values</td><td>All prices above 0, channels only 1 and 2, ages 16–99, no missing dates</td><td>No action needed</td></tr>
+  <tr><td>Cross-table matching</td><td>Every product and customer in the transactions exists in the product and customer tables</td><td>No action needed</td></tr>
+  <tr><td>Outliers</td><td>One customer bought 1,895 items in two years and 570 in a single day; a few transactions were priced far below or above the item's usual price</td><td><b>Kept</b>: after excluding the top 0.1% of customers by volume (1,362 people), the conclusions barely change (see below)</td></tr>
+</table>
+<details>
+  <summary>Outlier sensitivity test</summary>
+  <table style="margin-top:8px">
+    <tr><th></th><th class="num">All customers</th><th class="num">Excluding the top 0.1% by volume</th></tr>
+    <tr><td>FY2020 Q1 units, year over year</td><td class="num">−10.3%</td><td class="num">−10.2%</td></tr>
+    <tr><td>Kidswear share of lost units</td><td class="num">54.0%</td><td class="num">55.3%</td></tr>
+    <tr><td>Adult apparel units, year over year: in-store / online</td><td class="num">−0.1% / −7.5%</td><td class="num">−0.3% / −7.2%</td></tr>
+  </table>
+  <p class="howto">An outlier is not necessarily bad data; it may be a real bulk purchase. Identify it first, then ask "does excluding it change the conclusion?" If not, keep the original data.</p>
+</details>
+
+<h2>How the conclusions were validated</h2>
+<ul>
+  <li><b>Write down "if this is the cause, what should the data show" before checking</b>, to avoid stopping at the first plausible story (see <a href="#analysis-1">Analysis 1</a>, Step 4).</li>
+  <li><b>Systematically check every category, and have an AI analyst who had not seen the conclusions redo the analysis</b> to confirm the results match (see the note under <a href="#analysis-1">Analysis 1</a>, Step 2). I also had AI check 80 conclusions one by one against the data, and fixed problems in 25 of them.</li>
+  <li><b>Every conclusion traces back to the code that produced it</b>: the analysis file is checked automatically when saved, and conclusions without a source cannot be saved.</li>
+</ul>
+
+<h2>Limitations</h2>
+<ul>
+  <li>The data ends in September 2020, during the pandemic; shopping habits afterward may differ.</li>
+  <li>Each analysis lists its own limitations and the data needed to dig further at the end.</li>
+</ul>
+
+<h2>Tools</h2>
+<p>Python (pandas, NumPy, scikit-learn, LightGBM, XGBoost, SciPy, statsmodels) | Claude Code (AI-assisted coding and independent review)</p>
+</section>
+
+<section class="panel" id="analysis-1">
+<!-- ============ Analysis 1 ============ -->
+<h2>Analysis 1: Why did sales fall?</h2>
+<p class="ask">Manager: "The Q1 report is out and it looks like we dropped quite a bit this quarter. Can you find out what happened?"</p>
+
+<div class="tldr lead">
+  <p><b>Conclusion</b></p>
+  <p>The report's "revenue down 23.5% from last quarter" is exaggerated by seasonality. Compared with the same quarter last year, FY2020 Q1 units fell 10.3% (368K units), made up of two unrelated things: ① <b>Kidswear</b> unit sales halved from March 2019, accounting for 54.0% of the decline; transaction data cannot tell whether this is a business change or a change in data coverage. ② <b>Adult apparel</b> fell a net 5.2%, concentrated in dark blue, striped, and lace styles (down 48.4%) — a shift in the product mix.</p>
+  <p><b>Recommendations</b></p>
+  <ul>
+  <li><b>First confirm whether the kidswear drop is a data issue:</b> Kidswear is 54% of the lost units, but it may not reflect real lost sales — the data may have stopped including some kidswear transactions from March 2019 (for example, some markets no longer included). Asking the data provider whether coverage changed is enough to tell; no new data collection or analysis is needed, so it is the cheapest step. The answer also sets the direction: if it is a data issue, the kidswear decline is not real and the sales analysis should be redone without kidswear; only if not does the kidswear business need a dedicated investigation (data needed: see "To dig further: data needed" at the end of this analysis).</li>
+  <li><b>Ask the merchandising team why dark blue, striped, and lace styles fell:</b> these three styles lost 236K units, more than adult apparel's net decline of 169K. Confirm whether this was a company style decision or a change in customer taste, then decide whether next season's assortment needs adjusting. Data needed: see "To dig further: data needed" at the end of this analysis.</li>
+</ul>
+</div>
+
+<h3>Background: quarterly revenue trend</h3>
+<div class="card">
+  <div class="chart-title">FY2020 Q1 revenue was the lowest of the 7 full quarters in the data</div>
+  <p class="ax-y">Y-axis: quarterly revenue (sum of prices, relative units)</p>
+  <svg viewBox="0 0 760 280" width="100%" role="img" aria-label="Quarterly revenue; FY2020 Q1 is 88,854, the lowest of 7 quarters">
+<line x1="58" x2="748" y1="226.0" y2="226.0" stroke="var(--line)"/><text x="50" y="230.0" text-anchor="end" font-size="11" fill="var(--ink-3)">0K</text>
+<line x1="58" x2="748" y1="154.6" y2="154.6" stroke="var(--line)"/><text x="50" y="158.6" text-anchor="end" font-size="11" fill="var(--ink-3)">50K</text>
+<line x1="58" x2="748" y1="83.1" y2="83.1" stroke="var(--line)"/><text x="50" y="87.1" text-anchor="end" font-size="11" fill="var(--ink-3)">100K</text>
+<rect x="79.7" y="86.8" width="55.2" height="139.2" rx="3" fill="var(--mute)"><title>FY2019 Q1: 97,411</title></rect>
+<text x="107.3" y="80.8" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">97,411</text>
+<text x="107.3" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2019</text><text x="107.3" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q1</text>
+<rect x="178.3" y="49.2" width="55.2" height="176.8" rx="3" fill="var(--mute)"><title>FY2019 Q2: 123,732</title></rect>
+<text x="205.9" y="43.2" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">123,732</text>
+<text x="205.9" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2019</text><text x="205.9" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q2</text>
+<rect x="276.8" y="55.2" width="55.2" height="170.8" rx="3" fill="var(--mute)"><title>FY2019 Q3: 119,581</title></rect>
+<text x="304.4" y="49.2" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">119,581</text>
+<text x="304.4" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2019</text><text x="304.4" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q3</text>
+<rect x="375.4" y="60.1" width="55.2" height="165.9" rx="3" fill="var(--mute)"><title>FY2019 Q4: 116,146</title></rect>
+<text x="403.0" y="54.1" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">116,146</text>
+<text x="403.0" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2019</text><text x="403.0" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q4</text>
+<rect x="474.0" y="99.1" width="55.2" height="126.9" rx="3" fill="var(--neg)"><title>FY2020 Q1: 88,854</title></rect>
+<text x="501.6" y="93.1" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">88,854</text>
+<text x="501.6" y="74" text-anchor="middle" font-size="11" fill="var(--neg)">−23.5% QoQ</text>
+<text x="501.6" y="244" text-anchor="middle" font-size="12" fill="var(--ink)">FY2020</text><text x="501.6" y="260" text-anchor="middle" font-size="12" fill="var(--ink)">Q1</text>
+<rect x="572.5" y="75.7" width="55.2" height="150.3" rx="3" fill="var(--mute)"><title>FY2020 Q2: 105,228</title></rect>
+<text x="600.1" y="69.7" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">105,228</text>
+<text x="600.1" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2020</text><text x="600.1" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q2</text>
+<rect x="671.1" y="70.9" width="55.2" height="155.1" rx="3" fill="var(--mute)"><title>FY2020 Q3: 108,549</title></rect>
+<text x="698.7" y="64.9" text-anchor="middle" font-size="12" font-weight="400" fill="var(--ink)">108,549</text>
+<text x="698.7" y="244" text-anchor="middle" font-size="12" fill="var(--ink-3)">FY2020</text><text x="698.7" y="260" text-anchor="middle" font-size="12" fill="var(--ink-3)">Q3</text>
+</svg>
+  <p class="ax-x">X-axis: fiscal quarter (H&amp;M fiscal year, starting each December)</p>
+  <p class="howto">How it's calculated: the sum of sale prices of all transactions in each quarter. Prices in the data are rescaled relative values, not real currency, so only levels and changes can be compared. The partial quarters at the start and end of the data are left out.</p>
+</div>
+
+<h3>Step 1: Confirm how much was really lost</h3>
+<p>The quarterly report says "down 23.5% from last quarter" (FY2019 Q4's 116,146 → FY2020 Q1's 88,854 in the chart above). But fashion retail is seasonal — autumn (the previous quarter) usually sells better than winter — so comparing with the previous quarter exaggerates the problem. Compared with <b>the same quarter last year</b> (FY2019 Q1's 97,411), revenue actually fell <b>8.8%</b> and units sold fell <b>10.3%</b> (368K units). The average price per item did not drop (it rose 1.7%), so the problem is "<b>fewer units sold</b>," and the search for the cause starts from units.</p>
+
+<div class="bridge">Next question: <b>where are the 368K lost units concentrated?</b> The method is to break them down by product category and customer group, one at a time, and see which group the decline falls in.</div>
+
+<h3>Step 2: The lost units split into two parts — kidswear 54%, adult apparel 46%</h3>
+<p>The full picture first: after breaking down by product category layer by layer, the 368K lost units split cleanly into two parts with different causes, which the rest of this section traces separately.</p>
+<div class="card tree">
+  <div class="chart-title">Where the 368K lost units came from (conclusion map for Analysis 1)</div>
+  <div class="node"><b>All products</b>: 368K fewer units, −10.3%</div>
+  <div class="kids">
+    <div><span class="node hi"><b>Kidswear</b> (7.9% of last year's units): −70.8%, 199K fewer = <b>54% of the total decline</b></span><span class="note">→ suddenly halved in March 2019 (Steps 3 and 4)</span></div>
+    <div><span class="node"><b>Adult apparel</b> (92.1% of last year's units): −5.2%, 169K fewer = <b>46% of the total decline</b></span>
+      <div class="kids">
+        <div><span class="node hi"><b>Dark blue, striped, or lace items</b> (13.7% of last year's units, 14.8% of adult apparel): −48.4%, 236K fewer</span><span class="note">→ these three style features fell in all four adult product groups (Step 5)</span></div>
+        <div><span class="node">Other adult apparel (78.4% of last year's units): +2.4%, 67K more, offsetting part of the decline</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="howto">How to read: "share of last year's units" = the group's units in the same quarter last year ÷ all units in that quarter; "share of total decline" = the group's lost units ÷ the 368K total lost units. Kidswear was only 7.9% of units but lost about 70% of its volume, so it accounts for more than half of the decline. "Adult apparel" means the four groups other than kidswear (Divided, Ladieswear, Menswear, Sport).</p>
+</div>
+<p>The first layer splits by product group, as shown below:</p>
+
+<div class="card">
+  <div class="chart-title">Of the 368K units lost this year, 54.0% came from kidswear; the other 45.9% was spread across the four adult groups</div>
+  <div class="row hi"><span class="name">Kidswear</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec-hi" style="left:8%;width:88.0%"></span></span><span class="val">54.0%</span></div>
+  <div class="row"><span class="name">Divided</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:8%;width:47.6%"></span></span><span class="val">29.2%</span></div>
+  <div class="row"><span class="name">Ladieswear</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:8%;width:25.7%"></span></span><span class="val">15.8%</span></div>
+  <div class="row"><span class="name">Menswear</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:8%;width:4.7%"></span></span><span class="val">2.9%</span></div>
+  <div class="row"><span class="name">Sport</span><span class="track div"><span class="zero" style="left:8%"></span><span class="dbar dec" style="left:4.7%;width:3.3%"></span></span><span class="val">−2.0%</span></div>
+  <p class="ax-x">X-axis: share of this year's total lost units (368K)</p>
+  <table style="margin-top:14px">
+    <tr><th>Units, year over year, by group</th><th class="num">Kidswear</th><th class="num">Divided</th><th class="num">Ladieswear</th><th class="num">Menswear</th><th class="num">Sport</th></tr>
+    <tr><td>FY2020 Q1 vs FY2019 Q1</td><td class="num"><b>−70.8%</b></td><td class="num">−13.3%</td><td class="num">−2.7%</td><td class="num">−5.4%</td><td class="num">+4.8%</td></tr>
+  </table>
+  <p class="howto">How it's calculated: bar = the group's units lost vs last year ÷ the 368K total lost units; the five groups sum to 100% (Sport units grew, so its contribution is negative; the chart rounds to one decimal, so the figures add to 99.9%). Year-over-year change = the group's units this quarter ÷ units in the same quarter last year − 1. Kidswear not only contributed the most to the decline, it also fell by about 70% itself, far beyond the other groups' −13% to +5%.</p>
+  <p class="howto" style="margin-top:6px">Kidswear was only 7.9% of units yet contributed more than half the decline — the most concentrated anomaly — so kidswear is traced first (Steps 3 and 4), then adult apparel's 46% (Step 5).</p>
+</div>
+<p>I also split the data by 15 different dimensions, including color, pattern, style, age, channel, and membership status, and compared each category's "share of the decline" with its "original share of units." Kidswear still had the largest gap and was the most concentrated source. The first version of this project only looked at "customer type" and "tops/bottoms," which spread kidswear across many categories so it went unnoticed; it was only found after comparing every dimension one by one.</p>
+<details>
+  <summary>Note: why the original conclusion had to be corrected</summary>
+  <p style="margin-top:8px">The first version concluded that "returning customers bought less, accounting for 64% of the decline." The number was not wrong, but it mixed two things together: of the 235K fewer units bought by returning customers, 65K were kidswear units they simply stopped buying. Only by splitting by product category does the concentrated kidswear anomaly show up. After this correction, I had another AI analyst who had not seen any conclusions redo the analysis from the raw data alone, and it reached the same result (kidswear 54%, adult apparel 46%).</p>
+</details>
+
+<div class="bridge">Kidswear first. Next question: <b>when did it start dropping?</b> A gradual decline looks more like a change in demand; a sudden drop on a particular day suggests a specific event.</div>
+
+<h3>Step 3: Kidswear was suddenly cut in half in March 2019</h3>
+<div class="card">
+  <div class="chart-title">Kidswear share of monthly units: fell from 7.5% to 3.8% in March 2019 and never came back</div>
+  <p class="ax-y">Y-axis: kidswear units as a share of all units that month (%)</p>
+  <svg viewBox="0 0 820 260" width="100%" role="img" aria-label="Kidswear share of total units fell from 7.5% to 3.8% in March 2019">
+<line x1="44" x2="810" y1="220.0" y2="220.0" stroke="var(--line)"/><text x="38" y="224.0" text-anchor="end" font-size="11" fill="var(--ink-3)">0%</text>
+<line x1="44" x2="810" y1="154.7" y2="154.7" stroke="var(--line)"/><text x="38" y="158.7" text-anchor="end" font-size="11" fill="var(--ink-3)">4%</text>
+<line x1="44" x2="810" y1="89.3" y2="89.3" stroke="var(--line)"/><text x="38" y="93.3" text-anchor="end" font-size="11" fill="var(--ink-3)">8%</text>
+<line x1="44" x2="810" y1="24.0" y2="24.0" stroke="var(--line)"/><text x="38" y="28.0" text-anchor="end" font-size="11" fill="var(--ink-3)">12%</text>
+<rect x="49.4" y="53.2" width="21.1" height="166.8" fill="var(--accent)" rx="2"><title>2018-10: 10.2%</title></rect>
+<text x="60.0" y="49.2" text-anchor="middle" font-size="10" fill="var(--ink-2)">10.2</text>
+<text x="60.0" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2018/10</text>
+<rect x="81.3" y="74.5" width="21.1" height="145.5" fill="var(--accent)" rx="2"><title>2018-11: 8.9%</title></rect>
+<text x="91.9" y="70.5" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.9</text>
+<rect x="113.3" y="75.5" width="21.1" height="144.5" fill="var(--accent)" rx="2"><title>2018-12: 8.8%</title></rect>
+<text x="123.8" y="71.5" text-anchor="middle" font-size="10" fill="var(--ink-2)">8.8</text>
+<rect x="145.2" y="99.3" width="21.1" height="120.7" fill="var(--accent)" rx="2"><title>2019-01: 7.4%</title></rect>
+<text x="155.7" y="95.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.4</text>
+<text x="155.7" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/1</text>
+<rect x="177.1" y="98.1" width="21.1" height="121.9" fill="var(--accent)" rx="2"><title>2019-02: 7.5%</title></rect>
+<text x="187.6" y="94.1" text-anchor="middle" font-size="10" fill="var(--ink-2)">7.5</text>
+<rect x="209.0" y="157.3" width="21.1" height="62.7" fill="var(--mute)" rx="2"><title>2019-03: 3.8%</title></rect>
+<text x="219.5" y="153.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.8</text>
+<rect x="240.9" y="162.0" width="21.1" height="58.0" fill="var(--mute)" rx="2"><title>2019-04: 3.6%</title></rect>
+<text x="251.5" y="158.0" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.6</text>
+<text x="251.5" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/4</text>
+<rect x="272.8" y="178.4" width="21.1" height="41.6" fill="var(--mute)" rx="2"><title>2019-05: 2.5%</title></rect>
+<text x="283.4" y="174.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.5</text>
+<rect x="304.8" y="180.7" width="21.1" height="39.3" fill="var(--mute)" rx="2"><title>2019-06: 2.4%</title></rect>
+<text x="315.3" y="176.7" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.4</text>
+<rect x="336.7" y="181.2" width="21.1" height="38.8" fill="var(--mute)" rx="2"><title>2019-07: 2.4%</title></rect>
+<text x="347.2" y="177.2" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.4</text>
+<text x="347.2" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/7</text>
+<rect x="368.6" y="175.0" width="21.1" height="45.0" fill="var(--mute)" rx="2"><title>2019-08: 2.8%</title></rect>
+<text x="379.1" y="171.0" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.8</text>
+<rect x="400.5" y="165.1" width="21.1" height="54.9" fill="var(--mute)" rx="2"><title>2019-09: 3.4%</title></rect>
+<text x="411.0" y="161.1" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.4</text>
+<rect x="432.4" y="168.6" width="21.1" height="51.4" fill="var(--mute)" rx="2"><title>2019-10: 3.1%</title></rect>
+<text x="443.0" y="164.6" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.1</text>
+<text x="443.0" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2019/10</text>
+<rect x="464.3" y="174.7" width="21.1" height="45.3" fill="var(--mute)" rx="2"><title>2019-11: 2.8%</title></rect>
+<text x="474.9" y="170.7" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.8</text>
+<rect x="496.3" y="171.0" width="21.1" height="49.0" fill="var(--mute)" rx="2"><title>2019-12: 3.0%</title></rect>
+<text x="506.8" y="167.0" text-anchor="middle" font-size="10" fill="var(--ink-2)">3.0</text>
+<rect x="528.2" y="180.3" width="21.1" height="39.7" fill="var(--mute)" rx="2"><title>2020-01: 2.4%</title></rect>
+<text x="538.7" y="176.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.4</text>
+<text x="538.7" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/1</text>
+<rect x="560.1" y="183.5" width="21.1" height="36.5" fill="var(--mute)" rx="2"><title>2020-02: 2.2%</title></rect>
+<text x="570.6" y="179.5" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.2</text>
+<rect x="592.0" y="187.5" width="21.1" height="32.5" fill="var(--mute)" rx="2"><title>2020-03: 2.0%</title></rect>
+<text x="602.5" y="183.5" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.0</text>
+<rect x="623.9" y="190.4" width="21.1" height="29.6" fill="var(--mute)" rx="2"><title>2020-04: 1.8%</title></rect>
+<text x="634.5" y="186.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">1.8</text>
+<text x="634.5" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/4</text>
+<rect x="655.8" y="194.1" width="21.1" height="25.9" fill="var(--mute)" rx="2"><title>2020-05: 1.6%</title></rect>
+<text x="666.4" y="190.1" text-anchor="middle" font-size="10" fill="var(--ink-2)">1.6</text>
+<rect x="687.8" y="197.9" width="21.1" height="22.1" fill="var(--mute)" rx="2"><title>2020-06: 1.4%</title></rect>
+<text x="698.3" y="193.9" text-anchor="middle" font-size="10" fill="var(--ink-2)">1.4</text>
+<rect x="719.7" y="191.3" width="21.1" height="28.7" fill="var(--mute)" rx="2"><title>2020-07: 1.8%</title></rect>
+<text x="730.2" y="187.3" text-anchor="middle" font-size="10" fill="var(--ink-2)">1.8</text>
+<text x="730.2" y="236" text-anchor="middle" font-size="11" fill="var(--ink-3)">2020/7</text>
+<rect x="751.6" y="191.4" width="21.1" height="28.6" fill="var(--mute)" rx="2"><title>2020-08: 1.7%</title></rect>
+<text x="762.1" y="187.4" text-anchor="middle" font-size="10" fill="var(--ink-2)">1.7</text>
+<rect x="783.5" y="180.7" width="21.1" height="39.3" fill="var(--mute)" rx="2"><title>2020-09: 2.4%</title></rect>
+<text x="794.0" y="176.7" text-anchor="middle" font-size="10" fill="var(--ink-2)">2.4</text>
+<line x1="203.6" x2="203.6" y1="24" y2="220.0" stroke="var(--ink-3)" stroke-dasharray="4 3"/><text x="207.6" y="34" font-size="11" fill="var(--ink-2)">Break: 2019-03</text>
+</svg>
+  <p class="ax-x">X-axis: month (October 2018 – September 2020)</p>
+  <p class="howto">How to read: each bar is one month; its height is "kidswear units ÷ all units that month." Blue is before March 2019, gray is after. Daily kidswear sales pin down the exact timing: from Feb 18–28, 2,219–6,638 units were sold per day; from Mar 3–17, this fell to 830–1,755 per day, so the break falls around March 3.</p>
+</div>
+<p><b>If kidswear dropped in March 2019, why didn't the quarterly reports show it then?</b> Seeing a "decline" requires a baseline, and in spring 2019 neither baseline was usable:</p>
+<ul>
+  <li><b>Vs the same quarter last year: no data.</b> The data starts on Sep 20, 2018, so there is no prior-year period to compare with March–May 2019. The first quarter with a full prior-year comparison is FY2020 Q1.</li>
+  <li><b>Vs the previous quarter: masked by peak season.</b> Spring normally sells better than winter, and adult apparel's growth far outweighed kidswear's decline:</li>
+</ul>
+<table>
+  <tr><th>Units</th><th class="num">FY2019 Q1 (Dec 2018 – Feb 2019)</th><th class="num">FY2019 Q2 (Mar – May 2019)</th><th class="num">Change</th></tr>
+  <tr><td>All</td><td class="num">3.565M</td><td class="num">4.324M</td><td class="num"><b>+21.3%</b></td></tr>
+  <tr><td>Adult apparel</td><td class="num">3.284M</td><td class="num">4.182M</td><td class="num">+27.4% (898K more)</td></tr>
+  <tr class="hi"><td>Kidswear</td><td class="num">281K</td><td class="num">142K</td><td class="num"><b>−49.6%</b> (139K fewer)</td></tr>
+</table>
+<p>So the kidswear decline was drowned out by overall growth. Only from autumn 2019 did each month have "the same month last year" to compare against — and those prior-year months still predated the kidswear drop — so the decline surfaced for the first time (October 2019 units were 17.9% below the prior year) and was noticed by the manager in the FY2020 Q1 report.</p>
+
+<div class="bridge">Losing half within one month is very unusual. Next, confirm: <b>did fewer people actually buy kidswear, or is it an artifact of something else?</b> The approach is to list possible causes, write down "if this is the cause, what should the data show," and check each one.</div>
+
+<h3>Step 4: Rule out the other possibilities one by one</h3>
+<table>
+  <tr><th>Could it be…</th><th>If so, we'd expect</th><th>What we actually see</th><th>Result</th></tr>
+  <tr><td>Seasonality (winter season change)</td><td>A similar sudden drop at the same time the next year</td><td>From Feb to Mar 2019, kidswear's share of units fell 49%; over the same period in 2020 it fell only 11% (computed on unrounded shares; the chart shows one decimal)</td><td>Ruled out</td></tr>
+  <tr><td>Price increase or end of a promotion</td><td>The same items became more expensive in March</td><td>Prices of the same items barely changed</td><td>Ruled out</td></tr>
+  <tr><td>A group of customers dropped out of the data</td><td>Those customers stopped buying adult apparel too</td><td>Kidswear buyers kept buying adult apparel, with an even smaller decline than other customers</td><td>Ruled out</td></tr>
+  <tr><td>An event affecting all products (e.g. website or POS outage, data system issue)</td><td>Other product lines also dropped sharply at the same time</td><td>From Feb to Mar 2019, only kidswear dropped sharply; other product lines changed between −6% and +19%</td><td>Ruled out</td></tr>
+  <tr><td>A problem in one channel</td><td>The other channel was fine</td><td>Kidswear dropped sharply in stores and online at the same time</td><td>Ruled out</td></tr>
+  <tr><td>Many kidswear items delisted</td><td>The number of kidswear items on sale fell along with units</td><td>Feb to Mar 2019: the number of kidswear items sold fell 16%; kidswear units fell 43%</td><td>Explains only part</td></tr>
+</table>
+<p><b>Conclusion:</b> this was an event limited to kidswear, with the entire kidswear line falling together; the same customers kept buying adult apparel but stopped buying kidswear. Every cause that transaction data can rule out has been ruled out, leaving two possibilities this data cannot distinguish: <b>① a change in H&amp;M's kidswear business itself</b> (e.g. product, marketing, or market changes); <b>② a change in data coverage</b> (e.g. kidswear transactions from some markets no longer included). Because this dataset was originally prepared for a product recommendation competition, possibility ② cannot be ruled out.</p>
+
+<div class="bridge">That completes the kidswear investigation. Back to the other part of the conclusion map in Step 2: <b>adult apparel's 46%</b>, to see which products the decline is concentrated in.</div>
+
+<h3>Step 5: The adult apparel decline is concentrated in dark blue, striped, and lace styles</h3>
+<p>Breaking down adult apparel with the same method as Step 2, the decline is most concentrated in three style features: <b>dark blue</b>, <b>stripes</b>, and <b>lace</b> (items matching more than one are counted once).</p>
+<table>
+  <tr><th>Adult apparel (both channels)</th><th class="num">Units, same quarter last year ①</th><th class="num">Share of adult apparel<br>① ÷ 3,283,745</th><th class="num">Units, this quarter ②</th><th class="num">Change in units<br>② − ①</th><th class="num">YoY change<br>② ÷ ① − 1</th></tr>
+  <tr class="hi"><td>Dark blue, striped, or lace items</td><td class="num">487,388</td><td class="num">14.8%</td><td class="num">251,579</td><td class="num">−235,809</td><td class="num"><b>−48.4%</b></td></tr>
+  <tr><td>Other items</td><td class="num">2,796,357</td><td class="num">85.2%</td><td class="num">2,862,873</td><td class="num">+66,516</td><td class="num">+2.4%</td></tr>
+  <tr><td>Adult apparel total</td><td class="num">3,283,745</td><td class="num">100%</td><td class="num">3,114,452</td><td class="num">−169,293</td><td class="num">−5.2%</td></tr>
+</table>
+<p><b>Conclusion:</b> dark blue, striped, and lace items, only 14.8% of last year's units, fell by nearly half, while other items grew 2.4%; after that partial offset, adult apparel fell a net 5.2%. These three styles fell in Divided, Ladieswear, Menswear, and Sport alike — a shift in the product mix. Transaction data cannot tell whether this was a company merchandising decision or a change in customer taste; the data needed is listed in "To dig further: data needed" at the end of this analysis.</p>
+<details>
+  <summary>Note: why split by color and pattern rather than drilling down by product group</summary>
+  <p style="margin-top:8px">Adult apparel can be split by several fields: product group, department, and product type belong to a category hierarchy (each item belongs to exactly one), while color and pattern are attributes that cut across all groups. For each way of splitting, I compared each category's "share of adult apparel's lost units" with its "share of last year's units"; the bigger the gap, the more concentrated the decline. The category with the largest gap in each split is shown below; splitting by color or pattern gives the most concentration:</p>
+  <table>
+  <tr><th>Split (field)</th><th>Most concentrated category</th><th class="num">Share of last year's adult units ①<br>category's units last year ÷ 3,283,745</th><th class="num">Share of adult decline ②<br>category's lost units ÷ 169,293</th><th class="num">Gap (pp)<br>② − ①</th></tr>
+  <tr><td>Product group</td><td>Divided</td><td class="num">24.6%</td><td class="num">63.5%</td><td class="num">39.0</td></tr>
+  <tr><td>Department</td><td>Jersey Basic</td><td class="num">0.8%</td><td class="num">14.8%</td><td class="num">14.0</td></tr>
+  <tr><td>Product type</td><td>Trousers</td><td class="num">15.2%</td><td class="num">40.7%</td><td class="num">25.5</td></tr>
+  <tr class="hi"><td>Color</td><td>Dark blue</td><td class="num">8.1%</td><td class="num">64.8%</td><td class="num"><b>56.8</b></td></tr>
+  <tr class="hi"><td>Pattern</td><td>Stripe / Lace</td><td class="num">4.4% / 3.2%</td><td class="num">42.3% / 39.6%</td><td class="num">38.0 / 36.4</td></tr>
+</table>
+  <p class="howto">Terms: share of adult apparel's lost units = the category's lost units ÷ adult apparel's net decline of 169,293 units; gap = share of decline − share of last year's units. Because other items grew and offset part of the decline, a single category's share can be very high.</p>
+  <p>Digging further into "why these styles sold less" (e.g. number of new styles, units per style) would lead to the same next step whatever the result — asking the merchandising team — so this page stops at this level, and the details stay in the working notes.</p>
+</details>
+
+
+
+
+
+<h3>To dig further: data needed</h3>
+<table>
+  <tr><th>Open question</th><th>Data needed</th><th>From whom</th><th>What it would tell us</th></tr>
+  <tr><td><b>Is the March 2019 kidswear drop a data issue or a business issue?</b></td><td>Which markets, stores, and channels this dataset covers each month (coverage documentation)</td><td>Data provider (H&amp;M / Kaggle competition host)</td><td>If some markets were dropped from March, the kidswear drop is a data issue, and the sales analysis should exclude kidswear</td></tr>
+  <tr><td><b>If it is a business issue, is it supply or demand?</b></td><td>Monthly kidswear item counts on sale, inventory and stock-out records; kidswear merchandising and marketing campaign records</td><td>Kidswear merchandising, supply chain, marketing</td><td>Listings or inventory fell too → supply side (the company changed the line); listings normal but sales down → demand side</td></tr>
+  <tr><td><b>Why did dark blue, striped, and lace styles fall — company decision or customer taste?</b></td><td>Style and color plans and trend forecasts for AW2019 and SS2020; listings, inventory, sell-through and markdown records for these three categories; customer preference surveys</td><td>Merchandising, buying, customer research</td><td>Planned reduction with fewer styles listed → company decision; listings normal but low sell-through and heavy markdowns → change in customer taste (transaction data only shows items that sold, not items listed but unsold, so listing records are needed)</td></tr>
+</table>
+</section>
+
+<section class="panel" id="analysis-2">
+<!-- ============ Analysis 2 ============ -->
+<h2>Analysis 2: Is one sales channel the problem?</h2>
+<p class="ask">Manager, following up: "The total number of customers this quarter is about the same as the same quarter last year, but when I looked, nearly half of our returning customers left and were just replaced by new ones. The total staying flat doesn't mean there's no problem — we still need to understand the churn. Did the customers who didn't come back mainly shop in stores or online? Could it be a channel problem?"</p>
+
+<div class="tldr lead">
+  <p><b>Conclusion</b></p>
+  <p>It is not just a channel problem. After controlling for items bought and age, <b>online customers' churn probability is 7.1 percentage points higher than in-store customers'</b> — the gap is real and worth investigating — but among customers who shopped only in stores or only online, more than 50% did not return, so <b>churn is common to both channels</b>.</p>
+  <p><b>Recommendation</b></p>
+  <ul>
+  <li><b>Investigate why online customers churn more:</b> with the same number of items bought and the same age, online customers' churn probability is 7.1 percentage points higher on average. Data needed: see "To dig further: data needed" at the end of this analysis.</li>
+</ul>
+</div>
+<p>The offset the manager saw is real: 490,304 customers shopped in FY2020 Q1, only 2.6% fewer than the 503,504 in the same quarter last year. But 247,641 (49.2%) of last year's customers bought nothing this quarter, and their numbers were replaced by 234,441 customers who "didn't buy in that quarter last year but did this quarter." These 234,441 are not all new: 80,775 made their first purchase in the data period (the data starts in September 2018), and the other 153,666 had bought before and came back this quarter.</p>
+<p>If the customers who didn't return were concentrated in one channel, the problem might lie in that channel (e.g. a hard-to-use website), and the fix would differ. This is checked in two steps: where the churned customers used to shop, and whether the channel gap remains after removing the effect of purchase volume.</p>
+
+<h3>Step 1: Of the churned customers, 52.8% had shopped only online</h3>
+<p>The 503,504 customers who shopped in the same quarter last year are split into three groups by "where they shopped"; 247,641 of them bought nothing in the same quarter this year (churned). Which group did they come from:</p>
+<table>
+  <tr><th>Where they shopped last year</th><th class="num">Customers<br>①</th><th class="num">Of whom churned<br>②</th><th class="num"><b>Share of all churn</b><br>② ÷ 247,641</th><th class="num">Non-return rate<br>② ÷ ①</th></tr>
+  <tr class="hi"><td>Online only</td><td class="num">233,526</td><td class="num">130,792</td><td class="num"><b>52.8%</b></td><td class="num">56.0%</td></tr>
+  <tr><td>In-store only</td><td class="num">178,219</td><td class="num">93,472</td><td class="num"><b>37.7%</b></td><td class="num">52.4%</td></tr>
+  <tr><td>Both</td><td class="num">91,759</td><td class="num">23,377</td><td class="num"><b>9.4%</b></td><td class="num">25.5%</td></tr>
+  <tr><td>Total</td><td class="num">503,504</td><td class="num">247,641</td><td class="num">100%</td><td class="num">49.2%</td></tr>
+</table>
+<p class="howto">Terms: churned = shopped in the same quarter last year but bought nothing in the same quarter this year. Recalculating without customers who bought only kidswear gives almost the same non-return rates (54.2%, 50.9%, 25.2%).</p>
+<p>To answer the manager directly: <b>52.8% of churned customers had shopped only online</b>, 37.7% only in stores, and 9.4% in both. But online-only shoppers are the largest group to begin with — 46.4% of all returning customers (233,526 ÷ 503,504) — so naturally more of them churn. To judge whether online customers are <i>especially</i> likely to churn, look at each group's own non-return rate (last column): 56.0% for online-only vs 52.4% for in-store-only, a gap of 3.6 percentage points; customers who used both channels had only 25.5%.</p>
+
+<div class="bridge">Customers who buy more are less likely to churn, so if the two channels' customers buy different amounts, comparing overall rates is misleading. The next step compares customers who bought the same number of items.</div>
+
+<h3>Step 2: With the same items bought and age, online customers' churn probability is still 7.1 points higher</h3>
+<table>
+  <tr><th>Items bought in the same quarter last year</th><th class="num">In-store only</th><th class="num">Online only</th><th class="num">Both</th><th class="num">Online − in-store (pp)</th></tr>
+  <tr><td>1 item</td><td class="num">58.4%</td><td class="num">70.4%</td><td class="num">—</td><td class="num">+12.0</td></tr>
+  <tr><td>2 items</td><td class="num">56.5%</td><td class="num">65.9%</td><td class="num">41.7%</td><td class="num">+9.4</td></tr>
+  <tr><td>3–4 items</td><td class="num">54.0%</td><td class="num">61.1%</td><td class="num">36.5%</td><td class="num">+7.1</td></tr>
+  <tr><td>5–9 items</td><td class="num">46.9%</td><td class="num">52.0%</td><td class="num">29.9%</td><td class="num">+5.1</td></tr>
+  <tr><td>10+ items</td><td class="num">37.4%</td><td class="num">37.6%</td><td class="num">18.6%</td><td class="num">+0.2</td></tr>
+</table>
+<p class="howto">Terms: figures are non-return rates; "Both" requires at least 2 items, so there is no 1-item row.</p>
+<p>In every group buying 1–9 items, online customers' non-return rate is 5.1–12.0 percentage points higher than in-store customers', and the gap narrows as purchases increase. The overall gap is only 3.6 points because 22.0% of online customers bought 10+ items vs only 8.0% of in-store customers; these customers rarely churn, which pulls down the online overall rate.</p>
+<p>The table above controls only for items bought. To account for items bought and age together, and get a single overall gap with a confidence interval, I used <b>logistic regression</b> (a statistical method that includes several factors at once and estimates each factor's effect on "churn or not") to answer: if all customers had the same distribution of items bought and age, and only the channel differed, what would each channel's churn probability be?</p>
+<div class="card">
+  <div class="chart-title">After controlling for items bought and age, the churn gap between online and in-store customers widens from 3.6 to 7.1 percentage points</div>
+  <p class="ax-y">Y-axis: churn probability (probability of buying nothing in the same quarter this year, %)</p>
+  <svg viewBox="0 0 820 330" width="100%" role="img" aria-label="Dot plot: direct comparison gap 3.6 points; after controlling for items bought and age, gap 7.1 points">
+<line x1="60" x2="800" y1="270.0" y2="270.0" stroke="var(--line)"/><text x="54" y="274.0" text-anchor="end" font-size="11" fill="var(--ink-3)">46%</text>
+<line x1="60" x2="800" y1="233.3" y2="233.3" stroke="var(--line)"/><text x="54" y="237.3" text-anchor="end" font-size="11" fill="var(--ink-3)">48%</text>
+<line x1="60" x2="800" y1="196.7" y2="196.7" stroke="var(--line)"/><text x="54" y="200.7" text-anchor="end" font-size="11" fill="var(--ink-3)">50%</text>
+<line x1="60" x2="800" y1="160.0" y2="160.0" stroke="var(--line)"/><text x="54" y="164.0" text-anchor="end" font-size="11" fill="var(--ink-3)">52%</text>
+<line x1="60" x2="800" y1="123.3" y2="123.3" stroke="var(--line)"/><text x="54" y="127.3" text-anchor="end" font-size="11" fill="var(--ink-3)">54%</text>
+<line x1="60" x2="800" y1="86.7" y2="86.7" stroke="var(--line)"/><text x="54" y="90.7" text-anchor="end" font-size="11" fill="var(--ink-3)">56%</text>
+<line x1="60" x2="800" y1="50.0" y2="50.0" stroke="var(--line)"/><text x="54" y="54.0" text-anchor="end" font-size="11" fill="var(--ink-3)">58%</text>
+<line x1="180" x2="320" y1="152.7" y2="86.7" stroke="var(--ink-3)" stroke-dasharray="3 3"/>
+<line x1="180" x2="180" y1="147.2" y2="156.3" stroke="var(--ink-3)" stroke-width="2"/><line x1="173" x2="187" y1="147.2" y2="147.2" stroke="var(--ink-3)" stroke-width="2"/><line x1="173" x2="187" y1="156.3" y2="156.3" stroke="var(--ink-3)" stroke-width="2"/>
+<circle cx="180" cy="152.7" r="4" fill="var(--ink-3)"><title>In-store only: 52.4% (95% CI 52.2–52.7%)</title></circle>
+<text x="194" y="156.7" font-size="13" fill="var(--ink)">52.4%</text>
+<line x1="320" x2="320" y1="83.0" y2="90.3" stroke="var(--accent)" stroke-width="2"/><line x1="313" x2="327" y1="83.0" y2="83.0" stroke="var(--accent)" stroke-width="2"/><line x1="313" x2="327" y1="90.3" y2="90.3" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="320" cy="86.7" r="4" fill="var(--accent)"><title>Online only: 56.0% (95% CI 55.8–56.2%)</title></circle>
+<text x="334" y="90.7" font-size="13" fill="var(--ink)">56.0%</text>
+<text x="250" y="294" text-anchor="middle" font-size="12" fill="var(--ink-2)">Direct comparison (raw non-return rate)</text>
+<text x="250" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Gap: 3.6 pp</text>
+<line x1="520" x2="660" y1="224.2" y2="94.0" stroke="var(--ink-3)" stroke-dasharray="3 3"/>
+<line x1="520" x2="520" y1="220.5" y2="227.8" stroke="var(--ink-3)" stroke-width="2"/><line x1="513" x2="527" y1="220.5" y2="220.5" stroke="var(--ink-3)" stroke-width="2"/><line x1="513" x2="527" y1="227.8" y2="227.8" stroke="var(--ink-3)" stroke-width="2"/>
+<circle cx="520" cy="224.2" r="4" fill="var(--ink-3)"><title>In-store only: 48.5% (95% CI 48.3–48.7%)</title></circle>
+<text x="534" y="228.2" font-size="13" fill="var(--ink)">48.5%</text>
+<line x1="660" x2="660" y1="90.3" y2="97.7" stroke="var(--accent)" stroke-width="2"/><line x1="653" x2="667" y1="90.3" y2="90.3" stroke="var(--accent)" stroke-width="2"/><line x1="653" x2="667" y1="97.7" y2="97.7" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="660" cy="94.0" r="4" fill="var(--accent)"><title>Online only: 55.6% (95% CI 55.4–55.8%)</title></circle>
+<text x="674" y="98.0" font-size="13" fill="var(--ink)">55.6%</text>
+<text x="590" y="294" text-anchor="middle" font-size="12" fill="var(--ink-2)">Controlling for items and age (predicted churn)</text>
+<text x="590" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Gap: 7.1 pp (95% CI 6.8–7.4)</text>
+<circle cx="566" cy="318" r="5" fill="var(--ink-3)"/><text x="576" y="322" font-size="12" fill="var(--ink-2)">In-store only</text>
+<circle cx="686" cy="318" r="5" fill="var(--accent)"/><text x="696" y="322" font-size="12" fill="var(--ink-2)">Online only</text>
+</svg>
+  <p class="howto">How to read: dots are estimates; the vertical bars are 95% confidence intervals (the plausible range of the estimate; they are very narrow, about ±0.2 points, because the sample has hundreds of thousands of people). Left: the raw non-return rates (Step 1). Right: predicted churn probability after controlling for items bought and age = treat all 503,504 customers as that channel's customers, compute their churn probability with the model, and average. The 95% confidence interval of the gap does not include 0, so the gap is unlikely to be chance (p-value below 0.001). In-store customers' raw rate is inflated partly because they buy less; once items bought and age are equalized, the full gap shows. The Y-axis starts at 46% to make the gap visible.</p>
+</div>
+<p>With the same items bought and age, online-only customers' churn probability is 7.1 percentage points higher on average — larger than the 3.6-point direct comparison. 7.1 is the average across all customers; the table above shows the gap shrinks as purchases increase, almost disappearing at 10+ items. So <b>online customers are indeed more likely to churn than in-store customers</b>, especially those who buy little. The regression measures how big the gap is and whether it is reliable, but it cannot prove the gap is caused by "online" itself.</p>
+
+
+
+
+
+<h3>To dig further: data needed</h3>
+<table>
+  <tr><th>Open question</th><th>Data needed</th><th>From whom</th><th>What it would tell us</th></tr>
+  <tr><td><b>Why do online customers churn more?</b></td><td>Website and app visits, add-to-cart and checkout conversion rates; email, push, and other marketing send and open records; online order delivery times, returns, and customer service records</td><td>E-commerce, digital marketing, logistics and customer service</td><td>Fewer visits → traffic or marketing issue; visits steady but no purchases → product, price, or checkout issue; customers with slow delivery or many returns churn more → post-purchase experience issue</td></tr>
+  <tr><td><b>Is the higher online churn new this year, or has it always been this way?</b></td><td>Transaction data before September 2018 (at least one more year back), to compute each channel's non-return rate for the prior year's same quarter</td><td>Data provider (H&amp;M / Kaggle competition host)</td><td>Gap widened → online retention is one cause of the decline; gap unchanged → an inherent channel trait, to be improved separately</td></tr>
+</table>
+</section>
+
+<section class="panel" id="analysis-3">
+<!-- ============ Analysis 3 ============ -->
+<h2>Analysis 3: Which customers should get retention coupons?</h2>
+<p class="ask">Manager: "We have 50,000 retention coupons. Who should get them? How accurate is the list? Why not just send them to the people who've been away the longest?"</p>
+
+<div class="tldr lead">
+  <p><b>Conclusion</b></p>
+  <p>Send them to the model's list. Of the 50,000 people LightGBM picked, <b>68.4%</b> actually did not return in the next six months, versus only 57.5% for "pick whoever has been away the longest" — with the same 50,000 coupons, the model finds 5,440 more customers who will actually churn. But the people most likely to churn mostly spend very little, so I built a second "highest churn loss" List B, whose churners had spent 4.4 times as much as List A's in the past six months. Which list to use depends on whether the goal is to keep the most people or protect the most revenue.</p>
+  <p><b>Recommendation</b></p>
+  <ul>
+  <li><b>Use an experiment to decide how to send coupons:</b> the model only predicts who will churn; it cannot prove coupons retain customers. Randomly hold back a control group that gets no coupon, compare the two groups' repurchase rates afterward, convert that to net profit per coupon, then decide how to allocate the budget. For how big the control group must be and how to read the results, see <a href="#analysis-4">Analysis 4</a>.</li>
+</ul>
+</div>
+<p>This section uses <b>Precision@50K</b> to judge how accurate a list is: the share of the 50,000 people picked (50K) who actually did not buy again in the next six months.</p>
+
+<h3>Step 1: Define what "churn" means</h3>
+<p>Unlike subscriptions, clothing has no "cancel" action — customers just gradually stop coming — so a definition is needed. This project defines churn as: <b>no purchase in the 180 days after a given point in time</b>. 180 days rests on two grounds: ① looking at how often each customer usually comes back, 90% of customers return within 192 days, so six months without buying is beyond most people's habit; ② industry benchmarks put fashion customers at about 2–4 purchases a year, and the median here is 2 times a year. Both point to "about six months," so the round figure of 180 days was chosen.</p>
+
+<h3>Step 2: Data preparation before modeling</h3>
+<p><b>① Class balance:</b> churned vs not-churned customers are about 35:65, not very imbalanced. I tested 4 common balancing methods (e.g. duplicating or removing customers of one class); none improved Precision@50K, and they made the model's predicted churn probabilities too high, so no balancing was applied.</p>
+<p><b>② Preventing the model from learning patterns it shouldn't.</b> The data is split into three parts by time, rather than randomly splitting the same customers in half. Each part has a "prediction date": customer features are computed from the six months of purchases before that date, and whether the customer came back in the six months after it is the known outcome. The model learns only from earlier data and is evaluated on later, unseen data, so it can't "peek at the answers."</p>
+<table>
+  <tr><th>Purpose</th><th>Prediction date</th><th>Feature period (180 days before)</th><th>Churn outcome period (180 days after)</th></tr>
+  <tr><td>Training: the model learns patterns</td><td>2019-09-28</td><td>2019-04-02 – 2019-09-28</td><td>2019-09-29 – 2020-03-26</td></tr>
+  <tr><td>Validation: compare and choose methods</td><td>2019-12-26</td><td>2019-06-30 – 2019-12-26</td><td>2019-12-27 – 2020-06-23</td></tr>
+  <tr class="hi"><td>Test: final score (all results in this section)</td><td>2020-03-26</td><td>2019-09-29 – 2020-03-26</td><td>2020-03-27 – 2020-09-22</td></tr>
+</table>
+<p class="howto">Why a separate validation set: this project chooses among several options (which training data, which method). Choosing by repeatedly looking at test scores amounts to tuning to the test data and inflates the final score, so all choices are made on validation data, and the test data is used only once after the method is fixed.</p>
+<p>Also, in the spring 2019 data, customers who often bought kidswear "looked" especially likely to churn (they actually just stopped buying kidswear). So training uses only a prediction date after the kidswear cliff (2019-09-28 in the table above; originally two more prediction dates in March and June 2019 were also used). The improvement was confirmed on the validation date first; on the test data, Precision@50K then rose from 66.4% to 68.4%.</p>
+
+<h3>Step 3: Compare models and pick the most accurate list</h3>
+<p>The model learns from many examples where the outcome is already known: before a point in time, how many times a customer bought, how long since their last visit, how much they spent, and whether they churned afterward. It learns the patterns, then scores current customers' likelihood of churning, and the top 50,000 get coupons. I compared 5 common machine learning models, 1 traditional statistical model (BG/NBD), and the simple rule "pick whoever has been away the longest."</p>
+<p><b>Result:</b> using March 26, 2020 as the prediction date, each method picked 50,000 people from the 702K customers who shopped in the six months before it. Of LightGBM's list, 68.4% actually did not return in the next six months, versus 57.5% for "pick whoever has been away the longest" and 35.0% for random picks (equal to the overall churn rate). With the same 50,000 coupons, the model found <b>5,440 more</b> customers who would actually churn.</p>
+<table>
+  <tr><th>Method for picking 50,000 (test data)</th><th class="num">Number who actually churned</th><th class="num">Precision@50K</th></tr>
+  <tr class="hi"><td>LightGBM</td><td class="num">34,177</td><td class="num">68.4%</td></tr>
+  <tr><td>Away the longest</td><td class="num">28,737</td><td class="num">57.5%</td></tr>
+  <tr><td>Extra found by the model</td><td class="num"><b>5,440</b></td><td class="num">10.9 pp</td></tr>
+</table>
+
+<div class="card">
+  <div class="chart-title">LightGBM and XGBoost perform best on both validation and test data (test: prediction date March 26, 2020, 702K customers)</div>
+  <table>
+    <tr><th>Method</th><th class="num">Validation: Precision@50K</th><th class="num">Test: Precision@50K</th><th class="num">Test: AUC</th><th class="num">Test: Accuracy</th></tr>
+    <tr class="hi"><td>LightGBM (chosen)</td><td class="num">69.3%</td><td class="num">68.4%</td><td class="num">0.767</td><td class="num">70.9%</td></tr>
+    <tr><td>XGBoost</td><td class="num">69.2%</td><td class="num">68.4%</td><td class="num">0.767</td><td class="num">70.9%</td></tr>
+    <tr><td>Random Forest</td><td class="num">67.5%</td><td class="num">66.7%</td><td class="num">0.763</td><td class="num">70.6%</td></tr>
+    <tr><td>Decision tree</td><td class="num">66.4%</td><td class="num">66.2%</td><td class="num">0.760</td><td class="num">70.1%</td></tr>
+    <tr><td>Logistic regression</td><td class="num">67.4%</td><td class="num">66.2%</td><td class="num">0.761</td><td class="num">70.2%</td></tr>
+    <tr><td>BG/NBD (statistical model)</td><td class="num">59.4%</td><td class="num">57.3%</td><td class="num">0.717</td><td class="num">—</td></tr>
+    <tr><td>Away the longest (rule)</td><td class="num">60.1%</td><td class="num">57.5%</td><td class="num">0.661</td><td class="num">—</td></tr>
+  </table>
+  <p class="howto">Metric definitions: <b>Precision@50K</b> = share of the 50,000 picked who actually did not buy again in the next six months; it maps directly to the 50,000-coupon budget and is the main basis for choosing a model. The <b>Validation</b> column is Precision@50K on the validation data (prediction date 2019-12-26), used to choose methods; the other columns are test results. <b>AUC</b> = the probability that, for one randomly drawn churner and one non-churner, the model scores the churner higher (0.5 = random guessing, 1 = perfect); it reflects the model's overall ranking ability across all customers. <b>Accuracy</b> = correct predictions ÷ all people when churn probability ≥ 0.5 is classed as churn. BG/NBD and the rule produce only ranking scores, not probabilities, so they have no Accuracy.</p>
+  <details>
+    <summary>Note: why Precision, Recall, and F1 are not listed</summary>
+    <p style="margin-top:8px">All three are computed by classing "churn probability ≥ 0.5" as churn. At that threshold LightGBM would select 269.7K people, but the budget is only 50,000 coupons; in practice the top 50,000 by score get coupons, so the 0.5-threshold results don't match the real decision. Precision@50K is exactly Precision computed on those 50,000; Recall on the same 50,000 (how many actual churners the list covers) is 13.9%, which comes up in Step 4 when discussing the budget limit. The full figures for all three metrics are kept in the working notes.</p>
+  </details>
+</div>
+<p><b>LightGBM and XGBoost perform the same — why choose LightGBM?</b> Their Precision@50K is almost identical on both validation and test data, within the margin of error. LightGBM trains faster on the same machine (about 10 seconds vs about 12 for XGBoost), which saves time when regenerating the list every month, so LightGBM was chosen. Switching to XGBoost would not change the conclusions.</p>
+<p><b>Why choose the model by Precision@50K rather than Accuracy?</b> With a fixed budget of 50,000 coupons, Precision@50K directly represents "the share of coupons that go to people who will actually churn." Accuracy confirms the two best models' overall predictions aren't skewed (both 70.9%, others 70%–71%), but it's not suited to choosing a model: even predicting "no churn" for everyone gives 65.0% Accuracy, so models barely differ on it.</p>
+<p><b>Why is it more accurate than "away the longest"?</b> The model weighs two things most: how many days the customer shopped in the past six months, and "given this person's own usual habits, have they been away unusually long?" For example, a customer who normally comes every 30 days and hasn't come for 90 days is at 3 times their normal interval and is likely churning; another customer who normally comes once every six months is perfectly normal after 90 days away. Looking only at "how long since the last visit" would wrongly rank the latter as more likely to churn.</p>
+
+<h3>Step 4: The most likely to churn aren't necessarily the most worth keeping</h3>
+<p>Prompted by the manager's follow-up question, I found that most of the 50,000 people the model picked had visited only once and spent very little (average spend over the past six months 0.063, versus 0.274 for typical active customers, about a quarter; prices are relative values). So I built a second list ranked by "churn likelihood × spend over the past six months" — prioritizing people whose departure would cost the most.</p>
+<table>
+  <tr><th></th><th class="num">List A: most likely to churn</th><th class="num">List B: highest churn loss</th></tr>
+  <tr><td>People on the list</td><td class="num">50,000</td><td class="num">50,000</td></tr>
+  <tr><td>Number who actually churned ①</td><td class="num"><b>34,177</b></td><td class="num">19,419</td></tr>
+  <tr><td>Precision@50K (① ÷ 50,000)</td><td class="num"><b>68.4%</b></td><td class="num">38.8%</td></tr>
+  <tr><td>① Total spend of these churners over the past six months</td><td class="num">2,168</td><td class="num"><b>9,630 (4.4× List A)</b></td></tr>
+</table>
+<p class="howto">Terms: spend is the sum of relative prices in the data (the data has no real currency values), so it can only be compared in size.</p>
+<p>List A can retain more people; List B can retain more revenue. Which to choose depends on whether the goal is "keep the most people" or "protect the most revenue." Also, backtesting from March 26, 2020, 246K customers actually churned in the following six months, and a 50,000-person list covers only about 14% of them — the budget is a major constraint.</p>
+
+
+
+
+
+<h3>Monitoring after launch</h3>
+<p>After the model goes live, customer behavior and the data will change, so it needs regular checks to keep the list from silently becoming inaccurate. The kidswear cliff in this project is an example: the data changed suddenly at one point in time, and without checks the model would keep learning the wrong patterns.</p>
+<table>
+  <tr><th>What to monitor</th><th>How to check</th><th>When to act</th></tr>
+  <tr><td>Precision@50K of the list</td><td>After each coupon send, check whether listed customers actually churned within six months</td><td>Precision@50K clearly below 68.4%</td></tr>
+  <tr><td>Sudden changes in the data</td><td>Check each product group's share of units and the overall churn rate every month</td><td>A group's share shifts sharply within a month (e.g. kidswear 7.5% → 3.8%)</td></tr>
+  <tr><td>Regenerating the list</td><td>Before each send, rebuild the model and list with the latest six months of data</td><td>Always; if either check above is abnormal, find the cause before using the new list</td></tr>
+</table>
+
+<h3>Limitations</h3>
+<ul>
+  <li>"Spend" uses only the past six months as a proxy; it is not full customer lifetime value.</li>
+</ul>
+</section>
+
+<section class="panel" id="analysis-4">
+<!-- ============ Analysis 4 ============ -->
+<h2>Analysis 4: After sending coupons, how do we prove they work?</h2>
+<p class="ask">Manager: "The coupons go out next week. Finance is asking: afterward, how do we prove the coupons actually worked? Is holding back 10% without coupons enough? Can we avoid waiting six months for the result?"</p>
+
+<div class="tldr lead">
+  <p><b>Conclusion</b></p>
+  <p>Coupons must be sent with a randomly held-back control group; List A's control group needs <b>5,000 people</b> (the planned 10%, 2,500 people, gives only 54% power). At day 30, only check that there is no clear negative effect; draw conclusions at day 180. A simulated result shows how to decide: <b>List A's expected net profit is +31K, so keep sending; List B's is −97K, so stop</b>. Both decisions could be wrong.</p>
+  <p><b>Recommendations</b></p>
+  <ul>
+  <li><b>Keep sending to List A, and hold back a 5,000-person control group again next round</b>, accumulating results across rounds so the effect estimate gets more precise.</li>
+  <li><b>Stop sending to List B</b>: its expected net profit is negative (−97K). B's break-even threshold is very low (0.58 percentage points); reaching 80% power would need about 219K people in a single experiment (half treatment, half control; 109,500 coupons = 4.4× the coupon budget). Keeping this round's size would require pooling about 12 rounds (180 days each, about 6 years), which isn't worth it (assuming the baseline repurchase rate and coupon effect stay the same).</li>
+  <li><b>How to win over List B's customers later</b>: the note under Step 4 shows this stop decision was actually a misjudgment, but in practice the true effect is unknown before sending. This example shows that when the threshold is very low, a single experiment can hardly detect the effect (power only 13%), and the measured result depends heavily on the luck of the split. Rather than spending 6 years testing the same coupon, it's better to redesign the experiment with an option that has a bigger effect (e.g. a higher-value coupon).</li>
+  <li><b>Coupons saved</b>: send them first to customers further down List A. This is a new trial (higher baseline repurchase rate, possibly smaller coupon effect), so it also needs a random control group.</li>
+  <li><b>Before launching any new coupon plan, compute the control group size from that plan's own break-even threshold</b>; the lower the threshold, the more people are needed. When the threshold is too low, first assess whether "measuring it precisely" is worth the cost — for B it isn't. A large enough sample reduces misjudgment, but when the effect is very close to break-even, several rounds of results are still needed.</li>
+</ul>
+</div>
+<div class="caveat"><p><b>What in this section is real data and what is simulated:</b> the data ends on Sep 22, 2020 and contains no coupon records, so March 26, 2020 is used as the "send date" for a backtest. <b>Whether customers would come back without a coupon</b> is real data; <b>how many more people the coupon brings back</b> is simulated: the coupon's average effect was set in advance and kept hidden until the analysis was complete, then used for comparison. Coupon cost, gross profit per returning customer, and the 30-day coupon validity are scenario assumptions; money amounts are hypothetical units, not real currency (spend in the data is relative only).</p></div>
+<p>The manager's original plan: the 50,000 coupons are split between the two lists (List A and List B from Analysis 3, Step 4), 25,000 each, and each list randomly holds back 10% (2,500 people) without coupons for comparison. Coupons are meant to be sent regularly (with the list recomputed from the latest data before each send), so this experiment's results decide who gets coupons in <b>every future round</b>. This section checks whether the plan is adequate and shows how to decide once results are in.</p>
+<p>The main metric here is the <b>repurchase rate</b> = the number of customers in a group who buy again within 180 days of the send ÷ the group's size; the repurchase rate without a coupon is the <b>baseline repurchase rate</b>. The difference between two groups' rates is expressed in "percentage points" (e.g. 31% − 28% = 3 percentage points).</p>
+
+<h3>Experiment design at a glance (decided before sending)</h3>
+<table>
+  <tr><th>Item</th><th>Setting for this experiment</th></tr>
+  <tr><td>Null hypothesis H0 / alternative H1</td><td>H0: the treatment group and the control group (randomly held back, no coupon) have the same repurchase rate, i.e. the coupon has no effect; H1: they differ (the coupon could also backfire, so both directions are checked — a two-sided test)</td></tr>
+  <tr><td>Assignment</td><td>Random assignment from the list (Step 1)</td></tr>
+  <tr><td>Significance level</td><td>5%: even when the coupon does nothing, the two groups will differ due to the luck of the split; the threshold for "effective" is set where a luck-driven gap exceeds it only 5% of the time — i.e. a useless coupon is wrongly judged effective in at most about 5 of 100 experiments</td></tr>
+  <tr><td>Minimum detectable effect</td><td>Equal to the break-even threshold: 2 percentage points for List A (Step 2)</td></tr>
+  <tr><td>Power</td><td>80%: when the coupon's effect exactly equals the minimum detectable effect, about 80 of 100 experiments will detect it (judge it effective)</td></tr>
+  <tr><td>Sample size</td><td>List A: 25,000 in treatment, 5,000 in control (Step 2)</td></tr>
+  <tr><td>Observation period</td><td>180 days (Step 3)</td></tr>
+  <tr><td>Interpretation</td><td>The gap's 95% confidence interval excludes 0 (usually consistent with p-value &lt; 0.05) = a statistically detectable effect; whether to send is decided separately by whether expected net profit is positive or negative (Step 4)</td></tr>
+</table>
+<p class="howto">The test answers "does the coupon have an effect"; the send decision also depends on whether the effect covers the coupon's cost, so Step 4 decides by expected net profit.</p>
+
+<h3>Step 1: The control group must be random, not hand-picked</h3>
+<p>In List A (the top 25,000 by churn likelihood), the baseline repurchase rate without coupons is 28.4% (7,090 ÷ 25,000). These people would come back anyway, so only the gap versus a control group is the coupon's effect. Intuitively one might keep "the least likely to churn" as the control group. Testing this on real data (no coupons sent to anyone):</p>
+<div style="overflow-x:auto"><table>
+  <tr><th>How the control group is chosen (no coupons)</th><th class="num">Control repurchase rate</th><th class="num">Others' repurchase rate</th><th class="num">Gap (pp)</th></tr>
+  <tr><td>Pick the 2,500 least likely to churn</td><td class="num">770 ÷ 2,500 = 30.8%</td><td class="num">6,320 ÷ 22,500 = 28.1%</td><td class="num">−2.7</td></tr>
+</table></div>
+<p>Without a single coupon, the hand-picked control group already returns 2.7 percentage points more often than everyone else — more than the coupon's break-even threshold (2 points) — so the coupon's effect would be completely masked. Randomly drawing 2,500 people instead, repeated 1,000 times, the average gap is only +0.03 percentage points, leaving only the luck of the split; how big that luck is gets controlled by the sample size in Step 2.</p>
+
+<h3>Step 2: A 10% control group isn't enough; List A needs 5,000</h3>
+<p>First decide "how effective the coupon must be to be worth sending": for List A, each coupon costs 6 and each extra returning customer brings 300 in gross profit, so every 100 coupons must bring back at least 2 extra customers to break even — <b>break-even threshold = 2 percentage points</b>, used as the minimum detectable effect. List B gets the same coupon (also costing 6), but B's customers spend more: among customers who returned within 180 days without a coupon, List B's average spend is 3.44 times List A's, so gross profit per extra returning customer is taken as 300 × 3.44 ≈ 1,030, and the break-even threshold is only about 0.58 percentage points. Then compute the control group size:</p>
+<table>
+  <tr><th>List and control group size</th><th class="num">Power</th></tr>
+  <tr><td>A: 2,500 (the original 10%)</td><td class="num">54%</td></tr>
+  <tr class="hi"><td><b>A: 5,000 (chosen)</b></td><td class="num"><b>80%</b></td></tr>
+  <tr><td>B: 5,650 (after the manager's adjustment)</td><td class="num">13%</td></tr>
+  <tr><td>B: infinitely large control (treatment still 25,000)</td><td class="num">48%</td></tr>
+  <tr><td>B: keep this round's size, pool 12 rounds (180 days each, about 6 years)</td><td class="num">81%</td></tr>
+  <tr><td>B: 109,500 each in treatment and control (219K total; coupons = 4.4× the coupon budget)</td><td class="num">80%</td></tr>
+</table>
+<p class="howto">How it's calculated: the budget is fixed at 25,000 coupons; taking the control group out of 25,000 would leave only 22,500 coupons, so the list extends further down — for List A, 5,000 people are randomly drawn from the top 30,000 as the control and the other 25,000 get coupons. A's baseline repurchase rate is 29.3% (top 30,000, 8,795 ÷ 30,000). List B also extends down, randomly drawing 5,650 from the top 30,650, with a baseline repurchase rate of 61.5% (18,863 ÷ 30,650). Power = the probability of judging the coupon effective when its effect exactly equals the break-even threshold, computed with the standard formula for comparing two proportions. Industry practice usually requires at least 80% power.</p>
+<p>B was also originally planned at 10%; after seeing A's calculation, the manager reused A's 2-point threshold and set B's control group to 5,650. The two lists are two independent experiments (each treatment group is compared only with its own control), so the control groups need not be the same size and should be computed from each list's own baseline and break-even threshold. B's threshold is only 0.58 points, while the treatment group of 25,000 alone has a standard error of about 0.31 points in its repurchase rate (a 95% confidence interval is about ±2 standard errors). Since 0.58 is less than 2 standard errors, power tops out at 48% no matter how big the control group gets. Detecting such a small effect would in theory require a larger treatment group or pooling several rounds, but for B that costs too much (see the recommendations at the end of this analysis). Low power means "this experiment can hardly detect B's effect," not that B isn't worth sending; whether to send still depends on Step 4's expected net profit.</p>
+
+<h3>Step 3: Look at day 30, but conclude at day 180</h3>
+<p>Real data shows that, without coupons, only 31% of customers who return within 180 days do so in the first 30 days, so looking only at 30 days misses most repurchases. It can also be inferred that a 30-day coupon pulls forward purchases from customers who would have returned in months 2–6, which a 30-day comparison counts as extra customers brought by the coupon. The simulation includes this pull-forward to show its impact: List A's gap is 4.26 percentage points at day 30 but only 2.41 by day 180. So day 30 is used only to confirm there is no clear negative effect; whether to keep sending is decided at day 180.</p>
+
+<h3>Step 4: Results (simulated) — keep sending to List A, stop List B</h3>
+<p>The decision rule is <b>send if expected net profit is positive, don't if negative</b> — i.e. which side of the break-even threshold the measured gap falls on; the confidence interval describes the estimate's error and risk.</p>
+<div class="card">
+  <div class="chart-title">List A's measured gap is above break-even; List B's is below (180 days, simulated)</div>
+  <svg viewBox="0 0 820 200" width="100%" role="img" aria-label="Dot plot: List A gap +2.41 above break-even 2.00; List B gap +0.21 below break-even 0.58">
+<line x1="190.0" x2="190.0" y1="20" y2="170" stroke="var(--line)"/><text x="190.0" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">−2</text>
+<line x1="255.7" x2="255.7" y1="20" y2="170" stroke="var(--line)"/><text x="255.7" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">−1</text>
+<line x1="321.4" x2="321.4" y1="20" y2="170" stroke="var(--ink-3)"/><text x="321.4" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">0</text>
+<line x1="387.1" x2="387.1" y1="20" y2="170" stroke="var(--line)"/><text x="387.1" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">+1</text>
+<line x1="452.9" x2="452.9" y1="20" y2="170" stroke="var(--line)"/><text x="452.9" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">+2</text>
+<line x1="518.6" x2="518.6" y1="20" y2="170" stroke="var(--line)"/><text x="518.6" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">+3</text>
+<line x1="584.3" x2="584.3" y1="20" y2="170" stroke="var(--line)"/><text x="584.3" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">+4</text>
+<line x1="650.0" x2="650.0" y1="20" y2="170" stroke="var(--line)"/><text x="650.0" y="188" text-anchor="middle" font-size="11" fill="var(--ink-3)">+5</text>
+<text x="176" y="64.0" text-anchor="end" font-size="13" fill="var(--ink)">List A</text><text x="176" y="80.0" text-anchor="end" font-size="11" fill="var(--ink-2)">(most likely to churn)</text>
+<line x1="452.9" x2="452.9" y1="49.0" y2="81.0" stroke="var(--neg)" stroke-width="3"/><text x="452.9" y="44.0" text-anchor="middle" font-size="11" fill="var(--ink-2)">Break-even 2.00</text>
+<line x1="388.5" x2="571.1" y1="65.0" y2="65.0" stroke="var(--accent)" stroke-width="3"/><circle cx="479.8" cy="65.0" r="6" fill="var(--accent)"><title>List A (most likely to churn): +2.41 pp (95% CI +1.02 to +3.80)</title></circle>
+<text x="583.1" y="70.0" font-size="13" fill="var(--ink)">+2.41 (+1.02 to +3.80) → <tspan font-weight="700">Keep</tspan></text>
+<text x="176" y="134.0" text-anchor="end" font-size="13" fill="var(--ink)">List B</text><text x="176" y="150.0" text-anchor="end" font-size="11" fill="var(--ink-2)">(highest churn loss)</text>
+<line x1="359.5" x2="359.5" y1="119.0" y2="151.0" stroke="var(--neg)" stroke-width="3"/><text x="359.5" y="114.0" text-anchor="middle" font-size="11" fill="var(--ink-2)">Break-even 0.58</text>
+<line x1="243.2" x2="426.6" y1="135.0" y2="135.0" stroke="var(--accent)" stroke-width="3"/><circle cx="335.2" cy="135.0" r="6" fill="var(--accent)"><title>List B (highest churn loss): +0.21 pp (95% CI −1.19 to +1.60)</title></circle>
+<text x="438.6" y="140.0" font-size="13" fill="var(--ink)">+0.21 (−1.19 to +1.60) → <tspan font-weight="700">Stop</tspan></text>
+</svg>
+  <p class="ax-x">X-axis: treatment − control gap in 180-day repurchase rate (percentage points)</p>
+  <p class="howto">How to read: dots are the measured gaps, horizontal bars are 95% confidence intervals (the plausible range of the true effect after accounting for the luck of the split), and short vertical lines are break-even thresholds.</p>
+</div>
+<div style="overflow-x:auto"><table>
+  <tr><th></th><th class="num">List A</th><th class="num">List B</th></tr>
+  <tr><td>Treatment repurchase rate</td><td class="num">7,968 ÷ 25,000 = 31.9%</td><td class="num">15,724 ÷ 25,000 = 62.9%</td></tr>
+  <tr><td>Control repurchase rate</td><td class="num">1,473 ÷ 5,000 = 29.5%</td><td class="num">3,542 ÷ 5,650 = 62.7%</td></tr>
+  <tr><td>Gap (95% confidence interval)</td><td class="num"><b>+2.41</b> (+1.02 to +3.80)</td><td class="num"><b>+0.21</b> (−1.19 to +1.60)</td></tr>
+  <tr><td>p-value</td><td class="num">0.0008 (effect detected)</td><td class="num">0.77 (no effect detected)</td></tr>
+  <tr><td>Break-even threshold</td><td class="num">2.00</td><td class="num">0.58</td></tr>
+  <tr><td>Expected net profit (range from the CI)</td><td class="num"><b>+31K</b> (−73K to +135K)</td><td class="num"><b>−97K</b> (−456K to +262K)</td></tr>
+  <tr class="hi"><td>Decision</td><td class="num"><b>Keep sending</b></td><td class="num"><b>Stop</b></td></tr>
+</table></div>
+<p class="howto">Expected net profit = gap × 25,000 × gross profit per returning customer − 25,000 × cost per coupon.</p>
+<p>Both lists' confidence intervals include the break-even threshold, so both decisions could be wrong: the lower bound of the 95% CI for A's expected net profit is a net loss of 73K. Repeating the experiment under the simulation settings, the chance the measured gap lands on the wrong side of the threshold is about 33% for A and about 7% for B (see note).</p>
+<details>
+  <summary>Note: the actual effect in this split, and the probability of misjudgment (compared after the analysis)</summary>
+  <p style="margin-top:8px">In this particular split, the coupon actually brought back 2.58 percentage points more of List A — above the threshold, so keeping it was correct. For List B the coupon actually brought back 1.61 percentage points more, well above the 0.58 threshold, so this stop decision was a misjudgment. The cause is the luck of the split: ignoring the coupon's effect, 62.69% of B's control group would have returned anyway versus only 61.28% of the treatment group, so the groups started 1.41 percentage points apart, which cancelled out the coupon's effect.</p>
+  <p>Repeating 1,000 times under the simulation settings (re-randomizing the split and regenerating the coupon effect each time), the share of times the measured gap lands on the wrong side of the threshold is about 33% for List A and about 7% for List B — this time B happened to be unlucky; increasing B's control group to 20,000 would reduce it to about 1%. This answers a different question from Step 2's power: power asks "when the effect exactly equals the threshold, can we detect it," where A beats B; the misjudgment rate depends on how close the true effect is to the threshold. A's true effect averages about 2.40, only 0.40 above its threshold of 2, so even with 80% power it is often misjudged; B's is about 1.61, far above its 0.58 threshold, so despite low power it is misjudged less often.</p>
+</details>
+
+
+<h3>To dig further: data needed</h3>
+<table>
+  <tr><th>Open question</th><th>Data needed</th><th>From whom</th><th>What it would tell us</th></tr>
+  <tr><td><b>How big is the coupon's real effect?</b> (Analysis 4 is simulated)</td><td>After actually sending coupons using Analysis 4's design, the 180-day repurchase rates of the treatment and control groups</td><td>Marketing, CRM</td><td>The real net profit per coupon, to decide the next budget and list allocation</td></tr>
+</table>
+<h3>Limitations</h3>
+<ul>
+  <li>Analysis 4's coupon results are simulated; the coupon's real effect must be verified with the same experiment design after a real send.</li>
+  <li>The lists pick customers "most likely to churn," not necessarily those who "stay only if they get a coupon"; once there is data from a coupon experiment, the next step is to find customers who respond to coupons and target them.</li>
+</ul>
+</section>
+</template>
+<script>
+// 語言切換：中文寫在 <main>，英文版放在 template#main-en，切換時整塊替換；選擇記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }  // 從帶參數的連結進來，也記住語言
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;  // 第一次載入且是中文就不用重建
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    // 站內連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || a.getAttribute('href').startsWith('#')) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    if (!first) document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);  // 網址同步，分享出去的連結語言一致
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+</script><!-- i18n:end -->
 <script>
 // 分頁切換：依網址 # 顯示對應分析（沒有 JS 時全部內容照常顯示）
 (function () {
-  const panels = [...document.querySelectorAll('.panel')], links = [...document.querySelectorAll('.tabs a')];
   document.body.classList.add('js-tabs');
   function show(scroll) {
+    const panels = [...document.querySelectorAll('.panel')], links = [...document.querySelectorAll('.tabs a')];
     const id = panels.some(p => '#' + p.id === location.hash) ? location.hash.slice(1) : 'overview';
     panels.forEach(p => { p.hidden = p.id !== id; });
     links.forEach(a => a.setAttribute('aria-current', a.hash === '#' + id ? 'page' : 'false'));
     if (scroll) window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', () => show(true));
+  document.addEventListener('langchange', () => show(false));  // 切換語言後內容重建，重新套用分頁
   show(false);
 })();
 </script>

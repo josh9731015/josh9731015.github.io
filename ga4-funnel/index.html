@@ -126,9 +126,30 @@
   details.sec > summary h2 { margin: 0; padding: 18px 0; border-top: none; }
   details.sec > summary:hover h2 { color: var(--accent); }
   details.sec[open] { padding-bottom: 24px; }
+  /* i18n:start 語言切換 */
+  .lang-switch { position: absolute; top: 12px; right: 16px; z-index: 10; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  html.lang-pending main { visibility: hidden; }
+  /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
+  html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
+  html[lang="en"] th.num { white-space: normal; }
+  html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
+  /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
+  /* i18n:end */
 </style>
+<!-- i18n:start --><script>
+// 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文
+(function () { var l = null; try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('lang'); } catch (e) {} if (l === 'en') document.documentElement.classList.add('lang-pending'); })();
+</script><!-- i18n:end -->
 </head>
 <body>
+<!-- i18n:start --><div class="lang-switch">
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div><!-- i18n:end -->
 <main>
 
 <header>
@@ -145,7 +166,7 @@
 
 <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
   <div class="stat"><b>45,107</b><span>分析期間看過商品的使用者</span></div>
-  <div class="stat"><b>6.11%</b><span>按照順序走完四步並購買（2,755 ÷ 45,107）</span></div>
+  <div class="stat"><b>6.11%</b><span>按照順序走完四步並購買的比例（2,755 ÷ 45,107）</span></div>
   <div class="stat"><b>26.6%</b><span>看過商品後加入購物車的比例（12,016 ÷ 45,107），各步中最低</span></div>
 </div>
 
@@ -478,5 +499,392 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </footer>
 
 </main>
+<!-- i18n:start --><template id="main-en" data-title="E-commerce Conversion Funnel Analysis" data-desc="Jiacheng (Josh) Yu's self-directed project: analyzing the purchase funnel in Google's GA4 e-commerce sample data with BigQuery SQL and checking event-tracking data quality.">
+<header>
+  <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
+  <h1>E-commerce Conversion Funnel Analysis (BigQuery SQL)</h1>
+  <p class="meta">Jiacheng (Josh) Yu | Google's official GA4 e-commerce sample data | BigQuery SQL, Claude Code</p>
+</header>
+
+<p>This project uses SQL to answer a common e-commerce question: "<b>At which step of the purchase flow do site visitors drop off most?</b>" The purchase flow has four steps — "view item → add to cart → begin checkout → purchase" — and fewer people make it through each step, like a funnel, hence the name conversion funnel. The data is website behavior from the Google Merchandise Store, recorded by Google's web analytics tool GA4 (Google Analytics 4). The project used an AI-assisted workflow: the SQL was written with help from Claude Code, while I decided the analysis scope and page presentation and reviewed each query's logic and intermediate results section by section.</p>
+
+<div class="caveat">
+  <p><b>Data limitations first:</b> To protect privacy, Google replaced parts of this data with placeholder values (e.g. "(not set)"), and the documentation notes the data may be internally inconsistent, so user counts and revenue <b>cannot be treated as real business results</b>. The period covers Black Friday and Christmas and does not represent a typical month. The point of this page is to show how to build a funnel with SQL while checking data quality along the way.</p>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+  <div class="stat"><b>45,107</b><span>users who viewed an item during the analysis period</span></div>
+  <div class="stat"><b>6.11%</b><span>share who completed all four steps in order and purchased (2,755 ÷ 45,107)</span></div>
+  <div class="stat"><b>26.6%</b><span>added to cart after viewing an item (12,016 ÷ 45,107), the lowest of all steps</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>Conclusion:</b> Of the 45,107 users who viewed an item between 2020-11-26 and 2021-01-31, 6.11% completed all four steps in order and purchased. The biggest drop-off is "view item → add to cart": conversion rate 26.6% (users reaching this step ÷ users reaching the previous step), with 33,091 users lost; it remains the lowest of the three conversions under several alternative calculations (see Analyses 3 and 4). In addition, of the 2,755 purchasers who completed all four steps in order, 92.4% completed every step from some item view to purchase within 30 minutes each: the final stretch before purchase is mostly done in one go (this method cannot show whether users had deliberated for days beforehand).</p>
+  <p><b>Recommendations:</b> ① There is currently no benchmark to judge whether 26.6% is low; a next step is to compare by device and traffic source to find clearly underperforming segments, then use product-page interaction data to find the cause (see "To dig further: data needed"). ② The final stretch before purchase is mostly completed continuously in a short time, so cart and checkout improvements should focus on in-the-moment ease of use (see Analysis 3). ③ The "add to cart" event has no records on many days in November 2020 (see "Data quality checks," item 1); in a real environment, check the tracking setup first and set up daily monitoring (see "Monitoring in production").</p>
+</div>
+
+<details class="sec">
+<summary><h2>Data</h2></summary>
+<p>Source: <code>bigquery-public-data.ga4_obfuscated_sample_ecommerce</code>, one table per day (e.g. <code>events_20201201</code>). Each row is an "event," i.e. one action a user takes on the site, such as opening a product page.</p>
+<table>
+  <tr><th>Period</th><th class="num">Days</th><th class="num">Events (all event types)</th></tr>
+  <tr><td>All data (2020-11-01 – 2021-01-31)</td><td class="num">92</td><td class="num">4,295,584</td></tr>
+  <tr class="hi"><td>Funnel analysis period (2020-11-26 – 2021-01-31)</td><td class="num">67</td><td class="num">3,089,233</td></tr>
+</table>
+<table>
+  <tr><th>Columns used</th><th>Meaning</th></tr>
+  <tr><td><code>event_name</code></td><td>Event name (see table below)</td></tr>
+  <tr><td><code>user_pseudo_id</code></td><td>Anonymous user ID (per browser; switching devices, clearing cookies, or using a private window produces a new ID)</td></tr>
+  <tr><td><code>event_timestamp</code></td><td>Time Google Analytics received the event, in microseconds (millionths of a second)</td></tr>
+  <tr><td><code>event_date</code></td><td>Event date (text, e.g. 20201201)</td></tr>
+  <tr><td><code>ecommerce.transaction_id</code></td><td>Order ID</td></tr>
+  <tr><td><code>ecommerce.purchase_revenue</code></td><td>Order amount (USD; identical to the <code>purchase_revenue_in_usd</code> column in all 5,242 purchases with an amount)</td></tr>
+</table>
+<p>The four funnel steps map to four events:</p>
+<table>
+  <tr><th>Step</th><th>Event name</th><th>Meaning</th></tr>
+  <tr><td>1 View item</td><td><code>view_item</code></td><td>Opens a product page</td></tr>
+  <tr><td>2 Add to cart</td><td><code>add_to_cart</code></td><td>Adds an item to the cart</td></tr>
+  <tr><td>3 Begin checkout</td><td><code>begin_checkout</code></td><td>Enters the checkout flow</td></tr>
+  <tr><td>4 Purchase</td><td><code>purchase</code></td><td>Completes payment</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>Data quality checks</h2></summary>
+<p>Before building the funnel, I checked the records of these four events. From 11-26 onward there are "view item" and "purchase" records every day (at least 1,390 and 14 per day respectively, based on daily counts). Of the four items below, items 1 and 4 changed how the funnel is calculated; items 2 and 3 affect only revenue (the funnel counts users).</p>
+
+<h3>1. "Add to cart" has no records on 18 days in November → the analysis period starts on 11-26</h3>
+<p>On 2020-11-02 – 11-15 and 11-21 – 11-24, 18 days in total, "add to cart" had 0 records per day, while "begin checkout" had 132–605 per day over the same period. It is unlikely that nobody added to cart; the cause could be a tracking gap or how the sample data was processed, which the data cannot distinguish. Records resume from 11-25 (229–2,135 per day afterward). Since 11-25 is the first day of recovery and it is unclear whether the whole day was recorded, the analysis conservatively starts the next day, 11-26 (11-01 and 11-20 also have very low counts and fall within the excluded range).</p>
+<details><summary>Daily counts and SQL</summary>
+<table>
+  <tr><th>Date</th><th class="num">add_to_cart per day</th><th class="num">begin_checkout per day</th></tr>
+  <tr><td>2020-11-01</td><td class="num">4</td><td class="num">127</td></tr>
+  <tr class="hi"><td>2020-11-02 – 11-15 (14 days)</td><td class="num">0</td><td class="num">132–605</td></tr>
+  <tr><td>2020-11-16 – 11-19</td><td class="num">85–621</td><td class="num">335–693</td></tr>
+  <tr><td>2020-11-20</td><td class="num">15</td><td class="num">318</td></tr>
+  <tr class="hi"><td>2020-11-21 – 11-24 (4 days)</td><td class="num">0</td><td class="num">166–366</td></tr>
+  <tr><td>2020-11-25</td><td class="num">297</td><td class="num">387</td></tr>
+  <tr><td>2020-11-26 – 2021-01-31</td><td class="num">229–2,135</td><td class="num">140–1,016</td></tr>
+</table>
+<div class="sqltags"><span class="tag">COUNTIF conditional count</span><span class="tag">Wildcard table events_*</span></div>
+<pre><code>SELECT
+  event_date,
+  COUNTIF(event_name = 'add_to_cart')    AS n_cart,
+  COUNTIF(event_name = 'begin_checkout') AS n_checkout
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name IN ('add_to_cart', 'begin_checkout')
+GROUP BY event_date
+ORDER BY event_date;</code></pre>
+</details>
+
+<h3>2. 15.9% of purchase events have no order ID → excluded from revenue, kept for user counts</h3>
+<p>Of all 5,692 purchase events, 883 have an order ID of <code>(not set)</code> and 23 are NULL, 906 in total (15.9%). Of these, 456 still have a purchase amount above 0, so a placeholder ID does not mean there was no purchase. The funnel counts users and does not need order IDs, so these events are kept; revenue, however, requires merging duplicate records by order ID, so these events are excluded there (see the next item), which makes the next item's revenue a lower bound. If the funnel also excluded these events, purchasers would go from 2,755 to 2,489, and "begin checkout → purchase" from 57.4% to 51.8%.</p>
+
+<h3>3. The same order is recorded multiple times → deduplicate before computing revenue (keep one record per order)</h3>
+<table>
+  <tr><th>Order ID situation (all 92 days, excluding the 906 in the previous item)</th><th class="num">Orders (user + ID)</th><th class="num">Times recorded</th><th class="num">Extra duplicate records</th></tr>
+  <tr><td>Appears once</td><td class="num">4,125</td><td class="num">4,125</td><td class="num">0</td></tr>
+  <tr><td>Resubmitted by the same user (e.g. order 119233 recorded 4 times)</td><td class="num">311</td><td class="num">628</td><td class="num">317</td></tr>
+  <tr><td>Same ID used by different users (15 IDs × 2 users)</td><td class="num">30</td><td class="num">33</td><td class="num">3</td></tr>
+  <tr class="total"><td>Total</td><td class="num">4,466</td><td class="num">4,786</td><td class="num">320</td></tr>
+</table>
+<p class="howto">Extra duplicate records = times recorded − orders; total "times recorded" 4,786 = 5,692 − 906.</p>
+<details><summary>Note: why does "same ID used by different users" have 3 extra records?</summary>
+<p>Each of the 15 IDs is used by 2 users, so there are really 15 × 2 = 30 orders, but they were recorded 33 times; the extra 33 − 30 = 3 are one of the users resubmitting their own order. For example, order 140428:</p>
+<table>
+  <tr><th>User</th><th>Time</th><th class="num">Amount</th><th>Note</th></tr>
+  <tr><td>70837463…</td><td>2020-11-23 20:40:09.574</td><td class="num">13</td><td>A's order</td></tr>
+  <tr class="hi"><td>70837463…</td><td>2020-11-23 20:40:09.606</td><td class="num">13</td><td>A resubmits (the 1 extra record)</td></tr>
+  <tr><td>86949711…</td><td>2020-12-18 15:28:10.972</td><td class="num">27</td><td>B's separate order</td></tr>
+</table>
+<p>So deduplication uses "user + order ID" as the unit: A's duplicate is removed, but B's order is kept.</p>
+</details>
+<p>Duplicate records with the same user and order ID are reduced to one (314 groups resubmitted by the same user — the 311 in the table plus 3 from "same ID used by different users" — where every record in a group has the same amount, so which one is kept does not affect revenue). After removing the 320 extra records, 4,466 remain, and revenue goes from USD 330,348 to USD 308,830; without this step revenue would be overstated by 7.0% (330,348 ÷ 308,830 − 1). For each of the 15 shared IDs, the two users' purchase dates and amounts differ, which more likely reflects ID collisions caused by placeholder values, so they are treated as separate orders and not merged. The funnel counts users and is not affected by this item.</p>
+<details><summary>SQL: deduplicate by "user + order ID"</summary>
+<div class="sqltags"><span class="tag">Window function ROW_NUMBER</span><span class="tag">QUALIFY</span><span class="tag">CTE</span></div>
+<pre><code>WITH p AS (
+  SELECT ecommerce.transaction_id AS tx, user_pseudo_id, event_timestamp,
+         ecommerce.purchase_revenue AS revenue
+  FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+  WHERE event_name = 'purchase'
+    AND ecommerce.transaction_id != '(not set)'  -- NULLs are also excluded by this comparison
+  -- Keep one row per user + order ID (duplicates have the same amount, and ordering by time is just to make the result deterministic)
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY user_pseudo_id, ecommerce.transaction_id ORDER BY event_timestamp) = 1
+)
+SELECT COUNT(*) AS n_rows, ROUND(SUM(revenue)) AS revenue
+FROM p;</code></pre>
+</details>
+
+<h3>4. Some "view item" and "add to cart" events have identical timestamps → simultaneous counts as in order</h3>
+<p>During the analysis period, 6,569 users (54.7% of the 12,016 who reached "add to cart") had at least one "view item" and "add to cart" with exactly the same timestamp. According to Google's documentation, web event timestamps are the time Google Analytics "received" the event, and multiple events sent in one batch share the same time, so their order cannot be determined from time (GA4 data from 2024 onward has a column recording the order within a batch; this 2020 data does not). Requiring each step to be strictly "later" than the previous one would reduce users reaching "add to cart" from 12,016 to 11,535, undercounting 481, so this analysis treats "simultaneous" as in order.</p>
+</details>
+
+<details class="sec" open>
+<summary><h2>Analysis</h2></summary>
+
+<h3>Analysis 1: How many users reached each step</h3>
+<p>Taking the question literally first, I counted the users who performed each event during the analysis period (results are in the "No order" columns of the Analysis 2 table). This method only checks "did it happen during the period," not the order: someone who began checkout and viewed an item the next day is still counted in step 3 (begin checkout). Result: 45,107 viewed an item and 3,351 purchased, 7.43% overall (full figures in the "No order" columns of the Analysis 2 table).</p>
+<p><b>Conclusion: Without checking order, the overall conversion rate is 7.43%, but this includes users who did not go through the steps in order, so an order check is needed.</b></p>
+<details><summary>SQL: count all four steps in one scan</summary>
+<div class="sqltags"><span class="tag">Conditional aggregation COUNT(DISTINCT IF(...))</span><span class="tag">_TABLE_SUFFIX date filter</span></div>
+<pre><code>SELECT
+  COUNT(DISTINCT IF(event_name = 'view_item',      user_pseudo_id, NULL)) AS s1_view_item,
+  COUNT(DISTINCT IF(event_name = 'add_to_cart',    user_pseudo_id, NULL)) AS s2_add_to_cart,
+  COUNT(DISTINCT IF(event_name = 'begin_checkout', user_pseudo_id, NULL)) AS s3_begin_checkout,
+  COUNT(DISTINCT IF(event_name = 'purchase', user_pseudo_id, NULL)) AS s4_purchase
+FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+WHERE event_name IN ('view_item', 'add_to_cart', 'begin_checkout', 'purchase')
+  AND _TABLE_SUFFIX &gt;= '20201126';</code></pre>
+</details>
+
+<p class="bridge"><b>Why look at this next:</b> without an order check, users who skip around are counted in later steps, so user counts for steps 2–4 are all overstated.</p>
+
+<h3>Analysis 2: Adding step order</h3>
+<p>Rule: each step only counts if it happens after the previous step (or at the same time; see data quality check item 4). For example, an add to cart before viewing an item does not count, but a later add to cart after viewing still does.</p>
+<table>
+  <tr><th>Step</th><th class="num">No order: users</th><th class="num">No order: users ÷ previous step</th><th class="num">In order: users</th><th class="num">In order: conversion rate (÷ previous step)</th><th class="num">In order: users lost</th></tr>
+  <tr><td>1 View item</td><td class="num">45,107</td><td class="num">—</td><td class="num">45,107</td><td class="num">—</td><td class="num">—</td></tr>
+  <tr class="hi"><td>2 Add to cart</td><td class="num">12,023</td><td class="num">26.7%</td><td class="num">12,016</td><td class="num">26.6%</td><td class="num">33,091</td></tr>
+  <tr><td>3 Begin checkout</td><td class="num">6,509</td><td class="num">54.1%</td><td class="num">4,802</td><td class="num">40.0%</td><td class="num">7,214</td></tr>
+  <tr><td>4 Purchase</td><td class="num">3,351</td><td class="num">51.5%</td><td class="num">2,755</td><td class="num">57.4%</td><td class="num">2,047</td></tr>
+  <tr class="total"><td>Overall (step 4 ÷ step 1)</td><td class="num"></td><td class="num">7.43%</td><td class="num"></td><td class="num">6.11%</td><td class="num"></td></tr>
+</table>
+<p class="howto">Users lost = previous step's users − this step's users. The "No order" ratios are not true conversion rates: for example, some of the 3,351 purchasers did not go through the earlier steps in order.</p>
+<p>With order applied, step 2 (add to cart) barely changes (12,023 → 12,016); the difference is concentrated in step 3 (begin checkout): from 6,509 to 4,802 users, 1,707 fewer, broken down as follows:</p>
+<table>
+  <tr><th>Users who began checkout</th><th class="num">Users</th></tr>
+  <tr><td>Began checkout during the analysis period (no order)</td><td class="num">6,509</td></tr>
+  <tr><td style="padding-left:26px">Of which began checkout after viewing an item</td><td class="num">6,441</td></tr>
+  <tr><td style="padding-left:42px">Of which completed "view item → add to cart → begin checkout" in order</td><td class="num">4,802</td></tr>
+  <tr class="hi"><td style="padding-left:42px">Began checkout after viewing, but without adding to cart in between</td><td class="num">1,639</td></tr>
+  <tr><td style="padding-left:26px">Others (no item view during the period, or all checkouts before the first item view)</td><td class="num">68</td></tr>
+</table>
+<p>Without the order check, "add to cart → begin checkout" looks higher than "begin checkout → purchase" (54.1% vs 51.5%); with it, they are 40.0% vs 57.4% — the opposite conclusion.</p>
+<p><b>Conclusion: With order applied, the biggest drop-off is still "view item → add to cart" (26.6%, 33,091 users lost). The order check reverses the ranking of the last two conversions, so all later analyses use the in-order version.</b></p>
+<details><summary>Note: did users who checked out without an add-to-cart record add to cart earlier?</summary>
+<p>Of the 1,639 users, 1,141 have no add-to-cart record at all in the 92 days. One possibility is that they added items to the cart earlier (before 11-01, or on the November days with no records), took time to consider, and came back to check out. If so, their checkouts should cluster in the early part of the analysis period.</p>
+<table>
+  <tr><th>When checkout began</th><th class="num">Users who reached checkout in order</th><th class="num">Users with no add-to-cart record</th></tr>
+  <tr><td>2020-11-26 – 12-20 (first 25 days)</td><td class="num">3,001 (62.5%)</td><td class="num">624 (54.7%)</td></tr>
+  <tr class="hi"><td>2020-12-21 – 2021-01-31 (last 42 days)</td><td class="num">1,801 (37.5%)</td><td class="num">517 (45.3%)</td></tr>
+  <tr class="total"><td>Total</td><td class="num">4,802</td><td class="num">1,141</td></tr>
+</table>
+<p>In fact, users with no add-to-cart record are more likely to check out in the last 42 days (45.3%) than users who completed the flow normally (37.5%), so "added to cart earlier" is not the main explanation. The remaining possibilities are missing records or a checkout path that bypasses the cart, which the data cannot distinguish (impact assessed in Analysis 4).</p>
+</details>
+<details><summary>SQL: in-order funnel</summary>
+<div class="sqltags"><span class="tag">Chained CTEs</span><span class="tag">Non-equi JOIN (ON with &gt;=)</span><span class="tag">MIN + GROUP BY</span></div>
+<pre><code>WITH ev AS (
+  SELECT user_pseudo_id AS user, event_name, event_timestamp AS ts
+  FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+  WHERE event_name IN ('view_item', 'add_to_cart', 'begin_checkout', 'purchase')
+    AND _TABLE_SUFFIX &gt;= '20201126'
+),
+s1 AS (  -- each user's first item view
+  SELECT user, MIN(ts) AS t1 FROM ev WHERE event_name = 'view_item' GROUP BY user
+),
+s2 AS (  -- first add to cart after (or at the same time as) the item view
+  SELECT s1.user, MIN(ev.ts) AS t2
+  FROM s1 JOIN ev
+    ON ev.user = s1.user AND ev.event_name = 'add_to_cart' AND ev.ts &gt;= s1.t1
+  GROUP BY s1.user
+),
+s3 AS (
+  SELECT s2.user, MIN(ev.ts) AS t3
+  FROM s2 JOIN ev
+    ON ev.user = s2.user AND ev.event_name = 'begin_checkout' AND ev.ts &gt;= s2.t2
+  GROUP BY s2.user
+),
+s4 AS (  -- users who purchased after beginning checkout (one row per user)
+  SELECT DISTINCT s3.user
+  FROM s3 JOIN ev
+    ON ev.user = s3.user AND ev.event_name = 'purchase' AND ev.ts &gt;= s3.t3
+)
+SELECT
+  (SELECT COUNT(*) FROM s1) AS s1_view_item,
+  (SELECT COUNT(*) FROM s2) AS s2_add_to_cart,
+  (SELECT COUNT(*) FROM s3) AS s3_begin_checkout,
+  (SELECT COUNT(*) FROM s4) AS s4_purchase;</code></pre>
+<p class="howto">Each step takes "the earliest occurrence after the previous step first happened." With no time limit, chaining from the earliest occurrence gives the best chance of linking up, so this approach does not undercount.</p>
+</details>
+
+<p class="bridge"><b>Why look at this next:</b> Analysis 2 only requires a step to happen "after," even two months later. Actions far apart may be unrelated to the original browsing — for example, viewing two months ago and coming back to buy this time because of an ad — and counting them as one flow overstates conversion. Funnel reports in practice usually set a time limit (GA4's funnel report also offers "complete the next step within X minutes/days"), and the limit should match the question being asked. So I calculated with three limits — 30 minutes, 24 hours, and 7 days — each answering a different question, and compared them with no limit (Analysis 2) to check whether the conclusion changes.</p>
+
+<h3>Analysis 3: Limiting how soon each step must follow the previous one</h3>
+<p>Rule: each step must be completed within a set time after the previous step (e.g. add to cart within 30 minutes, then begin checkout within another 30 minutes). When a user viewed items several times, any view can be the starting point, so this measures the stretch "from some item view to purchase" and cannot show how long the user had been considering the purchase before that.</p>
+<details><summary>Full results for the four time limits</summary>
+<table>
+  <tr><th>Each step within … of the previous</th><th class="num">Add to cart users</th><th class="num">Begin checkout users</th><th class="num">Purchase users</th><th class="num">View → cart</th><th class="num">Cart → checkout</th><th class="num">Checkout → purchase</th><th class="num">Overall</th></tr>
+  <tr><td>30 minutes</td><td class="num">12,011</td><td class="num">4,609</td><td class="num">2,546</td><td class="num">26.6%</td><td class="num">38.4%</td><td class="num">55.2%</td><td class="num">5.64%</td></tr>
+  <tr><td>1 day</td><td class="num">12,014</td><td class="num">4,731</td><td class="num">2,682</td><td class="num">26.6%</td><td class="num">39.4%</td><td class="num">56.7%</td><td class="num">5.95%</td></tr>
+  <tr><td>7 days</td><td class="num">12,016</td><td class="num">4,775</td><td class="num">2,726</td><td class="num">26.6%</td><td class="num">39.7%</td><td class="num">57.1%</td><td class="num">6.04%</td></tr>
+  <tr class="hi"><td>No limit (= Analysis 2)</td><td class="num">12,016</td><td class="num">4,802</td><td class="num">2,755</td><td class="num">26.6%</td><td class="num">40.0%</td><td class="num">57.4%</td><td class="num">6.11%</td></tr>
+</table>
+<p class="howto">Conversion rate = users at this step ÷ users at the previous step; overall = purchasers ÷ the 45,107 item viewers.</p>
+</details>
+<table>
+  <tr><th>Time limit</th><th>Question answered</th><th>Result</th><th>What it means</th></tr>
+  <tr><td>30 minutes</td><td>What share complete the steps in quick succession</td><td>Of the 12,011 who added to cart within 30 minutes, 38.4% began checkout within another 30 minutes; of these 4,609, 55.2% purchased within another 30 minutes. Of the 2,755 purchasers with no time limit, 2,546 (92.4%) completed every step within 30 minutes (at most 3 × 30 = 90 minutes end to end); the other 209 (2,755 − 2,546) took more than 30 minutes on at least one step</td><td>The final stretch before purchase is mostly done in one go</td></tr>
+  <tr><td>24 hours</td><td>How many completed a step after a gap of up to 24 hours (at most 3 days end to end)</td><td>2,682 purchasers, 136 more than at 30 minutes; 5.95% overall</td><td>Under the 24-hour limit, 94.9% of purchasers (2,546 ÷ 2,682) completed every step within 30 minutes; few completed a step after a gap</td></tr>
+  <tr><td>7 days</td><td>How many took several days between steps (at most 21 days end to end)</td><td>2,726 purchasers, only 44 more than at 1 day; 6.04% overall</td><td>Taking several days between steps is rare; but this method cannot show how long users deliberated after their first item view</td></tr>
+</table>
+<p><b>Conclusion: The time limit does not change the ranking of the three conversions; among in-order purchases, the final stretch before purchase is mostly done in one go (every step within 30 minutes: 92.4%).</b></p>
+<p>So improvements to the cart and checkout should focus on in-the-moment ease of use. This finding has three limitations: ① it covers only the 2,755 purchasers who completed all four steps in order; the other 596 purchasers (3,351 − 2,755) did not, and cannot be assessed; ② it cannot show how long users had been considering the purchase before their last item view; ③ switching devices, clearing cookies, or using a private window creates a new ID, so users who return on a later day may appear as new users, splitting their journey. Whether sending reminders could bring people back cannot be assessed, as this data has no related records.</p>
+<details><summary>SQL: compute all four time limits at once</summary>
+<div class="sqltags"><span class="tag">UNNEST custom list</span><span class="tag">CROSS JOIN</span><span class="tag">Non-equi JOIN (time window)</span><span class="tag">SELECT DISTINCT</span></div>
+<p class="howto">Append this after Analysis 2's <code>WITH ev AS (...)</code>, separated by a comma. r2 finds add-to-cart events "within w minutes after some item view," and r3 and r4 chain on from those events, so each stretch can start from any occurrence of the previous step.</p>
+<pre><code>wins AS (SELECT win FROM UNNEST([30, 60 * 24, 60 * 24 * 7, 999999]) AS win),  -- minutes, 999999 ≈ no limit
+v AS (SELECT DISTINCT user, ts FROM ev WHERE event_name = 'view_item'),  -- dedupe item views with identical timestamps so the JOIN below does not blow up the row count
+r2 AS (
+  SELECT DISTINCT wins.win, c.user, c.ts
+  FROM ev c CROSS JOIN wins
+  JOIN v ON v.user = c.user AND v.ts &lt;= c.ts AND c.ts - v.ts &lt;= wins.win * 60 * 1000000  -- minutes to microseconds
+  WHERE c.event_name = 'add_to_cart'
+),
+r3 AS (
+  SELECT DISTINCT r2.win, k.user, k.ts
+  FROM ev k JOIN r2
+    ON r2.user = k.user AND r2.ts &lt;= k.ts AND k.ts - r2.ts &lt;= r2.win * 60 * 1000000
+  WHERE k.event_name = 'begin_checkout'
+),
+r4 AS (
+  SELECT r3.win, p.user
+  FROM ev p JOIN r3
+    ON r3.user = p.user AND r3.ts &lt;= p.ts AND p.ts - r3.ts &lt;= r3.win * 60 * 1000000
+  WHERE p.event_name = 'purchase'
+)
+SELECT win,
+  (SELECT COUNT(DISTINCT user) FROM v) AS s1_view_item,
+  n2.n AS s2_add_to_cart, n3.n AS s3_begin_checkout, n4.n AS s4_purchase
+FROM (SELECT win, COUNT(DISTINCT user) AS n FROM r2 GROUP BY win) n2
+JOIN (SELECT win, COUNT(DISTINCT user) AS n FROM r3 GROUP BY win) n3 USING (win)
+JOIN (SELECT win, COUNT(DISTINCT user) AS n FROM r4 GROUP BY win) n4 USING (win)
+ORDER BY win;</code></pre>
+</details>
+
+<p class="bridge"><b>Why look at this next:</b> in Analysis 2's breakdown, 1,639 users began checkout after viewing an item without completing "view item → add to cart → begin checkout" in order. The cause could be a missed "add to cart" event or a checkout path that bypasses the cart; if events were missed, the "add to cart → begin checkout" conversion rate is understated, so I checked how sensitive the conclusion is to this.</p>
+
+<h3>Analysis 4: Impact of missed "add to cart" records on the conclusion</h3>
+<p>These 1,639 users fall into three groups, whose subsequent purchase rates differ widely:</p>
+<table>
+  <tr><th>Group</th><th class="num">Users</th><th class="num">Purchased after first checkout following an item view</th><th class="num">Purchase rate</th></tr>
+  <tr class="hi"><td>1 No add-to-cart record in all 92 days</td><td class="num">1,141</td><td class="num">551</td><td class="num">48.3%</td></tr>
+  <tr><td>2 Added to cart only before 11-26 (before the analysis period)</td><td class="num">6</td><td class="num">3</td><td class="num">50.0%</td></tr>
+  <tr><td>3 Added to cart during the period, but every add to cart after an item view came after beginning checkout</td><td class="num">492</td><td class="num">8</td><td class="num">1.6%</td></tr>
+</table>
+<p>I treated these users as "added to cart but not recorded," added them back, and recalculated the funnel under two assumptions (no time limit):</p>
+<table>
+  <tr><th>Method</th><th class="num">Add to cart</th><th class="num">Begin checkout</th><th class="num">Purchase</th><th class="num">View → cart</th><th class="num">Cart → checkout</th><th class="num">Checkout → purchase</th><th class="num">Gap, last two conversions (pp, from rounded %)</th></tr>
+  <tr><td>Recorded data (Analysis 2)</td><td class="num">12,016</td><td class="num">4,802</td><td class="num">2,755</td><td class="num">26.6%</td><td class="num">40.0%</td><td class="num">57.4%</td><td class="num">17.4</td></tr>
+  <tr class="hi"><td>Add back group 1 only (1,141 users)</td><td class="num">13,157</td><td class="num">5,943</td><td class="num">3,306</td><td class="num">29.2%</td><td class="num">45.2%</td><td class="num">55.6%</td><td class="num">10.4</td></tr>
+  <tr><td>Add back all three groups (1,639 users, upper bound)</td><td class="num">13,163</td><td class="num">6,441</td><td class="num">3,325</td><td class="num">29.2%</td><td class="num">48.9%</td><td class="num">51.6%</td><td class="num">2.7</td></tr>
+</table>
+<details><summary>How each column is calculated</summary>
+<p class="howto">Group 1 only: add to cart = 12,016 + 1,141; begin checkout = 4,802 + 1,141; purchase = 2,755 + 551. All three groups: group 3's 492 users are already among the 12,016, so add to cart increases by only 1,147 (1,141 + 6), giving 12,016 + 1,147 = 13,163; begin checkout = everyone who began checkout after viewing an item (4,802 + 1,639 = 6,441); purchase = those who purchased after their first checkout following an item view (3,325; recalculated from "first checkout after an item view," which is 8 more than simply adding the table counts 2,755 + 551 + 3 + 8 = 3,317, because 8 of the original 4,802 purchased only after an earlier checkout).</p>
+</details>
+<p><b>Conclusion: Missed records affect the numbers, but do not change "view item → add to cart" being the lowest.</b></p>
+<ul>
+  <li><b>"View item → add to cart" changes but stays the lowest:</b> across the three methods it moves from 26.6% to 29.2%, the lowest of the three conversions every time. This check cannot recover users "whose add to cart was missed and who never checked out"; assuming add-to-cart records are missed at the same rate for all users as for checkout users (19.2%, 1,141 ÷ 5,943), add-to-cart users would be about 12,016 ÷ (1 − 19.2%) ≈ 14,871, and "view item → add to cart" about 33.0%, still below the last two steps.</li>
+  <li><b>"Add to cart → begin checkout" may be understated:</b> after adding back missed records it rises from 40.0% to 45.2%–48.9%, up 5.2–8.9 percentage points (from the rounded percentages).</li>
+  <li><b>The ranking of the last two conversions holds, but is not certain:</b> "add to cart → begin checkout" is still below "begin checkout → purchase," but the gap shrinks from 17.4 percentage points to as little as 2.7, so the ranking of these two conversions should be treated as preliminary.</li>
+</ul>
+<p class="howto">Only 8 users in group 3 purchased after checkout — behavior very different from group 1 and less like missed records — so "add back all" is only an upper-bound reference. This check can also only recover missed records for users who "later began checkout": users whose add to cart was missed and who never checked out are invisible in the data.</p>
+</details>
+
+<details class="sec">
+<summary><h2>BigQuery query cost</h2></summary>
+<p>BigQuery's on-demand pricing charges by the amount of data each query processes. This section shows how two common cost-saving techniques affect bytes processed (using simplified queries, not the funnel queries above). The project tested two common techniques: "partitioning" by date (splitting the table into date segments so only the needed dates are read) and "clustering" by a column (storing similar data together so only relevant blocks are read). In this test, when the filter happened to be on the partitioning or clustering column (e.g. partitioned by date, filtering 7 of 92 days), bytes processed fell by about 90%.</p>
+<details><summary>Test method and results</summary>
+<p>Bytes processed depend on "which columns are read" and "which dates are read"; actual billing has a minimum (each table referenced in a query is billed at least 10 MB), so with small data the billed amount is higher than the bytes processed below. In a sandbox account, I created three tables with the same content (4,295,584 rows, 211.5 MB) but different storage layouts, and compared bytes processed with two queries: query A counts distinct users from 2020-12-01 to 12-07; query B counts distinct users with a purchase event.</p>
+<table>
+  <tr><th>Filter (bytes processed)</th><th class="num">Non-partitioned table</th><th class="num">Partitioned by date</th><th class="num">Clustered by event name</th></tr>
+  <tr><td>Query A: date filter only</td><td class="num">117.46 MB</td><td class="num"><b>12.13 MB</b></td><td class="num">117.46 MB</td></tr>
+  <tr><td>Query B: event filter only</td><td class="num">138.05 MB</td><td class="num">138.05 MB</td><td class="num"><b>13.76 MB</b></td></tr>
+</table>
+<p>To cut bytes processed, the table must be partitioned or clustered on the column the filter uses. The effect of partitioning shows in the pre-run estimate; the effect of clustering only shows after running (event filter only: estimated 138.05 MB, actually processed 13.76 MB). Google's raw data is one table per day, so filtering by date uses the table-name suffix <code>_TABLE_SUFFIX</code>: running query A on the raw data, filtering with <code>_TABLE_SUFFIX</code> processes 8.75 MB (reading only the user ID column; the self-built partitioned table's 12.13 MB also reads the date column), while filtering on the in-table <code>event_date</code> column processes 125.66 MB, presumably because all 92 tables are read plus the date column.</p>
+<details><summary>SQL: create partitioned and clustered tables</summary>
+<div class="sqltags"><span class="tag">PARTITION BY</span><span class="tag">CLUSTER BY</span><span class="tag">CREATE TABLE AS SELECT</span></div>
+<pre><code>CREATE TABLE IF NOT EXISTS `josh-bq-learning.ga4_learning.events_part`
+PARTITION BY event_dt                              -- partition by date
+OPTIONS (partition_expiration_days = 3650)         -- extend partition expiration (see note below)
+AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;
+
+CREATE TABLE IF NOT EXISTS `josh-bq-learning.ga4_learning.events_clu`
+CLUSTER BY event_name                              -- cluster by event name
+AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
+<p class="howto"><code>events_plain</code> was built from 6 columns of the raw data (event_dt, event_name, user_pseudo_id, event_timestamp, transaction_id, purchase_revenue); <code>event_dt</code> converts the text date to a DATE type. In the sandbox account (BigQuery sandbox), tables and partitions expire after 60 days by default, so 2020 partitions would be deleted immediately; the partitioned table therefore sets a 10-year expiration. The sandbox requires partition expiration under 60 days; this setting succeeded only on the first creation (why it succeeded the first time is unclear) and is rejected on later rebuilds, so a table both partitioned and clustered could not be created, and the comparison uses two separate tables.</p>
+</details>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>Monitoring in production</h2></summary>
+<p>If this funnel became a daily report, I recommend also monitoring the daily count of each funnel event: alert when one event drops to 0 (or far below the same weekday in previous weeks) while the steps before and after look normal. The tracking outage in data quality check item 1 is exactly the kind of problem this monitoring could catch on the same day.</p>
+</details>
+
+<details class="sec">
+<summary><h2>To dig further: data needed</h2></summary>
+<table>
+  <tr><th>Data needed</th><th>What it would tell us</th></tr>
+  <tr><td>Change log of the tracking setup (when the add_to_cart event was added or modified)</td><td>Whether the November gap was caused by the tracking setup; why 1,141 checkout users have no add-to-cart record at all (missed records or a checkout path that bypasses the cart), and the true ranking of the cart and checkout steps</td></tr>
+  <tr><td>Product-page interaction events (e.g. selecting a size, checking stock, scrolling to reviews)</td><td>Where on the product page the 33,091 users who viewed but did not add to cart stopped</td></tr>
+  <tr><td>A column recording event order within a batch (only in GA4 data from 2024 onward)</td><td>The true order of "view item" and "add to cart" events with identical timestamps</td></tr>
+  <tr><td>Logged-in members' <code>user_id</code></td><td>Merging the same person across devices, so someone who adds to cart on a phone and checks out on a computer is not counted as two people</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>Limitations</h2></summary>
+<ul>
+  <li>Users are identified per browser (<code>user_id</code> is entirely null), so the same person across devices is counted as different users.</li>
+  <li>The funnel is user-based and does not require the same item or the same visit: viewing item A and later adding item B to the cart still counts as moving down a step. So conversion rates are usually higher than those calculated per session, and the two cannot be compared directly.</li>
+  <li>The data ends on 2021-01-31: flows that start close to the end are more likely to be cut off before completion, so conversion rates under every time limit may be slightly understated. Funnel counts do not include behavior before 11-26 (except for the grouping in Analysis 4).</li>
+</ul>
+</details>
+
+<footer>
+  <p>Tools: BigQuery (GoogleSQL), Python (google-cloud-bigquery, to submit queries and save results), Claude Code. Data: Google <a href="https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset" target="_blank" rel="noopener">GA4 e-commerce sample dataset</a>. Queries run on: 2026-10-09.</p>
+</footer>
+</template>
+<script>
+// 語言切換：中文寫在 <main>，英文版放在 template#main-en，切換時整塊替換；選擇記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }  // 從帶參數的連結進來，也記住語言
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;  // 第一次載入且是中文就不用重建
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    // 站內連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || a.getAttribute('href').startsWith('#')) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    if (!first) document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);  // 網址同步，分享出去的連結語言一致
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+</script><!-- i18n:end -->
 </body>
 </html>
