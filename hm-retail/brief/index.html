@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>零售業績調查主管簡報</title>
+<meta name="description" content="余家丞的自學專案主管簡報版：H&M 公開資料的業績下滑原因、通路流失、挽留券名單與 A/B 測試，一題一頁只放結論與圖表。">
+<style>
+  /* 顏色沿用作品頁的變數；深色模式另一組 */
+  :root {
+    color-scheme: light;
+    --bg: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+    --accent: #2a78d6; --accent-soft: #e8f1fc; --mute: #c9c8c2; --neg: #eb6834;
+    --warn-soft: #fdf3e2; --warn-ink: #7a5200;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+      --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+      --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+    --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  a { color: var(--accent); }
+  /* 一頁一張投影片：至少一個螢幕高，內容置中 */
+  .slide { min-height: 100svh; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center;
+           max-width: 920px; margin: 0 auto; padding: 64px 24px 72px; border-bottom: 1px solid var(--line); }
+  .slide:last-of-type { border-bottom: none; }
+  .no { font-size: 13px; color: var(--ink-3); letter-spacing: .04em; margin: 0 0 6px; }
+  .ask { color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 0 0 14px; font-size: 15px; }
+  .tldr.headline { font-size: 25px; line-height: 1.45; font-weight: 700; margin: 0 0 22px; }
+  .tldr.headline p { margin: 0; }
+  h1 { font-size: 34px; line-height: 1.3; margin: 6px 0 14px; }
+  .meta { color: var(--ink-2); font-size: 15px; margin: 0 0 18px; }
+  .tag { display: inline-block; font-size: 13px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; margin-right: 6px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px 12px; margin: 0 0 18px; }
+  .chart-title { font-size: 15px; font-weight: 600; margin: 0 0 10px; }
+  .unit { font-size: 12.5px; color: var(--ink-3); margin: 6px 0 0; }
+  .points { margin: 0; padding-left: 1.2em; color: var(--ink-2); font-size: 15.5px; }
+  .points li { margin-bottom: 6px; }
+  .points b { color: var(--ink); }
+  .more { font-size: 14.5px; margin-top: 10px; }
+  .caveat { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 18px; }
+  /* 數字卡 */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 8px 0 4px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .stat b { display: block; font-size: 30px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 6px; line-height: 1.5; }
+  /* 橫條圖（HTML，手機會自動縮放） */
+  .row { display: grid; grid-template-columns: 190px 1fr 150px; align-items: center; gap: 10px; font-size: 14px; padding: 5px 0; }
+  .row .name { color: var(--ink-2); text-align: right; }
+  .row.hi .name { color: var(--ink); font-weight: 600; }
+  .row .track { height: 16px; position: relative; }
+  .row .bar { position: absolute; top: 0; height: 100%; border-radius: 0 4px 4px 0; background: var(--mute); }
+  .row.hi .bar { background: var(--accent); }
+  .row .bar.dec { background: var(--neg); border-radius: 4px 0 0 4px; }
+  .row .bar.inc { background: var(--accent); }
+  .row .zero { position: absolute; top: -5px; bottom: -5px; width: 1px; background: var(--ink-3); }
+  .row .val { font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .row.total { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 9px; font-weight: 600; }
+  .row.total .name { color: var(--ink); }
+  .legend { font-size: 13px; color: var(--ink-2); margin: 0 0 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 12px; vertical-align: -1px; }
+  .legend i:first-child { margin-left: 0; }
+  /* 點狀圖（HTML）：信賴區間線、圓點、回本門檻都用百分比定位 */
+  .row.dots { padding: 30px 0 10px; }
+  .row .grid { position: absolute; top: -28px; bottom: -8px; width: 1px; background: var(--line); }
+  .row .grid.zero-line { background: var(--ink-3); }
+  .row .ci { position: absolute; top: 6px; height: 4px; background: var(--accent); border-radius: 2px; }
+  .row .link { position: absolute; top: 7px; height: 2px; background: var(--mute); }
+  .row .dot { position: absolute; top: 1px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--card); }
+  .row .dot.store { background: var(--ink-3); }
+  .row .be { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1.5px; background: var(--neg); }
+  .row .lab { position: absolute; top: -24px; transform: translateX(-50%); font-size: 12.5px; color: var(--ink-2); white-space: nowrap; background: var(--card); padding: 0 3px; }
+  .row .sub { display: block; font-size: 12.5px; color: var(--ink-2); font-weight: 400; }
+  .row.axis { padding: 2px 0 0; }
+  .row.axis .track { height: 18px; }
+  .row.axis .tick { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--ink-3); }
+  .row.axis .name { font-size: 12px; color: var(--ink-3); }
+  svg text { font-family: inherit; paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }  /* 文字加底色描邊，壓在格線上也看得清楚 */
+  .card svg { display: block; max-width: 640px; }  /* 圖上文字不要被放得比內文大 */
+  /* 頂部列與翻頁 */
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(6px); }
+  .topbar a { font-size: 14.5px; text-decoration: none; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  .pager { position: fixed; right: 16px; bottom: 16px; z-index: 10; display: flex; align-items: center; gap: 8px;
+           background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 14px; color: var(--ink-2); }
+  .pager button { font: inherit; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .pager button:disabled { opacity: .35; cursor: default; }
+  html.lang-pending main { visibility: hidden; }
+  @media (max-width: 640px) {
+    .tldr.headline { font-size: 20px; }
+    h1 { font-size: 26px; }
+    .stats { grid-template-columns: 1fr; }
+    .stat b { font-size: 26px; }
+    .row { grid-template-columns: 92px 1fr 78px; font-size: 13px; gap: 8px; } .row .val { white-space: normal; }
+    .slide { padding: 60px 16px 76px; }
+    .card { padding: 14px 12px 10px; }
+    .card svg text { font-size: 19px; }  /* 手機上 SVG 會縮小約 0.66 倍，字放大才看得清楚 */
+    .card svg .xcap { display: none; }
+    /* 點狀圖在手機上：名稱獨立一行，圖表佔滿寬度 */
+    .row.dots, .row.axis { grid-template-columns: 1fr 74px; }
+    .row.dots .name, .row.axis .name { grid-column: 1 / -1; text-align: left; }
+    .row.dots .track { margin-top: 28px; }
+    .row.dots { padding-top: 6px; }
+  }
+  @media print { .topbar, .pager { display: none; } .slide { min-height: auto; page-break-after: always; } }
+</style>
+<script>
+// 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文（同作品頁）
+(function () { var l = null; try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('lang'); } catch (e) {} if (l === 'en') document.documentElement.classList.add('lang-pending'); })();
+</script>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="back-link">← 完整報告</a>
+  <div class="lang-switch">
+    <select id="lang-select" aria-label="語言 Language">
+      <option value="zh">繁體中文 Traditional Chinese</option>
+      <option value="en">英文 English</option>
+    </select>
+  </div>
+</div>
+<main>
+
+<section class="slide" id="s0">
+  <p><span class="tag">主管簡報</span><span class="tag">自學專案</span></p>
+  <h1>零售業績下滑調查與顧客流失預測</h1>
+  <p class="meta">余家丞｜H&amp;M 公開交易資料｜Python、Claude Code（分析方向與結論由本人負責，程式由 AI 協助撰寫）</p>
+  <div class="tldr headline"><p>業績下滑來自兩件事：童裝腰斬（可能是資料收錄問題，待確認）、少數款式減少。挽留券用模型挑名單，發券時保留對照組驗證效果。</p></div>
+  <section class="stats" aria-label="關鍵數字">
+    <div class="stat"><b>−10.3%</b><span>FY2020 Q1 賣出件數，與去年同季相比</span></div>
+    <div class="stat"><b>54%</b><span>減少的件數來自童裝</span></div>
+    <div class="stat"><b>79.4%</b><span>模型挑出的 5 萬人中，半年內真的沒再回來的比例</span></div>
+  </section>
+  <p class="caveat">資料為 H&amp;M 在 Kaggle 公開的部分顧客樣本，結果只代表這份資料，不代表 H&amp;M 真實業績；發券效果為模擬。</p>
+</section>
+
+<section class="slide" id="s1">
+  <p class="no">問題 1 / 4</p>
+  <p class="ask">主管：「這季業績掉了很多，發生什麼事？」</p>
+  <div class="tldr headline"><p>跟去年同季比少賣 10.3%（36.8 萬件）：54% 來自童裝腰斬（待確認是否為資料問題），其餘來自深藍、條紋、蕾絲款式減少。</p></div>
+  <div class="card">
+    <div class="chart-title">FY2020 Q1 件數比去年同季的增減</div>
+    <div class="row"><span class="name">童裝</span><span class="track"><span class="bar dec" style="left:14.9%;width:58.2%" title="童裝：−19.9 萬件（占減少的 54%）"></span><span class="zero" style="left:73.1%"></span></span><span class="val">−19.9 萬（54%）</span></div>
+    <div class="row"><span class="name">大人衣服：深藍、條紋、蕾絲</span><span class="track"><span class="bar dec" style="left:4.1%;width:69.0%" title="深藍、條紋、蕾絲款式：−23.6 萬件（−48.4%）"></span><span class="zero" style="left:73.1%"></span></span><span class="val">−23.6 萬</span></div>
+    <div class="row"><span class="name">大人衣服：其他款式</span><span class="track"><span class="bar inc" style="left:73.1%;width:19.6%;border-radius:0 4px 4px 0" title="其他大人衣服：+6.7 萬件（+2.4%）"></span><span class="zero" style="left:73.1%"></span></span><span class="val">+6.7 萬</span></div>
+    <div class="row total"><span class="name">合計</span><span class="track"></span><span class="val">−36.8 萬（−10.3%）</span></div>
+    <p class="unit">單位：萬件。FY2020 Q1＝2019 年 12 月～2020 年 2 月。</p>
+  </div>
+  <ul class="points">
+    <li><b>童裝 2019 年 3 月起突然腰斬：</b>先向資料提供單位確認收錄範圍有沒有改變，成本最低，也決定童裝要不要排除重算。</li>
+    <li><b>三種款式少了 48.4%：</b>向商品企劃確認是款式決策還是顧客偏好改變。</li>
+    <li>季報的「營收比上季 −23.5%」受淡旺季影響而誇大，應與去年同季比較。</li>
+  </ul>
+  <p class="more"><a href="../#analysis-1">看完整分析 →</a></p>
+</section>
+
+<section class="slide" id="s2">
+  <p class="no">問題 2 / 4</p>
+  <p class="ask">主管：「流失的老顧客，是不是通路出了問題？」</p>
+  <div class="tldr headline"><p>不只是通路的問題：購買件數與年齡相同時，網路顧客流失機率高 7.1 個百分點（原因待查）；但只在實體店或只在網路買的顧客，都有超過一半沒回來。</p></div>
+  <div class="card">
+    <div class="chart-title">只在實體店買 vs 只在網路買的顧客流失機率</div>
+    <p class="legend"><i style="background:var(--ink-3)"></i>只在實體店買<i style="background:var(--accent)"></i>只在網路買</p>
+    <div class="row dots"><span class="name">直接比較<span class="sub">差 3.6 個百分點</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid" style="left:33.33%"></span><span class="grid" style="left:66.67%"></span><span class="grid" style="left:100%"></span><span class="link" style="left:53.33%;width:30%"></span><span class="dot store" style="left:53.33%" title="直接比較・只在實體店買：52.4%"></span><span class="dot" style="left:83.33%" title="直接比較・只在網路買：56.0%"></span><span class="lab" style="left:53.33%">52.4%</span><span class="lab" style="left:83.33%">56.0%</span></span><span class="val">+3.6</span></div>
+    <div class="row dots hi"><span class="name">購買件數、年齡相同<span class="sub">差 7.1 個百分點</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid" style="left:33.33%"></span><span class="grid" style="left:66.67%"></span><span class="grid" style="left:100%"></span><span class="link" style="left:20.83%;width:59.17%"></span><span class="dot store" style="left:20.83%" title="購買件數、年齡相同・只在實體店買：48.5%"></span><span class="dot" style="left:80%" title="購買件數、年齡相同・只在網路買：55.6%（差距 7.1，差距的 95% 信賴區間 6.8～7.4）"></span><span class="lab" style="left:20.83%">48.5%</span><span class="lab" style="left:80%">55.6%</span></span><span class="val">+7.1</span></div>
+    <div class="row axis"><span class="name">流失機率</span><span class="track"><span class="tick" style="left:0%;transform:none">46%</span><span class="tick" style="left:33.33%">50%</span><span class="tick" style="left:66.67%">54%</span><span class="tick" style="left:100%;transform:translateX(-100%)">58%</span></span><span class="val"></span></div>
+    <p class="unit">流失＝去年同季有買、今年同季一件都沒買。下排是用統計模型把購買件數與年齡拉到相同後的結果；橫軸從 46% 開始。</p>
+  </div>
+  <ul class="points">
+    <li><b>建議調查網路顧客為什麼比較容易流失：</b>需要網站造訪、轉換率、配送與退貨資料。</li>
+    <li>差距隨購買件數縮小，買 10 件以上時幾乎沒有差距。</li>
+    <li>這個方法只能衡量差距大小，不能證明是「網路」本身造成的。</li>
+  </ul>
+  <p class="more"><a href="../#analysis-2">看完整分析 →</a></p>
+</section>
+
+<section class="slide" id="s3">
+  <p class="no">問題 3 / 4</p>
+  <p class="ask">主管：「5 萬張挽留券要發給誰？為什麼不直接發給最久沒來的人？」</p>
+  <div class="tldr headline"><p>發給模型挑出的名單：5 萬人中 79.4% 半年內真的沒回來，高於「先挑新顧客」規則的 73.2% 和「最久沒來」的 57.5%。</p></div>
+  <div class="card">
+    <div class="chart-title">挑出的 5 萬人中，半年內真的沒回來的比例（回測）</div>
+    <div class="row hi"><span class="name">模型（LightGBM）</span><span class="track"><span class="bar" style="width:79.4%" title="LightGBM：79.4%（39,689 人）"></span></span><span class="val">79.4%</span></div>
+    <div class="row"><span class="name">規則：先挑新顧客</span><span class="track"><span class="bar" style="width:73.2%" title="先挑新顧客、再挑最久沒來：73.2%（36,618 人）"></span></span><span class="val">73.2%</span></div>
+    <div class="row"><span class="name">規則：最久沒來</span><span class="track"><span class="bar" style="width:57.5%" title="挑最久沒來的人：57.5%（28,737 人）"></span></span><span class="val">57.5%</span></div>
+    <div class="row"><span class="name">隨機挑</span><span class="track"><span class="bar" style="width:35%" title="隨機挑選：35.0%（等於整體流失比例）"></span></span><span class="val">35.0%</span></div>
+    <p class="unit">以 2020 年 3 月 26 日為預測日回測，從 70.2 萬名活躍顧客中各挑 5 萬人；「流失」＝預測日後 180 天內沒有再買；「新顧客」＝預測日前 181～365 天沒有購買。</p>
+  </div>
+  <ul class="points">
+    <li><b>同樣 5 萬張券，比最好的簡單規則多找到 3,071 位</b>真正會流失的顧客。</li>
+    <li><b>關鍵線索是「更早半年有沒有來過」：</b>新顧客流失 60.6%，老顧客 22.3%；補上後模型從 68.4% 提升到 79.4%。</li>
+    <li>要保住營收可改用 B 名單（流失損失最大）：流失者消費合計是 A 的 3.4 倍，但準確度只有 47.1%。</li>
+  </ul>
+  <p class="more"><a href="../#analysis-3">看完整分析 →</a></p>
+</section>
+
+<section class="slide" id="s4">
+  <p class="no">問題 4 / 4</p>
+  <p class="ask">主管：「券發下去之後，怎麼證明有效？」</p>
+  <div class="tldr headline"><p>隨機保留不發券的對照組，看 180 天的回購差距：模擬結果 A、B 兩份名單都高於回本門檻，建議繼續發。</p></div>
+  <div class="card">
+    <div class="chart-title">發券組 − 對照組的 180 天回購比例差距（模擬，換新模型後的第二輪）</div>
+    <div class="row dots hi"><span class="name">A 最可能流失<span class="sub">淨賺 +3.4 萬</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid zero-line" style="left:16.67%"></span><span class="grid" style="left:50%"></span><span class="grid" style="left:83.33%"></span><span class="ci" style="left:34.67%;width:45.83%"></span><span class="be" style="left:50%"></span><span class="lab" style="left:50%">回本 2.00</span><span class="dot" style="left:57.67%" title="A 名單：+2.46 個百分點（95% 信賴區間 +1.08～+3.83）"></span></span><span class="val">+2.46 繼續發</span></div>
+    <div class="row dots hi"><span class="name">B 流失損失最大<span class="sub">淨賺 +51.4 萬</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid zero-line" style="left:16.67%"></span><span class="grid" style="left:50%"></span><span class="grid" style="left:83.33%"></span><span class="ci" style="left:39.5%;width:46.67%"></span><span class="be" style="left:27.17%"></span><span class="lab" style="left:27.17%">回本 0.63</span><span class="dot" style="left:62.83%" title="B 名單：+2.77 個百分點（95% 信賴區間 +1.37～+4.17）"></span></span><span class="val">+2.77 繼續發</span></div>
+    <div class="row axis"><span class="name">180 天回購差距（百分點）</span><span class="track"><span class="tick" style="left:0%;transform:none">−1</span><span class="tick" style="left:16.67%">0</span><span class="tick" style="left:50%">+2</span><span class="tick" style="left:83.33%">+4</span></span><span class="val"></span></div>
+    <p class="unit">單位：百分點。圓點＝量到的差距，橫線＝95% 信賴區間，橘色短線＝回本門檻。資料無發券紀錄，對照組為真實資料、券的效果為模擬；金額為假設單位。</p>
+  </div>
+  <ul class="points">
+    <li><b>每輪都隨機保留對照組</b>（A 3,500 人、B 6,050 人），不能挑「最不會流失的人」當對照組。</li>
+    <li><b>看 180 天、累積多輪才下結論：</b>第 30 天會高估（A：+3.75 → +2.46）；第一輪 B 曾因分組運氣被誤判為無效。</li>
+    <li><b>換模型就要重新驗證：</b>新名單幾乎都是新顧客，券的效果可能和舊名單不同。</li>
+  </ul>
+  <p class="more"><a href="../#analysis-4">看完整分析 →</a></p>
+</section>
+
+<section class="slide" id="s5">
+  <p class="no">總結</p>
+  <div class="tldr headline"><p>建議的三個下一步</p></div>
+  <ol class="points" style="font-size:17px">
+    <li><b>確認童裝資料：</b>向資料提供單位確認 2019 年 3 月起的收錄範圍；若是資料問題，排除童裝重算業績。</li>
+    <li><b>調查網路顧客流失：</b>取得網站造訪、轉換、配送與退貨資料，找出網路顧客較易流失的原因。</li>
+    <li><b>挽留券照實驗設計發放：</b>A、B 名單都發、每輪保留對照組，以 180 天結果決定下一輪預算，並累積多輪結果。</li>
+  </ol>
+  <p class="caveat">限制：資料為部分顧客樣本，不代表 H&amp;M 真實業績；資料只到 2020 年 9 月（疫情期間）；發券效果為模擬，需實際發券後驗證。</p>
+  <p class="more"><a href="../">看完整報告（資料品質檢查、方法與所有步驟）→</a></p>
+</section>
+
+</main>
+
+<template id="main-en" data-title="Retail Decline Manager Brief" data-desc="Jia Cheng Yu's self-directed project, manager brief: why sales fell in H&M public data, channel churn, retention coupon lists, and the A/B test — one question per slide, conclusions and charts only.">
+<section class="slide" id="s0">
+  <p><span class="tag">Manager brief</span><span class="tag">Personal project</span></p>
+  <h1>Retail Sales Decline Investigation and Customer Churn Prediction</h1>
+  <p class="meta">Jia Cheng Yu | H&amp;M public transaction data | Python, Claude Code (I led the analysis direction and conclusions; code written with AI help)</p>
+  <div class="tldr headline"><p>The decline comes from two things: kidswear was cut in half (possibly a data-coverage issue, to be confirmed), and a few product styles shrank. Retention coupons go to a model-picked list, with a control group to verify they work.</p></div>
+  <section class="stats" aria-label="Key figures">
+    <div class="stat"><b>−10.3%</b><span>FY2020 Q1 units sold vs the same quarter last year</span></div>
+    <div class="stat"><b>54%</b><span>of the lost units came from kidswear</span></div>
+    <div class="stat"><b>79.4%</b><span>of the 50,000 customers the model picked did not return within six months</span></div>
+  </section>
+  <p class="caveat">The data is a partial customer sample H&amp;M released on Kaggle; results describe this dataset only, not H&amp;M's real performance. Coupon effects are simulated.</p>
+</section>
+
+<section class="slide" id="s1">
+  <p class="no">Question 1 / 4</p>
+  <p class="ask">Manager: "Sales dropped a lot this quarter. What happened?"</p>
+  <div class="tldr headline"><p>Units fell 10.3% (368K) vs the same quarter last year: 54% from a kidswear collapse (to be confirmed whether it is a data issue), the rest from fewer dark blue, striped, and lace styles.</p></div>
+  <div class="card">
+    <div class="chart-title">FY2020 Q1 change in units vs the same quarter last year</div>
+    <div class="row"><span class="name">Kidswear</span><span class="track"><span class="bar dec" style="left:14.9%;width:58.2%" title="Kidswear: −199K units (54% of the decline)"></span><span class="zero" style="left:73.1%"></span></span><span class="val">−199K (54%)</span></div>
+    <div class="row"><span class="name">Adult: dark blue, striped, lace</span><span class="track"><span class="bar dec" style="left:4.1%;width:69.0%" title="Dark blue, striped, lace styles: −236K units (−48.4%)"></span><span class="zero" style="left:73.1%"></span></span><span class="val">−236K</span></div>
+    <div class="row"><span class="name">Adult: other styles</span><span class="track"><span class="bar inc" style="left:73.1%;width:19.6%;border-radius:0 4px 4px 0" title="Other adult apparel: +67K units (+2.4%)"></span><span class="zero" style="left:73.1%"></span></span><span class="val">+67K</span></div>
+    <div class="row total"><span class="name">Total</span><span class="track"></span><span class="val">−368K (−10.3%)</span></div>
+    <p class="unit">Units. FY2020 Q1 = Dec 2019 – Feb 2020.</p>
+  </div>
+  <ul class="points">
+    <li><b>Kidswear suddenly halved from March 2019:</b> first ask the data provider whether coverage changed — the cheapest check, and it decides whether kidswear should be excluded.</li>
+    <li><b>The three styles fell 48.4%:</b> ask merchandising whether it was a product decision or a shift in customer taste.</li>
+    <li>The quarterly report's "revenue −23.5% vs last quarter" is inflated by seasonality; compare with the same quarter last year.</li>
+  </ul>
+  <p class="more"><a href="../#analysis-1">Full analysis →</a></p>
+</section>
+
+<section class="slide" id="s2">
+  <p class="no">Question 2 / 4</p>
+  <p class="ask">Manager: "Is a sales channel the reason returning customers churned?"</p>
+  <div class="tldr headline"><p>Not just a channel problem: with the same items bought and age, online customers' churn probability is 7.1 points higher (cause unknown); but over half of both store-only and online-only customers did not return.</p></div>
+  <div class="card">
+    <div class="chart-title">Churn probability: store-only vs online-only customers</div>
+    <p class="legend"><i style="background:var(--ink-3)"></i>Store only<i style="background:var(--accent)"></i>Online only</p>
+    <div class="row dots"><span class="name">Raw comparison<span class="sub">gap 3.6 points</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid" style="left:33.33%"></span><span class="grid" style="left:66.67%"></span><span class="grid" style="left:100%"></span><span class="link" style="left:53.33%;width:30%"></span><span class="dot store" style="left:53.33%" title="Raw comparison - Store only: 52.4%"></span><span class="dot" style="left:83.33%" title="Raw comparison - Online only: 56.0%"></span><span class="lab" style="left:53.33%">52.4%</span><span class="lab" style="left:83.33%">56.0%</span></span><span class="val">+3.6</span></div>
+    <div class="row dots hi"><span class="name">Same items &amp; age<span class="sub">gap 7.1 points</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid" style="left:33.33%"></span><span class="grid" style="left:66.67%"></span><span class="grid" style="left:100%"></span><span class="link" style="left:20.83%;width:59.17%"></span><span class="dot store" style="left:20.83%" title="Same items &amp; age - Store only: 48.5%"></span><span class="dot" style="left:80%" title="Same items &amp; age - Online only: 55.6% (gap 7.1, 95% CI of the gap 6.8-7.4)"></span><span class="lab" style="left:20.83%">48.5%</span><span class="lab" style="left:80%">55.6%</span></span><span class="val">+7.1</span></div>
+    <div class="row axis"><span class="name">Churn probability</span><span class="track"><span class="tick" style="left:0%;transform:none">46%</span><span class="tick" style="left:33.33%">50%</span><span class="tick" style="left:66.67%">54%</span><span class="tick" style="left:100%;transform:translateX(-100%)">58%</span></span><span class="val"></span></div>
+    <p class="unit">Churn = bought in last year's quarter, bought nothing in this year's. The bottom row uses a statistical model to hold items bought and age equal; the axis starts at 46%.</p>
+  </div>
+  <ul class="points">
+    <li><b>Investigate why online customers churn more:</b> needs site visits, conversion, delivery and returns data.</li>
+    <li>The gap narrows as items bought rise; at 10+ items there is almost none.</li>
+    <li>This method measures the size of the gap; it can't prove "online" itself causes it.</li>
+  </ul>
+  <p class="more"><a href="../#analysis-2">Full analysis →</a></p>
+</section>
+
+<section class="slide" id="s3">
+  <p class="no">Question 3 / 4</p>
+  <p class="ask">Manager: "Who should get the 50,000 retention coupons? Why not just whoever has been away the longest?"</p>
+  <div class="tldr headline"><p>Send them to the model's list: 79.4% of its 50,000 did not return within six months, vs 73.2% for a "new customers first" rule and 57.5% for "away the longest."</p></div>
+  <div class="card">
+    <div class="chart-title">Share of the 50,000 picked who did not return within six months (backtest)</div>
+    <div class="row hi"><span class="name">Model (LightGBM)</span><span class="track"><span class="bar" style="width:79.4%" title="LightGBM: 79.4% (39,689 people)"></span></span><span class="val">79.4%</span></div>
+    <div class="row"><span class="name">Rule: new customers first</span><span class="track"><span class="bar" style="width:73.2%" title="New customers first, then away the longest: 73.2% (36,618 people)"></span></span><span class="val">73.2%</span></div>
+    <div class="row"><span class="name">Rule: away the longest</span><span class="track"><span class="bar" style="width:57.5%" title="Away the longest: 57.5% (28,737 people)"></span></span><span class="val">57.5%</span></div>
+    <div class="row"><span class="name">Random</span><span class="track"><span class="bar" style="width:35%" title="Random picks: 35.0% (equal to the overall churn rate)"></span></span><span class="val">35.0%</span></div>
+    <p class="unit">Backtest from March 26, 2020, picking 50,000 from 702K active customers; "churn" = no purchase in the 180 days after the prediction date; "new customer" = no purchase 181–365 days before it.</p>
+  </div>
+  <ul class="points">
+    <li><b>With the same 50,000 coupons, the model finds 3,071 more</b> actual churners than the best simple rule.</li>
+    <li><b>The key signal is "shopped in the earlier six months or not":</b> new customers churned 60.6%, returning ones 22.3%; adding it lifted the model from 68.4% to 79.4%.</li>
+    <li>To protect revenue, use List B ("highest churn loss"): its churners' total spend is 3.4× List A's, but only 47.1% of List B actually churned.</li>
+  </ul>
+  <p class="more"><a href="../#analysis-3">Full analysis →</a></p>
+</section>
+
+<section class="slide" id="s4">
+  <p class="no">Question 4 / 4</p>
+  <p class="ask">Manager: "Once the coupons go out, how do we prove they work?"</p>
+  <div class="tldr headline"><p>Randomly hold back a no-coupon control group and compare 180-day repurchase: in simulation both List A and List B clear break-even, so keep sending both.</p></div>
+  <div class="card">
+    <div class="chart-title">Coupon group − control group gap in 180-day repurchase rate (simulated, round 2 after the model update)</div>
+    <div class="row dots hi"><span class="name">A: most likely to churn<span class="sub">net +34K</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid zero-line" style="left:16.67%"></span><span class="grid" style="left:50%"></span><span class="grid" style="left:83.33%"></span><span class="ci" style="left:34.67%;width:45.83%"></span><span class="be" style="left:50%"></span><span class="lab" style="left:50%">break-even 2.00</span><span class="dot" style="left:57.67%" title="List A: +2.46 points (95% CI +1.08 to +3.83)"></span></span><span class="val">+2.46 keep</span></div>
+    <div class="row dots hi"><span class="name">B: highest churn loss<span class="sub">net +514K</span></span><span class="track"><span class="grid" style="left:0%"></span><span class="grid zero-line" style="left:16.67%"></span><span class="grid" style="left:50%"></span><span class="grid" style="left:83.33%"></span><span class="ci" style="left:39.5%;width:46.67%"></span><span class="be" style="left:27.17%"></span><span class="lab" style="left:27.17%">break-even 0.63</span><span class="dot" style="left:62.83%" title="List B: +2.77 points (95% CI +1.37 to +4.17)"></span></span><span class="val">+2.77 keep</span></div>
+    <div class="row axis"><span class="name">180-day repurchase gap (points)</span><span class="track"><span class="tick" style="left:0%;transform:none">−1</span><span class="tick" style="left:16.67%">0</span><span class="tick" style="left:50%">+2</span><span class="tick" style="left:83.33%">+4</span></span><span class="val"></span></div>
+    <p class="unit">Percentage points. Dot = measured gap, bar = 95% confidence interval, orange tick = break-even. No coupon records exist: the control group is real data, the coupon effect is simulated; money amounts are hypothetical units.</p>
+  </div>
+  <ul class="points">
+    <li><b>Hold back a random control group every round</b> (A 3,500, B 6,050) — never hand-pick "the least likely to churn" as controls.</li>
+    <li><b>Decide at day 180 and over several rounds:</b> day 30 overstates the effect (A: +3.75 → +2.46); in round 1 the luck of the split made List B look ineffective.</li>
+    <li><b>Re-validate whenever the model changes:</b> the new list is almost all new customers, who may respond to coupons differently.</li>
+  </ul>
+  <p class="more"><a href="../#analysis-4">Full analysis →</a></p>
+</section>
+
+<section class="slide" id="s5">
+  <p class="no">Summary</p>
+  <div class="tldr headline"><p>Three recommended next steps</p></div>
+  <ol class="points" style="font-size:17px">
+    <li><b>Check the kidswear data:</b> ask the data provider about coverage from March 2019; if it's a data issue, recompute sales without kidswear.</li>
+    <li><b>Investigate online churn:</b> get site visit, conversion, delivery and returns data to find why online customers churn more.</li>
+    <li><b>Send coupons per the experiment design:</b> keep both lists, hold back a control group each round, set the next budget on 180-day results, and accumulate rounds.</li>
+  </ol>
+  <p class="caveat">Limits: the data is a partial customer sample, not H&amp;M's real performance; it ends in September 2020 (during the pandemic); coupon effects are simulated and must be verified with real sends.</p>
+  <p class="more"><a href="../">Full report (data quality checks, methods, every step) →</a></p>
+</section>
+</template>
+
+<nav class="pager" aria-label="翻頁">
+  <span id="pager-count">1 / 6</span>
+  <button id="prev" aria-label="上一頁">↑</button>
+  <button id="next" aria-label="下一頁">↓</button>
+</nav>
+
+<script>
+// 語言切換（同作品頁做法）：中文在 <main>，英文在 template#main-en，整塊替換；記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const ui = {
+    zh: { back: '← 完整報告', prev: '上一頁', next: '下一頁', nav: '翻頁' },
+    en: { back: '← Full report', prev: 'Previous slide', next: 'Next slide', nav: 'Slides' }
+  };
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    document.getElementById('back-link').textContent = ui[l].back;
+    document.getElementById('prev').setAttribute('aria-label', ui[l].prev);
+    document.getElementById('next').setAttribute('aria-label', ui[l].next);
+    document.querySelector('.pager').setAttribute('aria-label', ui[l].nav);
+    // 連回作品頁的連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+
+// 翻頁：右下角按鈕與方向鍵（← → ↑ ↓、PageUp/PageDown）跳到上一張／下一張；頁碼依目前畫面中的投影片更新
+(function () {
+  const count = document.getElementById('pager-count'), prev = document.getElementById('prev'), next = document.getElementById('next');
+  let slides = [], cur = 0, io;
+  function go(i) { if (slides[i]) slides[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function update() { count.textContent = (cur + 1) + ' / ' + slides.length; prev.disabled = cur === 0; next.disabled = cur === slides.length - 1; }
+  function bind() {
+    slides = [...document.querySelectorAll('main .slide')];
+    if (io) io.disconnect();
+    io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { cur = slides.indexOf(e.target); update(); } }); }, { threshold: 0.5 });
+    slides.forEach(s => io.observe(s));
+    update();
+  }
+  prev.addEventListener('click', () => go(cur - 1));
+  next.addEventListener('click', () => go(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('select')) return;
+    if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+  });
+  document.addEventListener('langchange', bind);
+  bind();
+})();
+</script>
+</body>
+</html>
