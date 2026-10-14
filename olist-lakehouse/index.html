@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電商資料湖倉分析</title>
+<meta name="description" content="余家丞的自學專案：在 Databricks 把 Olist 巴西電商原始檔整理成 bronze／silver／gold 三層資料表，建立品質檢查與版本回溯，並分析配送延遲與評論分數的關係。">
+<style>
+  /* 顏色一律用變數，深色模式換一組 */
+  :root {
+    color-scheme: light;
+    --bg: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+    --accent: #2a78d6; --accent-soft: #e8f1fc; --mute: #c9c8c2; --neg: #eb6834;
+    --warn-soft: #fdf3e2; --warn-ink: #7a5200;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+      --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+      --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+    --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.75 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font-size: 30px; line-height: 1.3; margin: 8px 0 12px; }
+  h2 { font-size: 22px; margin: 60px 0 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 1.3em; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; font-size: 13px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; margin-right: 6px; }
+  .meta { color: var(--ink-2); font-size: 15px; }
+  /* 關鍵數字 */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 28px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; margin-top: 6px; }
+  .tldr { background: var(--accent-soft); border-radius: 10px; padding: 16px 20px; }
+  .tldr p:last-child { margin: 0; }
+  .tldr.lead { margin: 0 0 24px; } .tldr.lead ul { margin: 4px 0 0; }
+  .ask { color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 8px 0 18px; }
+  .tree { font-size: 15px; }
+  .tree .node { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; display: inline-block; background: var(--card); }
+  .tree .node.hi { border-color: var(--accent); background: var(--accent-soft); }
+  .tree .kids { margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line); }
+  .tree .kids > div { margin: 10px 0; }
+  .tree .note { display: block; color: var(--ink-2); font-size: 14px; margin: 4px 0 0 4px; }
+  .bridge { color: var(--ink-2); font-size: 15px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 14px; margin: 18px 0 8px; }
+  .bridge b { color: var(--ink); }
+  .howto { font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--line); padding: 4px 12px; margin: 6px 0 14px; }
+  .caveat { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 12px 16px; font-size: 14.5px; }
+  .caveat p:last-child { margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin: 12px 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin-bottom: 10px; }
+  td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-3); font-weight: 600; font-size: 13px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.hi td { background: var(--accent-soft); }
+  tr.total td { font-weight: 600; border-bottom: none; }
+  .chart-title { font-size: 15.5px; font-weight: 600; margin: 4px 0 10px; }
+  .legend { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 12px; vertical-align: -1px; }
+  .legend i:first-child { margin-left: 0; }
+  /* 橫條圖 */
+  .row { display: grid; grid-template-columns: 170px 1fr 64px; align-items: center; gap: 10px; font-size: 14px; padding: 3px 0; }
+  .row .name { color: var(--ink-2); text-align: right; }
+  .row .track { height: 14px; }
+  .row .bar { display: block; height: 100%; background: var(--mute); border-radius: 0 4px 4px 0; }
+  .row.hi .bar { background: var(--accent); }
+  .row .bar.dec { background: var(--mute); }
+  .row.hi .bar.dec { background: var(--neg); }
+  .row.hi .name { color: var(--ink); font-weight: 600; }
+  .row .val { font-variant-numeric: tabular-nums; }
+  /* 成對長條：占去年銷量 vs 占減少 */
+  .pair { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
+  .pair .name { text-align: right; color: var(--ink-2); }
+  .pair.hi .name { color: var(--ink); font-weight: 600; }
+  .pair .bars { display: grid; gap: 3px; }
+  .pair .b { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); }
+  .pair .b span { display: block; height: 11px; border-radius: 0 3px 3px 0; }
+  .pair .base span { background: var(--mute); }
+  .pair .dec span { background: var(--neg); }
+  .ax-y { font-size: 12.5px; color: var(--ink-3); margin: 0 0 6px; }
+  .ax-x { font-size: 12.5px; color: var(--ink-3); text-align: center; margin: 4px 0 10px; }
+  .track.div { position: relative; }
+  .track.div .zero { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--ink-3); }
+  .track.div .dbar { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+  .dbar.dec { background: var(--mute); }
+  .dbar.dec-hi { background: var(--neg); }
+  .dbar.inc { background: var(--accent); }
+  details { margin-top: 10px; font-size: 15px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14.5px; }
+  /* 分頁 */
+  .tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; background: var(--bg); padding: 10px 0; margin: 4px 0 8px; border-bottom: 1px solid var(--line); }
+  .tabs a { text-decoration: none; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; font-size: 14.5px; background: var(--card); }
+  .tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .panel > h2:first-child { margin-top: 24px; border-top: none; }
+  .panel > p:first-child { margin-top: 16px; }
+  .toc li { margin-bottom: 10px; }
+  .toc a { text-decoration: none; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.55; overflow-x: auto; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .sqltags { margin: 4px 0 8px; } .sqltags .tag { font-size: 12.5px; }
+  /* 大標題可展開 */
+  details.sec { margin: 0; font-size: 16px; border-top: 1px solid var(--line); }
+  details.sec > summary { list-style: none; cursor: pointer; color: var(--ink); font-size: inherit; display: flex; align-items: center; gap: 10px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  details.sec[open] > summary::before { transform: rotate(45deg); }
+  details.sec > summary h2 { margin: 0; padding: 18px 0; border-top: none; }
+  details.sec > summary:hover h2 { color: var(--accent); }
+  details.sec[open] { padding-bottom: 24px; }
+  /* 三層架構流程圖 */
+  .flow { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr; align-items: stretch; gap: 6px; margin: 16px 0 20px; }
+  .flow .layer { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .flow .layer b { display: block; font-size: 15.5px; }
+  .flow .layer span { display: block; font-size: 14px; color: var(--ink-2); line-height: 1.6; margin-top: 4px; }
+  .flow .layer em { display: block; font-style: normal; font-size: 13px; color: var(--accent); margin-top: 6px; }
+  .flow .arrow { align-self: center; text-align: center; color: var(--ink-3); font-size: 20px; }
+  @media (max-width: 600px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); } }
+  /* i18n:start 語言切換 */
+  .lang-switch { position: absolute; top: 12px; right: 16px; z-index: 10; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  html.lang-pending main { visibility: hidden; }
+  /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
+  html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
+  html[lang="en"] th.num { white-space: normal; }
+  html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
+  /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
+  /* i18n:end */
+</style>
+
+<!-- i18n:start --><script>
+// 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文
+(function () { var l = null; try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('lang'); } catch (e) {} if (l === 'en') document.documentElement.classList.add('lang-pending'); })();
+</script><!-- i18n:end -->
+</head>
+<body>
+<!-- i18n:start --><div class="lang-switch">
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div><!-- i18n:end -->
+<main>
+
+<header>
+  <span class="tag">自學專案</span><span class="tag">2026 年 10 月</span>
+  <h1>電商資料湖倉：從原始檔到分析（Databricks）</h1>
+  <p class="meta">余家丞 ｜ Olist 巴西電商公開資料 ｜ Databricks SQL、Delta Lake、Claude Code</p>
+</header>
+
+<p>本專案示範資料分析師如何「使用」資料湖倉（lakehouse，把原始檔案與整理好的資料表放在同一個平台管理）：把 9 個原始 CSV 檔放進 Databricks 雲端資料平台，依業界常見的三層架構整理成可以直接分析的表，沿途建立資料品質檢查與版本回溯，最後用整理好的表回答一個商業問題：「<b>配送延遲會不會拉低顧客的評論分數？</b>」資料是巴西電商平台 Olist 公開的約 10 萬筆訂單（2016-09～2018-10）。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對；分析題目與頁面呈現由本人決定。</p>
+
+<div class="caveat">
+  <p><b>先說明資料的限制：</b>顧客與賣家代號已匿名化，資料不代表 Olist 全部業績。本頁的分析是「晚到的訂單分數比較低」這類<b>關聯</b>，沒有做實驗，不能直接證明是延遲「造成」低分（見「限制」）。</p>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+  <div class="stat"><b>6.66%</b><span>晚於預計送達日的訂單比例（6,381 ÷ 95,824 張已送達且有評價的訂單）</span></div>
+  <div class="stat"><b>1.00 分</b><span>晚到 1～3 天的訂單，平均評分比準時訂單低多少（4.29 − 3.29，滿分 5 分）</span></div>
+  <div class="stat"><b>15 條</b><span>資料更新後一次重跑的資料品質規則數，目前全部通過（見「資料品質檢查」）</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>結論：</b>95,824 張已送達且有評價的訂單中，6.66% 晚於 Olist 給顧客的預計送達日。準時訂單平均 4.29 分；只晚 1～3 天就降到 3.29 分，晚 4 天以上降到 2.10 分以下，晚到 4 天以上的三組各有 67.68%～80.15% 給 1～2 星。這個落差不能用州別差異解釋：在晚到訂單較多的 14 個州（見分析二），州內晚到訂單都比準時訂單低 1.63～2.33 分。準時送達的訂單裡，等待天數越長分數也越低（等 0～7 天 4.41 分，等 31 天以上 3.62 分）。</p>
+  <p><b>建議：</b>① 晚到的訂單只占 6.66%，但分數低很多，是值得優先處理的風險。建議每天列出「即將到預計送達日、仍未送達」的訂單，提前處理或主動通知顧客；通知是否真的能減少負評，需要用實驗驗證（見「若要繼續追查：需要的資料」）。② 準時率 93.2%（96,470 張已送達訂單中準時或提早的比例，含沒有評價的訂單）不等於顧客滿意：預計送達日抓得很寬（預計送達天數中位數 24 天，實際中位數 10 天），準時的訂單等越久分數仍越低，物流指標建議同時追蹤「實際配送天數」（見附錄）。</p>
+</div>
+
+<details class="sec">
+<summary><h2>資料</h2></summary>
+<p>來源：Kaggle 上 Olist 公開的 <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a>，9 個互相關聯的 CSV 檔。Olist 是巴西的電商平台，讓小型賣家在大型購物網站上架；一張訂單可以包含多件商品、來自多個賣家。</p>
+<table>
+  <tr><th>檔案（本頁用到的）</th><th class="num">列數</th><th>一列代表</th></tr>
+  <tr><td>orders 訂單</td><td class="num">99,441</td><td>一張訂單（下單時間、狀態、出貨日、送達日、預計送達日）</td></tr>
+  <tr><td>order_items 訂單明細</td><td class="num">112,650</td><td>訂單裡的一件商品（商品、賣家、價格、運費）</td></tr>
+  <tr><td>order_reviews 評價</td><td class="num">99,224</td><td>一則評價（1～5 分、留言）</td></tr>
+  <tr><td>customers 顧客</td><td class="num">99,441</td><td>一張訂單的顧客資料（州別、郵遞區號）</td></tr>
+  <tr><td>products 商品</td><td class="num">32,951</td><td>一個商品（品類、重量）</td></tr>
+  <tr><td>其他：sellers 賣家、payments 付款、geolocation 郵遞區號座標、品類英文翻譯</td><td class="num">—</td><td>建表與品質檢查時使用</td></tr>
+</table>
+<table>
+  <tr><th>分析用到的欄位</th><th>意思</th></tr>
+  <tr><td><code>order_purchase_timestamp</code></td><td>下單時間</td></tr>
+  <tr><td><code>order_delivered_carrier_date</code></td><td>賣家把貨交給物流的時間</td></tr>
+  <tr><td><code>order_delivered_customer_date</code></td><td>實際送達顧客的時間</td></tr>
+  <tr><td><code>order_estimated_delivery_date</code></td><td>下單時告訴顧客的預計送達日</td></tr>
+  <tr><td><code>review_score</code></td><td>顧客給的評分，1～5 分</td></tr>
+  <tr><td><code>customer_state</code></td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>資料湖倉的三層架構</h2></summary>
+<p><b>資料湖（data lake）</b>是存放原始檔案的地方，什麼格式都能放，但不保證乾淨；<b>資料倉儲（data warehouse）</b>存放整理好、可以直接查詢的表。<b>資料湖倉（lakehouse）</b>把兩者放在同一個地方：原始檔與整理好的表都在 Databricks 裡，表使用 Delta Lake 格式，因此能做到一般檔案做不到的事，例如擋下不合規的資料、查詢過去的版本（見「版本回溯」）。資料由原始到可用分成三層，業界常稱為 medallion（獎牌）架構，類似餐廳處理食材：進貨原樣保存（bronze）→ 清洗、切好備料（silver）→ 依菜單組合成餐點（gold）。這樣分層的好處是：原始資料永遠留著，清洗出錯可以重來；每一層都能各自跑品質檢查。搭配 Delta 格式，還能查回過去的版本。</p>
+<div class="flow">
+  <div class="layer"><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另加「何時讀入、來自哪個檔案」兩個欄位</span><em>10 張表（含 1 張用預設設定讀評價檔的對照表）</em></div>
+  <div class="arrow">→</div>
+  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類</span><em>8 張表＋15 條品質規則</em></div>
+  <div class="arrow">→</div>
+  <div class="layer"><b>gold 分析層</b><span>依分析需求組成星狀結構（1 張事實表＋4 張維度表）</span><em>5 張表</em></div>
+</div>
+
+<h3>bronze：先原樣保存，讀取時就發現兩個問題</h3>
+<p>bronze 層的原則是「不修改內容」，之後清洗出錯時，隨時可以從這一層重來。讀進來後立刻比對每張表的列數與原始檔，發現兩個讀取問題：</p>
+<ul>
+  <li><b>評價留言含換行，一則評價被切成好幾列：</b>用預設設定讀取（存成對照表 <code>bronze_reviews_naive</code>），評價表有 104,162 列，比原始檔的 99,224 則多出 4,938 列碎片。加上「一筆資料可以跨好幾行」與「引號內的符號照原樣讀」兩項設定（multiLine、escape）後，列數與原始檔一致。</li>
+  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定這個欄位以文字讀入（schemaHints 設定），重建後所有郵遞區號都是 5 碼。</li>
+</ul>
+<details><summary>SQL：讀取原始檔（以評價表為例）</summary>
+<div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine／escape</span><span class="tag">_metadata 來源欄位</span></div>
+<pre><code>CREATE OR REPLACE TABLE workspace.olist.bronze_order_reviews AS
+SELECT *,
+       current_timestamp() AS _ingested_at,   -- 何時讀入
+       _metadata.file_name AS _source_file    -- 來自哪個檔案
+FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
+                format =&gt; 'csv', header =&gt; true,
+                multiLine =&gt; true, escape =&gt; '"');  -- 留言裡有換行與引號</code></pre>
+</details>
+
+<h3>silver：清洗規則——可疑的資料只標記，不刪除</h3>
+<p>建 silver 層前，先在 bronze 層數出每一種問題有幾列，再決定處理方式。可疑但可能是真實情況的資料（例如送達時間早於出貨時間）只加一個標記欄，不刪除，讓之後的分析自己決定要不要排除。</p>
+<table>
+  <tr><th>發現的問題</th><th class="num">數量</th><th>處理方式</th></tr>
+  <tr><td>同一張訂單有多則評價（547 張訂單有 2 則以上評價，比一張一則多出的則數）</td><td class="num">551 則</td><td>保留全部，標出每張訂單「最後回覆的那一則」，分析時每張訂單只取這一則</td></tr>
+  <tr><td>座標表同一個郵遞區號、同一組經緯度重複出現</td><td class="num">280,009 列</td><td>重複的只留一筆，再刪除巴西國境外的 27 筆，最後每個郵遞區號取平均座標（1,000,163 列 → 19,011 個郵遞區號）</td></tr>
+  <tr><td>商品沒有品類</td><td class="num">610 個</td><td>品類填「unknown」；有對照的品類翻成英文（13 個商品的品類沒有對照，保留葡萄牙文）</td></tr>
+  <tr><td>狀態是「已送達」卻沒有送達日</td><td class="num">8 張</td><td>加標記欄；配送分析排除</td></tr>
+  <tr><td>送達時間早於交給物流的時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
+</table>
+<p class="howto">座標表的重複列中，261,831 列連城市寫法等所有欄位都相同。數量是 Databricks 的查詢結果，並與本機用 Python 讀原始檔算出的數字逐項核對一致。</p>
+
+<h3>gold：星狀結構——一張事實表，四張維度表</h3>
+<p>gold 層依分析需求組合資料，常見做法是星狀結構：中間一張<b>事實表</b>記錄「發生了什麼」，本專案是 <code>gold_fact_sales</code>，一列代表「賣出的一件商品」（112,650 列），記價格與運費；周圍幾張<b>維度表</b>記錄「是誰、是什麼、在哪天」（顧客、商品、賣家、日期），查詢時用代號把它們接上事實表，例如用商品代號查出品類。日期維度表包含 2016-09-04～2018-10-17 每一天（774 天），沒有訂單的日子也有一列，按月彙總時才不會漏掉月份。</p>
+<p>事實表的一列是「一件商品」（資料的最小單位，稱為粒度），所以本頁的配送分析<b>不用</b>這張表，而是回到 silver 層以「一張訂單」為單位：同一張訂單買 3 件商品，在事實表會有 3 列、3 列都帶著同一個評分，直接平均會讓多件訂單的評分被重複計算。</p>
+<details><summary>SQL：用星狀結構回答「2018 年營收最高的品類」</summary>
+<div class="sqltags"><span class="tag">事實表 JOIN 維度表</span><span class="tag">COUNT(DISTINCT)</span></div>
+<pre><code>SELECT
+  p.category,
+  ROUND(SUM(f.price), 2)               AS revenue,     -- 商品金額，不含運費
+  COUNT(*)                             AS items_sold,  -- 事實表一列＝一件
+  COUNT(DISTINCT c.customer_unique_id) AS buyers       -- 用「人」的代號計算買家數
+FROM workspace.olist.gold_fact_sales AS f
+JOIN workspace.olist.gold_dim_date     AS d USING (date_key)
+JOIN workspace.olist.gold_dim_product  AS p USING (product_id)
+JOIN workspace.olist.gold_dim_customer AS c USING (customer_id)
+WHERE d.year = 2018 AND f.order_status = 'delivered'
+GROUP BY p.category
+ORDER BY revenue DESC
+LIMIT 5;</code></pre>
+<p class="howto">年份依下單日計算；2018 年已送達的訂單，下單日只到 8 月底。結果第一名是 health_beauty（健康美容），營收 755,724.50 巴西雷亞爾。計算買家人數用 <code>customer_unique_id</code>（同一個人只有一個）；另一個欄位 <code>customer_id</code> 是每張訂單各給一個，同一人下兩次單會被算成兩人。</p>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>資料品質檢查</h2></summary>
+<p>品質規則寫成一個 VIEW（存起來的查詢，名稱 <code>silver_quality_checks</code>），每次資料更新後只要執行一行查詢，15 條規則就會全部重跑一次。規則依常見的四個面向分類：</p>
+<table>
+  <tr><th>面向</th><th>例子</th><th class="num">規則數</th></tr>
+  <tr><td>唯一性：該唯一的代號有沒有重複</td><td>訂單編號不重複；每張有評價的訂單剛好一則「最後回覆」</td><td class="num">4</td></tr>
+  <tr><td>完整性：必填欄位有沒有空值</td><td>每張訂單都有顧客代號</td><td class="num">3</td></tr>
+  <tr><td>有效性：值是否在合理範圍</td><td>評分介於 1～5；價格大於 0</td><td class="num">3</td></tr>
+  <tr><td>一致性：表與表對不對得上</td><td>訂單明細裡的商品都存在商品表</td><td class="num">5</td></tr>
+  <tr class="total"><td>合計</td><td></td><td class="num">15</td></tr>
+</table>
+<p>規則分兩級：11 條是 <b>ERROR</b>（錯誤），一列都不能違反；4 條是 <b>WARN</b>（警告），對應已知、目前不修的問題，例如上一節的 23 張「送達早於交貨」，只要筆數沒有比現在多就算通過，用來發現問題是否變嚴重。目前 15 條全部通過。</p>
+<p>WARN 中有一條是「付款總額與商品＋運費不符（差超過 1 雷亞爾）」，共 249 張訂單，其中 232 張是付款多於商品＋運費。這 232 張有 98.7% 選擇分期付款（期數大於 1），金額相符的訂單用分期付款的只有 51.4%，多付的部分可能是分期利息，但資料無法證實；另外 17 張付款少於商品＋運費，原因不明。因此兩者都列為已知問題、不修改金額。</p>
+
+<h3>表上的「門禁」：哪些規則會在寫入時擋下壞資料</h3>
+<p>品質 VIEW 是資料寫進去之後才檢查；Delta 格式的表另外可以設定「寫入時就檢查」的規則，像大樓門禁，不合規的資料進不來。實際測試三種寫法：</p>
+<table>
+  <tr><th>寫法</th><th>測試</th><th>結果</th></tr>
+  <tr class="hi"><td>CHECK 條件（評分 1～5）</td><td>寫入一筆 6 分的評價</td><td>被擋下，資料沒有寫入</td></tr>
+  <tr><td>CHECK 條件（評分至少 3）</td><td>對已有 1、2 分評價的表加上這條規則</td><td>加不上去：系統會先檢查現有資料，14,575 列違反</td></tr>
+  <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，不會強制。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
+</table>
+<p>因此「不准重複」不能靠主鍵，要在寫入時處理：新資料用 <code>MERGE</code>（合併寫入）指令寫入，同一張訂單已存在就更新、不存在才新增。測試時也發現，如果同一批新資料裡同一張新訂單出現兩次，<code>MERGE</code> 會新增兩列，所以寫入前要先在新資料裡去重。</p>
+<details><summary>SQL：先去重再 MERGE</summary>
+<div class="sqltags"><span class="tag">MERGE INTO</span><span class="tag">QUALIFY ROW_NUMBER</span></div>
+<pre><code>MERGE INTO workspace.olist.silver_orders AS t
+USING (
+  SELECT * FROM VALUES
+    ('TEST_NEW', 'shipped',   TIMESTAMP'2018-01-01 10:00:00'),
+    ('TEST_NEW', 'delivered', TIMESTAMP'2018-01-05 10:00:00')
+    AS v(order_id, order_status, updated_at)
+  -- 同一張訂單只留最新的一列
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) = 1
+) AS s
+ON t.order_id = s.order_id
+WHEN MATCHED THEN UPDATE SET t.order_status = s.order_status
+WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
+  VALUES (s.order_id, (SELECT MIN(customer_id) FROM workspace.olist.silver_customers), s.order_status);</code></pre>
+<p class="howto">測試用的訂單借用一位既有顧客的代號，避免違反「訂單的顧客都在顧客表裡」這條規則；測試完已刪除，訂單表回到 99,441 列。</p>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>版本回溯</h2></summary>
+<p>Delta 表每次寫入、更新或刪除都會留下一個新版本。這個功能讓分析師可以查「某個時間點的資料長什麼樣」，也能在誤刪後還原。</p>
+<table>
+  <tr><th>指令</th><th>做什麼</th><th>本專案的實測</th></tr>
+  <tr><td><code>DESCRIBE HISTORY</code></td><td>列出每個版本做了什麼動作、影響幾列</td><td>訂單表在建置與測試過程中共產生 13 個版本（版本 0～12）</td></tr>
+  <tr><td><code>VERSION AS OF</code></td><td>查詢過去某個版本，不影響現在的表</td><td>查訂單表的版本 2 有 99,443 列（含 2 筆主鍵測試訂單），現在是 99,441 列</td></tr>
+  <tr class="hi"><td><code>RESTORE</code></td><td>把表還原成過去某個版本</td><td>在練習用的複製表上故意執行忘了指定刪除條件（沒有 WHERE）的 DELETE，整張表被刪光；還原到版本 0 後回到 99,441 列</td></tr>
+</table>
+<p>還原不會抹掉誤刪的紀錄，而是再新增一個版本（練習表：版本 0 建立 → 版本 1 誤刪 → 版本 2 還原），像會計用一筆沖銷分錄更正，而不是撕掉錯的那一頁。版本回溯有期限：依 Databricks 官方文件的預設值，「每個版本做了什麼」的紀錄保留 30 天，但舊版本的資料檔只保證保留 7 天，超過後可能被清除，就查不到當時的資料了，只看得到紀錄。需要長期保存的資料（例如月結數字）要另外存成帶日期的快照表，本專案存了一張 <code>snapshot_orders_20261013</code>。</p>
+<details><summary>SQL：誤刪後還原</summary>
+<div class="sqltags"><span class="tag">DESCRIBE HISTORY</span><span class="tag">RESTORE TABLE</span></div>
+<pre><code>-- 練習用的複製表（版本 0）
+CREATE OR REPLACE TABLE workspace.olist.sandbox_orders AS
+SELECT * FROM workspace.olist.silver_orders;
+
+DELETE FROM workspace.olist.sandbox_orders;                      -- 失誤：忘了寫 WHERE（版本 1，0 列）
+RESTORE TABLE workspace.olist.sandbox_orders TO VERSION AS OF 0; -- 還原（版本 2，99,441 列）
+DESCRIBE HISTORY workspace.olist.sandbox_orders;                 -- 三個版本的紀錄都還在</code></pre>
+</details>
+</details>
+
+<details class="sec" open>
+<summary><h2>分析：配送延遲會不會拉低評論分數？</h2></summary>
+<p>分析對象是狀態為「已送達」且有送達日的 96,470 張訂單（已送達 96,478 張，扣掉 8 張沒有送達日），其中有評價的 95,824 張（另 646 張沒有評價；同一張訂單有多則評價時只取最後回覆的一則）。定義：</p>
+<ul>
+  <li><b>晚到天數</b>＝實際送達日 − 預計送達日（只比日期，不比時間；0 或負數＝準時）</li>
+  <li><b>平均分數</b>＝該組評分加總 ÷ 該組訂單數；<b>1～2 星比例</b>＝給 1 或 2 星的訂單 ÷ 該組訂單數</li>
+</ul>
+
+<h3>分析一：晚到越多天，分數越低</h3>
+<table>
+  <tr><th>晚到天數</th><th class="num">訂單數</th><th class="num">平均分數</th><th class="num">1～2 星比例</th></tr>
+  <tr><td>準時或提早</td><td class="num">89,443</td><td class="num">4.29</td><td class="num">9.27%</td></tr>
+  <tr class="hi"><td>晚 1～3 天</td><td class="num">1,852</td><td class="num">3.29</td><td class="num">32.13%</td></tr>
+  <tr class="hi"><td>晚 4～7 天</td><td class="num">1,748</td><td class="num">2.10</td><td class="num">67.68%</td></tr>
+  <tr class="hi"><td>晚 8～14 天</td><td class="num">1,446</td><td class="num">1.67</td><td class="num">80.15%</td></tr>
+  <tr class="hi"><td>晚 15 天以上</td><td class="num">1,335</td><td class="num">1.72</td><td class="num">78.35%</td></tr>
+  <tr class="total"><td>合計</td><td class="num">95,824</td><td class="num"></td><td class="num"></td></tr>
+</table>
+<p class="howto">晚到的訂單合計 6,381 張（1,852 + 1,748 + 1,446 + 1,335），占 6.66%（6,381 ÷ 95,824）。</p>
+<p>只晚 1～3 天，平均分數就比準時低 1.00 分；晚 8 天以上約八成給 1～2 星，晚 8～14 天與晚 15 天以上的分數相近（1.67 與 1.72），晚到一週以上後，分數不再隨天數明顯下降。</p>
+<p><b>結論：晚到的訂單分數明顯較低，晚到 14 天以內越多天越低，之後持平；晚到一週以上約八成是 1～2 星。</b></p>
+<details><summary>SQL：依晚到天數分組</summary>
+<div class="sqltags"><span class="tag">DATEDIFF</span><span class="tag">CASE WHEN 分組</span><span class="tag">條件平均 AVG(IF(...))</span></div>
+<pre><code>WITH delivered AS (
+  SELECT order_id,
+         DATEDIFF(CAST(order_delivered_customer_date AS DATE),
+                  CAST(order_estimated_delivery_date AS DATE)) AS delay_days
+  FROM workspace.olist.silver_orders
+  WHERE order_status = 'delivered'
+    AND order_delivered_customer_date IS NOT NULL
+),
+scored AS (
+  SELECT d.delay_days, r.review_score,
+         CASE WHEN d.delay_days &lt;= 0  THEN '1 準時或提早'
+              WHEN d.delay_days &lt;= 3  THEN '2 晚 1-3 天'
+              WHEN d.delay_days &lt;= 7  THEN '3 晚 4-7 天'
+              WHEN d.delay_days &lt;= 14 THEN '4 晚 8-14 天'
+              ELSE                         '5 晚 15 天以上' END AS delay_bucket
+  FROM delivered AS d
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON d.order_id = r.order_id AND r.is_latest_for_order   -- 每張訂單只取一則評價
+)
+SELECT delay_bucket,
+       COUNT(*)                                         AS orders,
+       ROUND(AVG(review_score), 2)                      AS avg_score,
+       ROUND(AVG(IF(review_score &lt;= 2, 1, 0)) * 100, 2) AS pct_1_2_stars
+FROM scored
+GROUP BY delay_bucket
+ORDER BY delay_bucket;</code></pre>
+</details>
+
+<p class="bridge"><b>為什麼接著看這個：</b>偏遠的州可能本來就「常晚到、評分也偏低」，例如選擇較少、運費較高。如果是這樣，分析一的落差有一部分是地區造成的，不是延遲。檢查方法是在同一州裡比較晚到與準時的訂單。</p>
+
+<h3>分析二：在同一州裡比較，晚到的分數一樣低</h3>
+<p>只列出晚到訂單在 100 張以上的州（晚到訂單太少時，平均分數容易受少數訂單影響）。這 14 個州合計占全部 95,824 張訂單的 95.2%、晚到訂單的 92.8%。</p>
+<table>
+  <tr><th>州</th><th class="num">訂單數</th><th class="num">晚到比例</th><th class="num">準時：平均分數</th><th class="num">晚到：平均分數</th><th class="num">差距（準時 − 晚到）</th></tr>
+  <tr><td>RJ 里約熱內盧</td><td class="num">12,211</td><td class="num">11.92%</td><td class="num">4.24</td><td class="num">1.91</td><td class="num">2.33</td></tr>
+  <tr><td>DF 聯邦區</td><td class="num">2,070</td><td class="num">5.70%</td><td class="num">4.26</td><td class="num">1.97</td><td class="num">2.29</td></tr>
+  <tr><td>PE 伯南布哥</td><td class="num">1,579</td><td class="num">9.44%</td><td class="num">4.30</td><td class="num">2.03</td><td class="num">2.26</td></tr>
+  <tr><td>PA 帕拉</td><td class="num">933</td><td class="num">10.72%</td><td class="num">4.15</td><td class="num">1.92</td><td class="num">2.23</td></tr>
+  <tr><td>CE 塞阿拉</td><td class="num">1,273</td><td class="num">13.67%</td><td class="num">4.25</td><td class="num">2.04</td><td class="num">2.21</td></tr>
+  <tr><td>RS 南大河</td><td class="num">5,326</td><td class="num">6.03%</td><td class="num">4.31</td><td class="num">2.21</td><td class="num">2.11</td></tr>
+  <tr><td>GO 戈亞斯</td><td class="num">1,946</td><td class="num">6.37%</td><td class="num">4.24</td><td class="num">2.20</td><td class="num">2.03</td></tr>
+  <tr><td>MA 馬拉尼昂</td><td class="num">712</td><td class="num">17.13%</td><td class="num">4.17</td><td class="num">2.18</td><td class="num">1.99</td></tr>
+  <tr><td>SC 聖卡塔琳娜</td><td class="num">3,519</td><td class="num">8.07%</td><td class="num">4.29</td><td class="num">2.35</td><td class="num">1.94</td></tr>
+  <tr><td>MG 米納斯吉拉斯</td><td class="num">11,285</td><td class="num">4.47%</td><td class="num">4.28</td><td class="num">2.36</td><td class="num">1.92</td></tr>
+  <tr><td>BA 巴伊亞</td><td class="num">3,229</td><td class="num">11.89%</td><td class="num">4.14</td><td class="num">2.35</td><td class="num">1.79</td></tr>
+  <tr><td>SP 聖保羅</td><td class="num">40,266</td><td class="num">4.44%</td><td class="num">4.32</td><td class="num">2.55</td><td class="num">1.78</td></tr>
+  <tr><td>ES 聖埃斯皮里圖</td><td class="num">1,969</td><td class="num">10.41%</td><td class="num">4.26</td><td class="num">2.51</td><td class="num">1.75</td></tr>
+  <tr><td>PR 巴拉那</td><td class="num">4,900</td><td class="num">3.96%</td><td class="num">4.30</td><td class="num">2.68</td><td class="num">1.63</td></tr>
+</table>
+<p class="howto">差距以未四捨五入的平均分數相減後再取兩位小數，因此可能與表上兩欄直接相減差 0.01（分析三同）。</p>
+<p>14 個州的準時訂單平均都在 4.14～4.32 分之間，晚到訂單則都低 1.63～2.33 分。各州的晚到比例差異很大（SP 4.44%、MA 17.13%），但「晚到就低分」在這 14 州都成立。</p>
+<p><b>結論：在晚到訂單較多的 14 個州裡，州內比較仍有明顯落差，晚到與低分的關聯不能用州別差異解釋。</b>同州比較只排除了州別這一個因素（見「限制」）。</p>
+<details><summary>SQL：同一州內比較</summary>
+<div class="sqltags"><span class="tag">JOIN 三張 silver 表</span><span class="tag">HAVING 篩選分組</span><span class="tag">COUNT_IF</span></div>
+<pre><code>WITH scored AS (
+  SELECT c.customer_state,
+         DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_estimated_delivery_date AS DATE)) &gt; 0 AS is_late,
+         r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON o.order_id = r.order_id AND r.is_latest_for_order
+  JOIN workspace.olist.silver_customers AS c ON o.customer_id = c.customer_id
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+)
+SELECT customer_state,
+       COUNT(*)                                            AS orders,
+       ROUND(AVG(IF(is_late, 1, 0)) * 100, 2)              AS late_pct,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL)), 2)  AS ontime_score,  -- AVG 會略過 NULL
+       ROUND(AVG(IF(is_late, review_score, NULL)), 2)      AS late_score,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL))
+           - AVG(IF(is_late, review_score, NULL)), 2)      AS gap   -- 準時 − 晚到
+FROM scored
+GROUP BY customer_state
+HAVING COUNT_IF(is_late) &gt;= 100
+ORDER BY gap DESC;</code></pre>
+</details>
+
+<p class="bridge"><b>為什麼接著看這個：</b>晚到的訂單通常也等得比較久。顧客給低分，可能是因為「沒有在說好的日期送到」，也可能只是「等太久」。兩者的改善方式不同：前者可以從預計送達日的設定著手，後者需要縮短實際配送時間。</p>
+
+<h3>分析三：等待天數相同時，晚到的分數仍低得多</h3>
+<p>把訂單依「下單到送達實際等了幾天」分組，每組再分成準時與晚到比較。</p>
+<div class="chart-title">同樣等 22～30 天，準時送達平均 3.94 分，晚到只有 2.55 分</div>
+<div class="legend"><i style="background:var(--mute)"></i>準時或提早<i style="background:var(--neg)"></i>晚到</div>
+<div class="pair"><div class="name">等 0～7 天</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
+<div class="pair"><div class="name">等 8～14 天</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
+<div class="pair"><div class="name">等 15～21 天</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
+<div class="pair hi"><div class="name">等 22～30 天</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
+<div class="pair"><div class="name">等 31 天以上</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
+<p class="ax-x">X 軸：平均評分（0～5 分）</p>
+<table>
+  <tr><th>實際等待天數</th><th class="num">準時：訂單數</th><th class="num">準時：平均分數</th><th class="num">晚到：訂單數</th><th class="num">晚到：平均分數</th><th class="num">差距（準時 − 晚到）</th></tr>
+  <tr><td>0～7 天</td><td class="num">30,476</td><td class="num">4.41</td><td class="num">74</td><td class="num">3.97</td><td class="num">0.44</td></tr>
+  <tr><td>8～14 天</td><td class="num">37,441</td><td class="num">4.31</td><td class="num">334</td><td class="num">3.27</td><td class="num">1.04</td></tr>
+  <tr><td>15～21 天</td><td class="num">15,473</td><td class="num">4.16</td><td class="num">581</td><td class="num">2.94</td><td class="num">1.22</td></tr>
+  <tr class="hi"><td>22～30 天</td><td class="num">5,217</td><td class="num">3.94</td><td class="num">2,048</td><td class="num">2.55</td><td class="num">1.39</td></tr>
+  <tr><td>31 天以上</td><td class="num">836</td><td class="num">3.62</td><td class="num">3,344</td><td class="num">1.85</td><td class="num">1.78</td></tr>
+</table>
+<p>這張表回答兩個問題：</p>
+<ul>
+  <li><b>同一列比較（等待天數相同，只差有沒有晚到）：</b>每一組都是晚到的分數較低，例如等 22～30 天，準時 3.94 分、晚到 2.55 分，差 1.39 分。等 0～7 天的晚到訂單只有 74 張，該組的平均分數較不穩定。</li>
+  <li><b>只看準時那一欄（都沒有晚到，只差等多久）：</b>等 0～7 天 4.41 分，等 31 天以上 3.62 分，等待天數本身也和分數有關。</li>
+</ul>
+<details><summary>補充：同一組裡，晚到的訂單是不是其實等得比較久？</summary>
+<p>是，但差得不多：前四組晚到訂單的等待天數中位數只比準時多 1～2 天；31 天以上這組沒有上限，差距較大。</p>
+<table>
+  <tr><th>實際等待天數的中位數</th><th class="num">0～7 天組</th><th class="num">8～14 天組</th><th class="num">15～21 天組</th><th class="num">22～30 天組</th><th class="num">31 天以上組</th></tr>
+  <tr><td>準時</td><td class="num">5 天</td><td class="num">10 天</td><td class="num">17 天</td><td class="num">24 天</td><td class="num">33 天</td></tr>
+  <tr><td>晚到</td><td class="num">6 天</td><td class="num">11 天</td><td class="num">19 天</td><td class="num">26 天</td><td class="num">39 天</td></tr>
+</table>
+<p>把 31 天以上這組再細分，差距仍在 1.6 分以上：</p>
+<table>
+  <tr><th>等 31 天以上再細分</th><th class="num">準時：訂單數</th><th class="num">準時：平均分數</th><th class="num">晚到：訂單數</th><th class="num">晚到：平均分數</th></tr>
+  <tr><td>31～40 天</td><td class="num">729</td><td class="num">3.66</td><td class="num">1,822</td><td class="num">1.95</td></tr>
+  <tr><td>41～50 天</td><td class="num">89</td><td class="num">3.30</td><td class="num">933</td><td class="num">1.66</td></tr>
+  <tr><td>51 天以上</td><td class="num">18</td><td class="num">3.78</td><td class="num">589</td><td class="num">1.83</td></tr>
+</table>
+<p class="howto">41 天以上的準時訂單只有 107 張（89 + 18），平均分數較不穩定，51 天以上的 18 張不具參考性。</p>
+</details>
+<p>「等 31 天以上卻準時」的訂單，是因為預計送達日給得更長；這類訂單的預計送達天數與實際天數，見附錄。</p>
+<p><b>結論：兩者都和分數有關：等待越久分數越低，而等待天數相同時，晚到的訂單又再低 0.44～1.78 分。</b></p>
+<details><summary>SQL：等待天數 × 準時／晚到</summary>
+<div class="sqltags"><span class="tag">兩個 DATEDIFF</span><span class="tag">條件計數 COUNT_IF</span></div>
+<pre><code>WITH scored AS (
+  SELECT DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_purchase_timestamp AS DATE))          AS wait_days,
+         DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_estimated_delivery_date AS DATE)) &gt; 0 AS is_late,
+         r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON o.order_id = r.order_id AND r.is_latest_for_order
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+)
+SELECT CASE WHEN wait_days &lt;= 7  THEN '1 等 0-7 天'
+            WHEN wait_days &lt;= 14 THEN '2 等 8-14 天'
+            WHEN wait_days &lt;= 21 THEN '3 等 15-21 天'
+            WHEN wait_days &lt;= 30 THEN '4 等 22-30 天'
+            ELSE                      '5 等 31 天以上' END AS wait_bucket,
+       COUNT_IF(NOT is_late)                              AS ontime_orders,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL)), 2) AS ontime_score,
+       COUNT_IF(is_late)                                  AS late_orders,
+       ROUND(AVG(IF(is_late, review_score, NULL)), 2)     AS late_score,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL))
+           - AVG(IF(is_late, review_score, NULL)), 2)     AS gap   -- 準時 − 晚到
+FROM scored
+GROUP BY wait_bucket
+ORDER BY wait_bucket;</code></pre>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>附錄：準時的訂單為什麼等越久分數越低？</h2></summary>
+<p>分析三中，準時送達的訂單等越久分數越低。如果顧客依照預計送達日安排期待，準時的訂單應該不論等多久都差不多滿意。以下逐一檢查可能的解釋，每一項先寫出「如果成立，資料應該看到什麼」。</p>
+<table>
+  <tr><th>可能的解釋</th><th>如果成立，資料應該看到</th><th>結果</th></tr>
+  <tr><td>等很久的多是大件、重的商品，運送中較易損壞</td><td>只看輕的商品，分數不再隨等待天數下降</td><td>不成立：總重 500 克以下的訂單一樣從 4.44 降到 3.79</td></tr>
+  <tr><td>多件商品分批送達，顧客不滿意</td><td>只看單件訂單，分數不再下降</td><td>不成立：單件訂單一樣從 4.48 降到 3.68</td></tr>
+  <tr><td>出貨慢的賣家整體服務較差</td><td>只看賣家 2 天內就交給物流的訂單，分數不再下降</td><td>不成立：一樣從 4.43 降到 3.76</td></tr>
+  <tr class="hi"><td>預計送達日給得很寬，顧客的實際期待是「平常幾天會到」</td><td>承諾天數明顯長於實際天數；準時但等很久的顧客仍抱怨慢</td><td>資料支持，但無法直接證實（見下方）</td></tr>
+</table>
+<table>
+  <tr><th>只看準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
+  <tr><td>全部（89,443 張）</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td><td class="num">3.62</td></tr>
+  <tr><td>單件訂單（80,407 張）</td><td class="num">4.48</td><td class="num">4.38</td><td class="num">4.23</td><td class="num">3.99</td><td class="num">3.68</td></tr>
+  <tr><td>總重 500 克以下（36,134 張）</td><td class="num">4.44</td><td class="num">4.33</td><td class="num">4.19</td><td class="num">3.93</td><td class="num">3.79</td></tr>
+  <tr><td>賣家 2 天內交給物流（49,594 張）</td><td class="num">4.43</td><td class="num">4.34</td><td class="num">4.21</td><td class="num">3.95</td><td class="num">3.76</td></tr>
+</table>
+<p class="howto">表中數字為平均分數。總重是訂單內商品重量加總；有 16 張訂單的商品都缺少重量，無法計算總重，不列入「總重 500 克以下」；其他訂單的每件商品都有重量。</p>
+<table>
+  <tr><th>96,470 張已送達訂單（不限有無評價）</th><th class="num">數值</th></tr>
+  <tr><td>預計送達天數（下單日到預計送達日）的中位數</td><td class="num">24 天</td></tr>
+  <tr><td>實際送達天數（下單日到送達日）的中位數</td><td class="num">10 天</td></tr>
+  <tr><td>準時或提早送達的比例</td><td class="num">93.2%</td></tr>
+</table>
+<p><b>預計送達日給得很寬：</b>預計送達天數的中位數是實際的 2.4 倍（24 ÷ 10）。「準時」的門檻很容易達到，顧客較可能以平常的送達速度、或其他購物網站的速度作為期待。</p>
+<p><b>準時但等很久的顧客，留言較常抱怨慢：</b>在準時送達且有留言的訂單中，計算「留言含葡萄牙文 demor（拖很久，如 demorou、demora）的訂單 ÷ 該組有留言的訂單」。等越久的顧客留言比例也越高（38.4% → 49.3%），所以分母只用有留言的訂單，避免把「比較常留言」誤算成「比較常抱怨」：</p>
+<table>
+  <tr><th>準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
+  <tr><td>① 訂單數</td><td class="num">30,476</td><td class="num">37,441</td><td class="num">15,473</td><td class="num">5,217</td><td class="num">836</td></tr>
+  <tr><td>② 有留言的訂單</td><td class="num">11,696</td><td class="num">14,701</td><td class="num">6,153</td><td class="num">2,149</td><td class="num">412</td></tr>
+  <tr><td>留言比例 ② ÷ ①</td><td class="num">38.4%</td><td class="num">39.3%</td><td class="num">39.8%</td><td class="num">41.2%</td><td class="num">49.3%</td></tr>
+  <tr><td>③ 留言含 demor</td><td class="num">39</td><td class="num">143</td><td class="num">224</td><td class="num">157</td><td class="num">45</td></tr>
+  <tr class="hi"><td>抱怨慢的比例 ③ ÷ ②</td><td class="num">0.3%</td><td class="num">1.0%</td><td class="num">3.6%</td><td class="num">7.3%</td><td class="num">10.9%</td></tr>
+</table>
+<p>例如一則等了 29 天、給 1 星的留言：「Apesar de estar no prazo de entrega o produto demorou muito para chegar, fiz o pedido do mesmo produto em um concorrente do stark que entregou bem antes.」（雖然在期限內送達，但商品很久才到；我在另一家店訂了同樣的商品，對方早很多就送到了）。</p>
+<p><b>結論：最可能的解釋是預計送達日抓得很寬，顧客實際的期待比預計送達日短；但資料看不到顧客下單時的期待，這一點無法直接證實。</b>關鍵字只抓一種寫法，屬於粗略計算，只能看趨勢。</p>
+<h3>另一個發現：多個賣家的訂單分數特別低</h3>
+<p>同一張訂單的商品來自 2 個以上賣家時，即使準時且 7 天內送達，平均也只有 2.91 分，遠低於全部準時訂單同組的 4.41 分：</p>
+<table>
+  <tr><th>準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th></tr>
+  <tr><td>全部：平均分數</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
+  <tr class="hi"><td>商品來自 2 個以上賣家：平均分數</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
+  <tr><td>商品來自 2 個以上賣家：訂單數</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
+</table>
+<p class="howto">準時的多賣家訂單共 1,249 張；等 31 天以上只有 1 張，不列入。</p>
+<p>這類訂單通常分開出貨，可能有部分商品先到、部分後到的情形，但資料沒有記錄每件商品各自的送達日，需要分批出貨的紀錄才能確認原因。</p>
+<details><summary>SQL：排除可能的解釋（只看準時訂單）</summary>
+<div class="sqltags"><span class="tag">先彙總再 JOIN</span><span class="tag">UNION ALL 多組比較</span><span class="tag">MEDIAN</span></div>
+<pre><code>WITH items AS (                    -- 先把訂單明細彙總成一張訂單一列
+  SELECT i.order_id,
+         COUNT(*)                    AS n_items,
+         COUNT(DISTINCT i.seller_id) AS n_sellers,
+         SUM(p.product_weight_g)     AS total_weight_g
+  FROM workspace.olist.silver_order_items AS i
+  LEFT JOIN workspace.olist.silver_products AS p ON i.product_id = p.product_id
+  GROUP BY i.order_id
+),
+ontime AS (
+  SELECT DATEDIFF(CAST(o.order_delivered_customer_date AS DATE), CAST(o.order_purchase_timestamp AS DATE)) AS wait_days,
+         DATEDIFF(CAST(o.order_delivered_carrier_date AS DATE),  CAST(o.order_purchase_timestamp AS DATE)) AS seller_days,
+         it.n_items, it.n_sellers, it.total_weight_g, r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r ON o.order_id = r.order_id AND r.is_latest_for_order
+  LEFT JOIN items AS it ON o.order_id = it.order_id
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+    AND DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                 CAST(o.order_estimated_delivery_date AS DATE)) &lt;= 0
+),
+groups AS (                        -- 同一張訂單可以同時屬於好幾組
+  SELECT '全部' AS grp, * FROM ontime
+  UNION ALL SELECT '單件訂單',          * FROM ontime WHERE n_items = 1
+  UNION ALL SELECT '總重 500 克以下',   * FROM ontime WHERE total_weight_g &lt;= 500
+  UNION ALL SELECT '賣家 2 天內交貨',   * FROM ontime WHERE seller_days &lt;= 2
+  UNION ALL SELECT '多賣家訂單',        * FROM ontime WHERE n_sellers &gt; 1
+)
+SELECT grp, COUNT(*) AS orders,
+       ROUND(AVG(IF(wait_days &lt;= 7,              review_score, NULL)), 2) AS w0_7,
+       ROUND(AVG(IF(wait_days BETWEEN 8  AND 14, review_score, NULL)), 2) AS w8_14,
+       ROUND(AVG(IF(wait_days BETWEEN 15 AND 21, review_score, NULL)), 2) AS w15_21,
+       ROUND(AVG(IF(wait_days BETWEEN 22 AND 30, review_score, NULL)), 2) AS w22_30,
+       ROUND(AVG(IF(wait_days &gt; 30,              review_score, NULL)), 2) AS w31_plus
+FROM groups
+GROUP BY grp;
+
+-- 預計送達天數與實際送達天數
+SELECT MEDIAN(DATEDIFF(CAST(order_estimated_delivery_date AS DATE), CAST(order_purchase_timestamp AS DATE))) AS promise_days_median,
+       MEDIAN(DATEDIFF(CAST(order_delivered_customer_date AS DATE), CAST(order_purchase_timestamp AS DATE))) AS actual_days_median
+FROM workspace.olist.silver_orders
+WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;</code></pre>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>上線監控</h2></summary>
+<p>若把這個分析做成每日報表，建議監控兩件事：① 品質 VIEW 每天在資料更新後執行，任何一條 ERROR 規則失敗、或 WARN 規則的筆數超過門檻時發出警示，並暫停更新給分析用的 gold 層；② 每天列出「即將到預計送達日、仍未送達」的訂單數，並追蹤每月的晚到比例與實際配送天數中位數。</p>
+</details>
+
+<details class="sec">
+<summary><h2>若要繼續追查：需要的資料</h2></summary>
+<table>
+  <tr><th>需要的資料</th><th>可以判斷什麼</th></tr>
+  <tr><td>對晚到訂單主動通知或補償的實驗（隨機分組）</td><td>延遲是否「造成」低分，以及通知能不能減少負評</td></tr>
+  <tr><td>顧客下單時看到的預計送達日與其他物流選項</td><td>顧客的實際期待；縮短預計送達日是否會讓顧客更願意下單</td></tr>
+  <tr><td>每件商品各自的出貨與送達紀錄</td><td>多賣家訂單分數低，是否因為分批送達</td></tr>
+  <tr><td>評價是在收貨後多久填寫、是否由平台主動邀請</td><td>沒有評價的 646 張已送達訂單，是否和有評價的訂單一樣滿意</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>限制</h2></summary>
+<ul>
+  <li>分析是觀察資料的關聯。晚到的訂單可能同時有其他問題（例如商品缺貨後補寄），低分不一定只來自延遲；同州比較只排除了地區這一個因素。</li>
+  <li>只分析有評價的已送達訂單（95,824 張）；取消、未送達的訂單沒有送達日，不在分析範圍內。</li>
+  <li>晚到天數只比日期；當天晚上送達也算準時。</li>
+  <li>留言關鍵字只抓「demor」一種寫法，屬於粗略計算，只能看趨勢。</li>
+</ul>
+</details>
+
+<footer>
+  <p>工具：Databricks Free Edition（SQL Editor；Unity Catalog，管理資料表與權限的目錄；Delta Lake）、Python（pandas，以原始檔核對每個查詢結果）、Claude Code。資料：Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a>（Kaggle）。查詢日期：2026-10-13～14。</p>
+</footer>
+
+</main>
+
+<!-- i18n:start --><template id="main-en" data-title="E-commerce Lakehouse Analysis" data-desc="Jia Cheng Yu's self-directed project: building bronze/silver/gold tables from Olist Brazilian e-commerce raw files in Databricks, with data quality checks and version history, and analyzing how delivery delays relate to review scores.">
+<header>
+  <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
+  <h1>E-commerce Lakehouse: From Raw Files to Analysis (Databricks)</h1>
+  <p class="meta">Jia Cheng Yu | Olist Brazilian e-commerce public data | Databricks SQL, Delta Lake, Claude Code</p>
+</header>
+
+<p>This project shows how a data analyst <i>uses</i> a lakehouse (a single platform that manages both raw files and cleaned, query-ready tables): 9 raw CSV files are loaded into the Databricks cloud data platform and organized into query-ready tables using the common three-layer architecture, with data quality checks and version history built along the way. The cleaned tables are then used to answer one business question: "<b>Do delivery delays lower customers' review scores?</b>" The data is about 100,000 orders published by Olist, a Brazilian e-commerce platform (2016-09 to 2018-10). The project was done in collaboration with AI: Claude Code helped write the SQL; I ran each step in Databricks and checked the results against answers computed locally from the raw files. The analysis question and page presentation were my decisions.</p>
+
+<div class="caveat">
+  <p><b>Data limitations first:</b> customer and seller IDs are anonymized, and the data does not represent all of Olist's business. The analysis on this page shows <b>associations</b> such as "late orders receive lower scores". No experiment was run, so it cannot directly prove that delays <i>cause</i> lower scores (see "Limitations").</p>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+  <div class="stat"><b>6.66%</b><span>Share of orders delivered after the estimated delivery date (6,381 ÷ 95,824 delivered orders with a review)</span></div>
+  <div class="stat"><b>1.00 pt</b><span>Drop in average score for orders 1–3 days late vs. on-time orders (4.29 − 3.29, on a 5-point scale)</span></div>
+  <div class="stat"><b>15 rules</b><span>Number of data quality rules re-run after each data update; all currently pass (see "Data quality checks")</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>Conclusion:</b> Of 95,824 delivered orders with a review, 6.66% arrived after the estimated delivery date Olist gave the customer. On-time orders average 4.29 points; orders only 1–3 days late drop to 3.29, and orders 4 or more days late drop to 2.10 or below, with 67.68%–80.15% of each of those three groups giving 1–2 stars. State differences do not explain this gap: in the 14 states with the most late orders (see Analysis 2), late orders score 1.63–2.33 points lower than on-time orders within the same state. Among on-time orders, longer waits also mean lower scores (4.41 for 0–7 days, 3.62 for 31+ days).</p>
+  <p><b>Recommendations:</b> ① Late orders are only 6.66% of orders but score much lower, so they are a risk worth prioritizing. Each day, list orders approaching their estimated delivery date that have not yet been delivered, so they can be handled early or customers notified proactively. Whether notifications actually reduce negative reviews needs to be tested with an experiment (see "To dig further: data needed"). ② An on-time rate of 93.2% (share of 96,470 delivered orders arriving on time or early, including orders without a review) does not mean customers are satisfied: estimated delivery dates are very generous (median estimated delivery time 24 days vs. a median actual time of 10 days), and on-time orders still score lower the longer customers wait. Logistics metrics should also track actual delivery time (see Appendix).</p>
+</div>
+
+<details class="sec">
+<summary><h2>Data</h2></summary>
+<p>Source: the <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a> published by Olist on Kaggle, 9 related CSV files. Olist is a Brazilian e-commerce platform that lets small sellers list products on large marketplaces; one order can contain several items from several sellers.</p>
+<table>
+  <tr><th>File (used on this page)</th><th class="num">Rows</th><th>One row represents</th></tr>
+  <tr><td>orders</td><td class="num">99,441</td><td>One order (purchase time, status, shipping date, delivery date, estimated delivery date)</td></tr>
+  <tr><td>order_items</td><td class="num">112,650</td><td>One item in an order (product, seller, price, freight)</td></tr>
+  <tr><td>order_reviews</td><td class="num">99,224</td><td>One review (score 1–5, comment)</td></tr>
+  <tr><td>customers</td><td class="num">99,441</td><td>Customer information for one order (state, zip code)</td></tr>
+  <tr><td>products</td><td class="num">32,951</td><td>One product (category, weight)</td></tr>
+  <tr><td>Others: sellers, payments, geolocation (zip code coordinates), category English translation</td><td class="num">—</td><td>Used for building tables and quality checks</td></tr>
+</table>
+<table>
+  <tr><th>Fields used in the analysis</th><th>Meaning</th></tr>
+  <tr><td><code>order_purchase_timestamp</code></td><td>Purchase time</td></tr>
+  <tr><td><code>order_delivered_carrier_date</code></td><td>Time the seller handed the order to the carrier</td></tr>
+  <tr><td><code>order_delivered_customer_date</code></td><td>Actual delivery time to the customer</td></tr>
+  <tr><td><code>order_estimated_delivery_date</code></td><td>Estimated delivery date shown to the customer at purchase</td></tr>
+  <tr><td><code>review_score</code></td><td>Customer's score, 1–5</td></tr>
+  <tr><td><code>customer_state</code></td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>The lakehouse's three-layer architecture</h2></summary>
+<p>A <b>data lake</b> stores raw files in any format, with no guarantee they are clean; a <b>data warehouse</b> stores cleaned tables that can be queried directly. A <b>lakehouse</b> puts both in one place: raw files and cleaned tables both live in Databricks, and the tables use the Delta Lake format, which supports things plain files cannot, such as blocking non-compliant data and querying past versions (see "Version history"). Data moves from raw to usable in three layers, commonly called the medallion architecture. It works like a restaurant kitchen: ingredients are stored as delivered (bronze) → washed and prepped (silver) → assembled into dishes on the menu (gold). The benefit of layering: raw data is always kept, so cleaning mistakes can be redone, and each layer can run its own quality checks. With the Delta format, past versions can also be queried.</p>
+<div class="flow">
+  <div class="layer"><b>Bronze (raw)</b><span>9 CSV files loaded as-is, plus two columns recording when each row was loaded and from which file</span><em>10 tables (incl. 1 comparison table that reads the review file with default settings)</em></div>
+  <div class="arrow">→</div>
+  <div class="layer"><b>Silver (cleaned)</b><span>Fix loading errors, deduplicate, flag suspicious records, translate categories</span><em>8 tables + 15 quality rules</em></div>
+  <div class="arrow">→</div>
+  <div class="layer"><b>Gold (analysis)</b><span>Star schema built for analysis (1 fact table + 4 dimension tables)</span><em>5 tables</em></div>
+</div>
+
+<h3>Bronze: keep everything as-is; two problems found at load time</h3>
+<p>The bronze layer's rule is "do not modify content", so if cleaning goes wrong, it can always be rerun from this layer. Right after loading, each table's row count was compared with its source file, which revealed two loading problems:</p>
+<ul>
+  <li><b>Review comments contain line breaks, splitting one review into several rows:</b> loaded with default settings (saved as the comparison table <code>bronze_reviews_naive</code>), the review table had 104,162 rows, 4,938 fragment rows more than the 99,224 reviews in the source file. After adding two settings, "one record may span several lines" and "read characters inside quotes as-is" (multiLine, escape), the row count matched the source file.</li>
+  <li><b>Leading zeros of zip codes disappeared:</b> the system guessed zip codes were numbers, so 23,995 rows in the customer table lost their leading 0 (e.g., 01310 became 1310) and would not match the coordinate table. Reading this column as text at load time (the schemaHints setting) and rebuilding made every zip code 5 digits.</li>
+</ul>
+<details><summary>SQL: load a raw file (review table as an example)</summary>
+<div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine / escape</span><span class="tag">_metadata source columns</span></div>
+<pre><code>CREATE OR REPLACE TABLE workspace.olist.bronze_order_reviews AS
+SELECT *,
+       current_timestamp() AS _ingested_at,   -- when the row was loaded
+       _metadata.file_name AS _source_file    -- which file it came from
+FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
+                format =&gt; 'csv', header =&gt; true,
+                multiLine =&gt; true, escape =&gt; '"');  -- comments contain line breaks and quotes</code></pre>
+</details>
+
+<h3>Silver: cleaning rules — flag suspicious records, do not delete them</h3>
+<p>Before building the silver layer, each type of problem was counted in the bronze layer, then a handling rule was chosen. Records that look suspicious but may be real (e.g., delivered before being shipped) only get a flag column and are not deleted, so later analyses can decide whether to exclude them.</p>
+<table>
+  <tr><th>Problem found</th><th class="num">Count</th><th>Handling</th></tr>
+  <tr><td>Orders with multiple reviews (551 extra reviews across 547 orders with 2+ reviews)</td><td class="num">551 reviews</td><td>Keep all; mark each order's most recent review, and use only that one per order in analysis</td></tr>
+  <tr><td>Coordinate table: same zip code and same latitude/longitude repeated</td><td class="num">280,009 rows</td><td>Keep one of each duplicate, remove 27 rows outside Brazil, then average coordinates per zip code (1,000,163 rows → 19,011 zip codes)</td></tr>
+  <tr><td>Products without a category</td><td class="num">610 products</td><td>Set category to "unknown"; translate categories that have a mapping into English (13 products' categories have no mapping and stay in Portuguese)</td></tr>
+  <tr><td>Status "delivered" but no delivery date</td><td class="num">8 orders</td><td>Add a flag column; excluded from the delivery analysis</td></tr>
+  <tr><td>Delivered before being handed to the carrier</td><td class="num">23 orders</td><td>Add a flag column; not deleted</td></tr>
+</table>
+<p class="howto">Of the duplicate coordinate rows, 261,831 rows are identical in every column, including city spelling. Counts are Databricks query results, each checked against figures computed locally in Python from the raw files.</p>
+
+<h3>Gold: star schema — one fact table, four dimension tables</h3>
+<p>The gold layer combines data for analysis, commonly as a star schema: a central <b>fact table</b> records "what happened", here <code>gold_fact_sales</code>, where one row is one item sold (112,650 rows) with its price and freight; surrounding <b>dimension tables</b> record "who, what, and when" (customer, product, seller, date) and are joined to the fact table by ID, e.g., looking up a product's category by its product ID. The date dimension contains every day from 2016-09-04 to 2018-10-17 (774 days), including days without orders, so monthly summaries do not skip months.</p>
+<p>One row in the fact table is one item (the smallest unit of the data, called the grain), so the delivery analysis on this page does <b>not</b> use this table. It goes back to the silver layer and works at the order level: an order with 3 items has 3 rows in the fact table, each carrying the same review score, so a direct average would count multi-item orders' scores several times.</p>
+<details><summary>SQL: use the star schema to answer "which categories had the highest 2018 revenue"</summary>
+<div class="sqltags"><span class="tag">Fact table JOIN dimension tables</span><span class="tag">COUNT(DISTINCT)</span></div>
+<pre><code>SELECT
+  p.category,
+  ROUND(SUM(f.price), 2)               AS revenue,     -- item price, excluding freight
+  COUNT(*)                             AS items_sold,  -- one fact row = one item
+  COUNT(DISTINCT c.customer_unique_id) AS buyers       -- count buyers by person ID
+FROM workspace.olist.gold_fact_sales AS f
+JOIN workspace.olist.gold_dim_date     AS d USING (date_key)
+JOIN workspace.olist.gold_dim_product  AS p USING (product_id)
+JOIN workspace.olist.gold_dim_customer AS c USING (customer_id)
+WHERE d.year = 2018 AND f.order_status = 'delivered'
+GROUP BY p.category
+ORDER BY revenue DESC
+LIMIT 5;</code></pre>
+<p class="howto">Year is based on purchase date; delivered orders in 2018 were placed only through the end of August. The top category is health_beauty, with revenue of 755,724.50 Brazilian reais. Buyers are counted with <code>customer_unique_id</code> (one per person); the other field, <code>customer_id</code>, is assigned per order, so a person who orders twice would be counted as two people.</p>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>Data quality checks</h2></summary>
+<p>The quality rules are written as a VIEW (a saved query, named <code>silver_quality_checks</code>); after each data update, running one query re-runs all 15 rules. The rules are grouped into four common dimensions:</p>
+<table>
+  <tr><th>Dimension</th><th>Example</th><th class="num">Rules</th></tr>
+  <tr><td>Uniqueness: are IDs that should be unique duplicated?</td><td>Order IDs are unique; each reviewed order has exactly one most recent review</td><td class="num">4</td></tr>
+  <tr><td>Completeness: do required fields have nulls?</td><td>Every order has a customer ID</td><td class="num">3</td></tr>
+  <tr><td>Validity: are values within a reasonable range?</td><td>Score between 1 and 5; price greater than 0</td><td class="num">3</td></tr>
+  <tr><td>Consistency: do tables match each other?</td><td>Every product in order items exists in the product table</td><td class="num">5</td></tr>
+  <tr class="total"><td>Total</td><td></td><td class="num">15</td></tr>
+</table>
+<p>Rules have two levels: 11 are <b>ERROR</b> rules, where no row may fail; 4 are <b>WARN</b> rules for known issues that are not fixed for now, such as the 23 orders "delivered before being handed to the carrier" from the previous section. A WARN rule passes as long as the count does not exceed the current count, which shows whether a problem is getting worse. All 15 rules currently pass.</p>
+<p>One WARN rule is "payment total differs from items + freight (by more than 1 real)", covering 249 orders, 232 of which paid more than items + freight. Of these 232 orders, 98.7% chose installments (more than 1 installment), while only 51.4% of orders with matching amounts used installments. The extra amount may be installment interest, but the data cannot confirm this; the other 17 orders paid less than items + freight, for unknown reasons. Both are therefore kept as known issues, and amounts are not modified.</p>
+
+<h3>Table "gatekeeping": which rules block bad data at write time</h3>
+<p>The quality VIEW checks data after it is written; Delta tables can also have rules that check data at write time, like building security that keeps non-compliant data out. Three approaches were tested:</p>
+<table>
+  <tr><th>Approach</th><th>Test</th><th>Result</th></tr>
+  <tr class="hi"><td>CHECK constraint (score 1–5)</td><td>Write a review with a score of 6</td><td>Blocked; the row was not written</td></tr>
+  <tr><td>CHECK constraint (score at least 3)</td><td>Add this rule to a table that already has 1- and 2-point reviews</td><td>Could not be added: the system first checks existing data, and 14,575 rows violate it</td></tr>
+  <tr><td>PRIMARY KEY (declares order IDs unique)</td><td>Write 2 test orders with the same ID</td><td>Not blocked; both rows were written. In Databricks, primary keys are informational only and not enforced. The quality VIEW's uniqueness rule therefore showed FAIL, and the test rows were then deleted</td></tr>
+</table>
+<p>So "no duplicates" cannot rely on primary keys and must be handled at write time: new data is written with the <code>MERGE</code> command, which updates an order if it already exists and inserts it only if it does not. Testing also showed that if the same new order appears twice in one batch, <code>MERGE</code> inserts two rows, so new data must be deduplicated before writing.</p>
+<details><summary>SQL: deduplicate first, then MERGE</summary>
+<div class="sqltags"><span class="tag">MERGE INTO</span><span class="tag">QUALIFY ROW_NUMBER</span></div>
+<pre><code>MERGE INTO workspace.olist.silver_orders AS t
+USING (
+  SELECT * FROM VALUES
+    ('TEST_NEW', 'shipped',   TIMESTAMP'2018-01-01 10:00:00'),
+    ('TEST_NEW', 'delivered', TIMESTAMP'2018-01-05 10:00:00')
+    AS v(order_id, order_status, updated_at)
+  -- keep only the latest row per order
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) = 1
+) AS s
+ON t.order_id = s.order_id
+WHEN MATCHED THEN UPDATE SET t.order_status = s.order_status
+WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
+  VALUES (s.order_id, (SELECT MIN(customer_id) FROM workspace.olist.silver_customers), s.order_status);</code></pre>
+<p class="howto">The test order borrows an existing customer's ID to avoid violating the rule "every order's customer exists in the customer table"; it was deleted after testing, and the order table is back to 99,441 rows.</p>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>Version history</h2></summary>
+<p>Every write, update, or delete on a Delta table creates a new version. This lets an analyst see what the data looked like at a point in time and restore it after an accidental deletion.</p>
+<table>
+  <tr><th>Command</th><th>What it does</th><th>Tested in this project</th></tr>
+  <tr><td><code>DESCRIBE HISTORY</code></td><td>Lists what each version did and how many rows it affected</td><td>The order table produced 13 versions (versions 0–12) during building and testing</td></tr>
+  <tr><td><code>VERSION AS OF</code></td><td>Queries a past version without changing the current table</td><td>Version 2 of the order table has 99,443 rows (including the 2 primary-key test orders); it now has 99,441</td></tr>
+  <tr class="hi"><td><code>RESTORE</code></td><td>Restores a table to a past version</td><td>On a practice copy, a DELETE without a deletion condition (no WHERE) was run on purpose, wiping the whole table; after restoring to version 0 it was back to 99,441 rows</td></tr>
+</table>
+<p>Restoring does not erase the record of the deletion; it adds another version (practice table: version 0 created → version 1 deleted by mistake → version 2 restored), like an accountant correcting with a reversing entry instead of tearing out the wrong page. Version history has a time limit: under Databricks' documented defaults, the record of what each version did is kept for 30 days, but old versions' data files are only guaranteed for 7 days; after that they may be removed, and the data at that time can no longer be queried, only the record. Data that must be kept long term (e.g., month-end figures) should be saved as a dated snapshot table; this project saved <code>snapshot_orders_20261013</code>.</p>
+<details><summary>SQL: restore after an accidental deletion</summary>
+<div class="sqltags"><span class="tag">DESCRIBE HISTORY</span><span class="tag">RESTORE TABLE</span></div>
+<pre><code>-- practice copy (version 0)
+CREATE OR REPLACE TABLE workspace.olist.sandbox_orders AS
+SELECT * FROM workspace.olist.silver_orders;
+
+DELETE FROM workspace.olist.sandbox_orders;                      -- mistake: forgot WHERE (version 1, 0 rows)
+RESTORE TABLE workspace.olist.sandbox_orders TO VERSION AS OF 0; -- restore (version 2, 99,441 rows)
+DESCRIBE HISTORY workspace.olist.sandbox_orders;                 -- all three versions are still recorded</code></pre>
+</details>
+</details>
+
+<details class="sec" open>
+<summary><h2>Analysis: do delivery delays lower review scores?</h2></summary>
+<p>The analysis covers 96,470 orders with status "delivered" and a delivery date (96,478 delivered, minus 8 without a delivery date), of which 95,824 have a review (the other 646 have none; when an order has several reviews, only the most recent one is used). Definitions:</p>
+<ul>
+  <li><b>Days late</b> = actual delivery date − estimated delivery date (dates only, not times; 0 or negative = on time)</li>
+  <li><b>Average score</b> = sum of scores in the group ÷ number of orders in the group; <b>1–2 star share</b> = orders with 1 or 2 stars ÷ orders in the group</li>
+</ul>
+
+<h3>Analysis 1: the later the delivery, the lower the score</h3>
+<table>
+  <tr><th>Days late</th><th class="num">Orders</th><th class="num">Average score</th><th class="num">1–2 star share</th></tr>
+  <tr><td>On time or early</td><td class="num">89,443</td><td class="num">4.29</td><td class="num">9.27%</td></tr>
+  <tr class="hi"><td>1–3 days late</td><td class="num">1,852</td><td class="num">3.29</td><td class="num">32.13%</td></tr>
+  <tr class="hi"><td>4–7 days late</td><td class="num">1,748</td><td class="num">2.10</td><td class="num">67.68%</td></tr>
+  <tr class="hi"><td>8–14 days late</td><td class="num">1,446</td><td class="num">1.67</td><td class="num">80.15%</td></tr>
+  <tr class="hi"><td>15+ days late</td><td class="num">1,335</td><td class="num">1.72</td><td class="num">78.35%</td></tr>
+  <tr class="total"><td>Total</td><td class="num">95,824</td><td class="num"></td><td class="num"></td></tr>
+</table>
+<p class="howto">Late orders total 6,381 (1,852 + 1,748 + 1,446 + 1,335), or 6.66% (6,381 ÷ 95,824).</p>
+<p>Being just 1–3 days late lowers the average score by 1.00 point compared with on-time orders; about four in five orders 8 or more days late get 1–2 stars. Scores for 8–14 days late and 15+ days late are similar (1.67 and 1.72): beyond about a week late, scores no longer fall noticeably with more days.</p>
+<p><b>Conclusion: late orders score clearly lower; scores fall with each additional day late up to 14 days, then level off. About four in five orders more than a week late get 1–2 stars.</b></p>
+<details><summary>SQL: group by days late</summary>
+<div class="sqltags"><span class="tag">DATEDIFF</span><span class="tag">CASE WHEN grouping</span><span class="tag">conditional average AVG(IF(...))</span></div>
+<pre><code>WITH delivered AS (
+  SELECT order_id,
+         DATEDIFF(CAST(order_delivered_customer_date AS DATE),
+                  CAST(order_estimated_delivery_date AS DATE)) AS delay_days
+  FROM workspace.olist.silver_orders
+  WHERE order_status = 'delivered'
+    AND order_delivered_customer_date IS NOT NULL
+),
+scored AS (
+  SELECT d.delay_days, r.review_score,
+         CASE WHEN d.delay_days &lt;= 0  THEN '1 on time or early'
+              WHEN d.delay_days &lt;= 3  THEN '2 late 1-3 days'
+              WHEN d.delay_days &lt;= 7  THEN '3 late 4-7 days'
+              WHEN d.delay_days &lt;= 14 THEN '4 late 8-14 days'
+              ELSE                         '5 late 15+ days' END AS delay_bucket
+  FROM delivered AS d
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON d.order_id = r.order_id AND r.is_latest_for_order   -- one review per order
+)
+SELECT delay_bucket,
+       COUNT(*)                                         AS orders,
+       ROUND(AVG(review_score), 2)                      AS avg_score,
+       ROUND(AVG(IF(review_score &lt;= 2, 1, 0)) * 100, 2) AS pct_1_2_stars
+FROM scored
+GROUP BY delay_bucket
+ORDER BY delay_bucket;</code></pre>
+</details>
+
+<p class="bridge"><b>Why look at this next:</b> remote states may already be "often late and lower-rated", for example because of fewer choices or higher freight costs. If so, part of the gap in Analysis 1 would come from region rather than delay. The check is to compare late and on-time orders within the same state.</p>
+
+<h3>Analysis 2: within each state, late orders still score much lower</h3>
+<p>Only states with at least 100 late orders are listed (with too few late orders, an average is easily swayed by a few orders). These 14 states account for 95.2% of all 95,824 orders and 92.8% of late orders.</p>
+<table>
+  <tr><th>State</th><th class="num">Orders</th><th class="num">Late rate</th><th class="num">On time: avg score</th><th class="num">Late: avg score</th><th class="num">Gap (on time − late)</th></tr>
+  <tr><td>RJ Rio de Janeiro</td><td class="num">12,211</td><td class="num">11.92%</td><td class="num">4.24</td><td class="num">1.91</td><td class="num">2.33</td></tr>
+  <tr><td>DF Federal District</td><td class="num">2,070</td><td class="num">5.70%</td><td class="num">4.26</td><td class="num">1.97</td><td class="num">2.29</td></tr>
+  <tr><td>PE Pernambuco</td><td class="num">1,579</td><td class="num">9.44%</td><td class="num">4.30</td><td class="num">2.03</td><td class="num">2.26</td></tr>
+  <tr><td>PA Pará</td><td class="num">933</td><td class="num">10.72%</td><td class="num">4.15</td><td class="num">1.92</td><td class="num">2.23</td></tr>
+  <tr><td>CE Ceará</td><td class="num">1,273</td><td class="num">13.67%</td><td class="num">4.25</td><td class="num">2.04</td><td class="num">2.21</td></tr>
+  <tr><td>RS Rio Grande do Sul</td><td class="num">5,326</td><td class="num">6.03%</td><td class="num">4.31</td><td class="num">2.21</td><td class="num">2.11</td></tr>
+  <tr><td>GO Goiás</td><td class="num">1,946</td><td class="num">6.37%</td><td class="num">4.24</td><td class="num">2.20</td><td class="num">2.03</td></tr>
+  <tr><td>MA Maranhão</td><td class="num">712</td><td class="num">17.13%</td><td class="num">4.17</td><td class="num">2.18</td><td class="num">1.99</td></tr>
+  <tr><td>SC Santa Catarina</td><td class="num">3,519</td><td class="num">8.07%</td><td class="num">4.29</td><td class="num">2.35</td><td class="num">1.94</td></tr>
+  <tr><td>MG Minas Gerais</td><td class="num">11,285</td><td class="num">4.47%</td><td class="num">4.28</td><td class="num">2.36</td><td class="num">1.92</td></tr>
+  <tr><td>BA Bahia</td><td class="num">3,229</td><td class="num">11.89%</td><td class="num">4.14</td><td class="num">2.35</td><td class="num">1.79</td></tr>
+  <tr><td>SP São Paulo</td><td class="num">40,266</td><td class="num">4.44%</td><td class="num">4.32</td><td class="num">2.55</td><td class="num">1.78</td></tr>
+  <tr><td>ES Espírito Santo</td><td class="num">1,969</td><td class="num">10.41%</td><td class="num">4.26</td><td class="num">2.51</td><td class="num">1.75</td></tr>
+  <tr><td>PR Paraná</td><td class="num">4,900</td><td class="num">3.96%</td><td class="num">4.30</td><td class="num">2.68</td><td class="num">1.63</td></tr>
+</table>
+<p class="howto">Gaps are computed from unrounded averages and then rounded to two decimals, so they may differ by 0.01 from subtracting the two rounded columns (same in Analysis 3).</p>
+<p>In all 14 states, on-time orders average between 4.14 and 4.32 points, and late orders score 1.63–2.33 points lower. Late rates vary widely across states (SP 4.44%, MA 17.13%), but "late means lower scores" holds in all 14 states.</p>
+<p><b>Conclusion: in the 14 states with the most late orders, a clear gap remains within each state, so the link between lateness and low scores cannot be explained by state differences.</b> The within-state comparison only rules out state as one factor (see "Limitations").</p>
+<details><summary>SQL: compare within the same state</summary>
+<div class="sqltags"><span class="tag">JOIN three silver tables</span><span class="tag">HAVING to filter groups</span><span class="tag">COUNT_IF</span></div>
+<pre><code>WITH scored AS (
+  SELECT c.customer_state,
+         DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_estimated_delivery_date AS DATE)) &gt; 0 AS is_late,
+         r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON o.order_id = r.order_id AND r.is_latest_for_order
+  JOIN workspace.olist.silver_customers AS c ON o.customer_id = c.customer_id
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+)
+SELECT customer_state,
+       COUNT(*)                                            AS orders,
+       ROUND(AVG(IF(is_late, 1, 0)) * 100, 2)              AS late_pct,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL)), 2)  AS ontime_score,  -- AVG skips NULL
+       ROUND(AVG(IF(is_late, review_score, NULL)), 2)      AS late_score,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL))
+           - AVG(IF(is_late, review_score, NULL)), 2)      AS gap   -- on time − late
+FROM scored
+GROUP BY customer_state
+HAVING COUNT_IF(is_late) &gt;= 100
+ORDER BY gap DESC;</code></pre>
+</details>
+
+<p class="bridge"><b>Why look at this next:</b> late orders usually also take longer to arrive. A low score may come from "not delivered by the estimated delivery date" or simply from "waiting too long". The fixes differ: the former can be addressed by how estimated delivery dates are set, the latter requires shortening actual delivery time.</p>
+
+<h3>Analysis 3: with the same wait time, late orders still score much lower</h3>
+<p>Orders are grouped by how many days they actually took from purchase to delivery, and each group is split into on-time and late orders.</p>
+<div class="chart-title">With the same 22–30 day wait, on-time orders average 3.94 and late orders only 2.55</div>
+<div class="legend"><i style="background:var(--mute)"></i>On time or early<i style="background:var(--neg)"></i>Late</div>
+<div class="pair"><div class="name">Wait 0–7 days</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
+<div class="pair"><div class="name">Wait 8–14 days</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
+<div class="pair"><div class="name">Wait 15–21 days</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
+<div class="pair hi"><div class="name">Wait 22–30 days</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
+<div class="pair"><div class="name">Wait 31+ days</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
+<p class="ax-x">X-axis: average score (0–5)</p>
+<table>
+  <tr><th>Actual wait</th><th class="num">On time: orders</th><th class="num">On time: avg score</th><th class="num">Late: orders</th><th class="num">Late: avg score</th><th class="num">Gap (on time − late)</th></tr>
+  <tr><td>0–7 days</td><td class="num">30,476</td><td class="num">4.41</td><td class="num">74</td><td class="num">3.97</td><td class="num">0.44</td></tr>
+  <tr><td>8–14 days</td><td class="num">37,441</td><td class="num">4.31</td><td class="num">334</td><td class="num">3.27</td><td class="num">1.04</td></tr>
+  <tr><td>15–21 days</td><td class="num">15,473</td><td class="num">4.16</td><td class="num">581</td><td class="num">2.94</td><td class="num">1.22</td></tr>
+  <tr class="hi"><td>22–30 days</td><td class="num">5,217</td><td class="num">3.94</td><td class="num">2,048</td><td class="num">2.55</td><td class="num">1.39</td></tr>
+  <tr><td>31+ days</td><td class="num">836</td><td class="num">3.62</td><td class="num">3,344</td><td class="num">1.85</td><td class="num">1.78</td></tr>
+</table>
+<p>This table answers two questions:</p>
+<ul>
+  <li><b>Across a row (same wait, differing only in lateness):</b> late orders score lower in every group; e.g., with a 22–30 day wait, on-time orders score 3.94 and late orders 2.55, a gap of 1.39. The 0–7 day group has only 74 late orders, so its average is less stable.</li>
+  <li><b>Down the on-time column (none late, differing only in wait):</b> 4.41 for 0–7 days and 3.62 for 31+ days, so wait time itself is also related to scores.</li>
+</ul>
+<details><summary>Note: within a group, did late orders actually wait longer?</summary>
+<p>Yes, but not by much: in the first four groups, late orders' median wait is only 1–2 days longer than on-time orders'; the 31+ day group has no upper limit, so the difference is larger.</p>
+<table>
+  <tr><th>Median actual wait</th><th class="num">0–7 day group</th><th class="num">8–14 day group</th><th class="num">15–21 day group</th><th class="num">22–30 day group</th><th class="num">31+ day group</th></tr>
+  <tr><td>On time</td><td class="num">5 days</td><td class="num">10 days</td><td class="num">17 days</td><td class="num">24 days</td><td class="num">33 days</td></tr>
+  <tr><td>Late</td><td class="num">6 days</td><td class="num">11 days</td><td class="num">19 days</td><td class="num">26 days</td><td class="num">39 days</td></tr>
+</table>
+<p>Splitting the 31+ day group further, the gap is still above 1.6 points:</p>
+<table>
+  <tr><th>31+ days, split further</th><th class="num">On time: orders</th><th class="num">On time: avg score</th><th class="num">Late: orders</th><th class="num">Late: avg score</th></tr>
+  <tr><td>31–40 days</td><td class="num">729</td><td class="num">3.66</td><td class="num">1,822</td><td class="num">1.95</td></tr>
+  <tr><td>41–50 days</td><td class="num">89</td><td class="num">3.30</td><td class="num">933</td><td class="num">1.66</td></tr>
+  <tr><td>51+ days</td><td class="num">18</td><td class="num">3.78</td><td class="num">589</td><td class="num">1.83</td></tr>
+</table>
+<p class="howto">Only 107 on-time orders waited 41+ days (89 + 18), so their averages are less stable; the 18 orders at 51+ days are too few to be meaningful.</p>
+</details>
+<p>On-time orders that waited 31+ days were on time because their estimated delivery dates were even longer; see the Appendix for these orders' estimated and actual delivery times.</p>
+<p><b>Conclusion: both are related to scores: longer waits mean lower scores, and with the same wait, late orders score a further 0.44–1.78 points lower.</b></p>
+<details><summary>SQL: wait time × on time / late</summary>
+<div class="sqltags"><span class="tag">Two DATEDIFFs</span><span class="tag">conditional count COUNT_IF</span></div>
+<pre><code>WITH scored AS (
+  SELECT DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_purchase_timestamp AS DATE))          AS wait_days,
+         DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                  CAST(o.order_estimated_delivery_date AS DATE)) &gt; 0 AS is_late,
+         r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r
+    ON o.order_id = r.order_id AND r.is_latest_for_order
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+)
+SELECT CASE WHEN wait_days &lt;= 7  THEN '1 wait 0-7 days'
+            WHEN wait_days &lt;= 14 THEN '2 wait 8-14 days'
+            WHEN wait_days &lt;= 21 THEN '3 wait 15-21 days'
+            WHEN wait_days &lt;= 30 THEN '4 wait 22-30 days'
+            ELSE                      '5 wait 31+ days' END AS wait_bucket,
+       COUNT_IF(NOT is_late)                              AS ontime_orders,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL)), 2) AS ontime_score,
+       COUNT_IF(is_late)                                  AS late_orders,
+       ROUND(AVG(IF(is_late, review_score, NULL)), 2)     AS late_score,
+       ROUND(AVG(IF(NOT is_late, review_score, NULL))
+           - AVG(IF(is_late, review_score, NULL)), 2)     AS gap   -- on time − late
+FROM scored
+GROUP BY wait_bucket
+ORDER BY wait_bucket;</code></pre>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>Appendix: why do on-time orders score lower the longer they take?</h2></summary>
+<p>In Analysis 3, on-time orders score lower the longer customers wait. If customers set their expectations by the estimated delivery date, they should be about equally satisfied with on-time orders regardless of wait time. Possible explanations are checked one by one below, each stating first what the data should show if it were true.</p>
+<table>
+  <tr><th>Possible explanation</th><th>If true, the data should show</th><th>Result</th></tr>
+  <tr><td>Long waits are mostly large, heavy items that are more easily damaged in transit</td><td>For light items only, scores no longer fall with wait time</td><td>Not supported: orders with total weight of 500 g or less still fall from 4.44 to 3.79</td></tr>
+  <tr><td>Multi-item orders arrive in several shipments, annoying customers</td><td>For single-item orders only, scores no longer fall</td><td>Not supported: single-item orders still fall from 4.48 to 3.68</td></tr>
+  <tr><td>Sellers who ship slowly give worse service overall</td><td>For orders the seller handed to the carrier within 2 days, scores no longer fall</td><td>Not supported: still falls from 4.43 to 3.76</td></tr>
+  <tr class="hi"><td>Estimated delivery dates are very generous, and customers actually expect "the usual delivery time"</td><td>Estimated times are clearly longer than actual times; customers with on-time but long waits still complain about slowness</td><td>Supported by the data, but cannot be directly confirmed (see below)</td></tr>
+</table>
+<table>
+  <tr><th>On-time orders only</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
+  <tr><td>All (89,443 orders)</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td><td class="num">3.62</td></tr>
+  <tr><td>Single-item orders (80,407 orders)</td><td class="num">4.48</td><td class="num">4.38</td><td class="num">4.23</td><td class="num">3.99</td><td class="num">3.68</td></tr>
+  <tr><td>Total weight 500 g or less (36,134 orders)</td><td class="num">4.44</td><td class="num">4.33</td><td class="num">4.19</td><td class="num">3.93</td><td class="num">3.79</td></tr>
+  <tr><td>Seller handed to carrier within 2 days (49,594 orders)</td><td class="num">4.43</td><td class="num">4.34</td><td class="num">4.21</td><td class="num">3.95</td><td class="num">3.76</td></tr>
+</table>
+<p class="howto">Values are average scores. Total weight is the sum of item weights in the order; 16 orders have no weight for any of their items, so total weight cannot be computed and they are excluded from "500 g or less"; every item in all other orders has a weight.</p>
+<table>
+  <tr><th>96,470 delivered orders (with or without a review)</th><th class="num">Value</th></tr>
+  <tr><td>Median estimated delivery time (purchase date to estimated delivery date)</td><td class="num">24 days</td></tr>
+  <tr><td>Median actual delivery time (purchase date to delivery date)</td><td class="num">10 days</td></tr>
+  <tr><td>Share delivered on time or early</td><td class="num">93.2%</td></tr>
+</table>
+<p><b>Estimated delivery dates are very generous:</b> the median estimated time is 2.4 times the actual time (24 ÷ 10). "On time" is an easy bar to clear, so customers are more likely to expect the usual delivery speed, or that of other shopping sites.</p>
+<p><b>Customers with on-time but long waits complain about slowness more often:</b> among on-time orders with a comment, the measure is "orders whose comment contains the Portuguese stem demor (taking long, as in demorou, demora) ÷ orders with a comment in the group". Customers who wait longer also comment more often (38.4% → 49.3%), so only orders with a comment are used as the denominator, to avoid mistaking "comments more often" for "complains more often":</p>
+<table>
+  <tr><th>On-time orders</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
+  <tr><td>① Orders</td><td class="num">30,476</td><td class="num">37,441</td><td class="num">15,473</td><td class="num">5,217</td><td class="num">836</td></tr>
+  <tr><td>② Orders with a comment</td><td class="num">11,696</td><td class="num">14,701</td><td class="num">6,153</td><td class="num">2,149</td><td class="num">412</td></tr>
+  <tr><td>Comment rate ② ÷ ①</td><td class="num">38.4%</td><td class="num">39.3%</td><td class="num">39.8%</td><td class="num">41.2%</td><td class="num">49.3%</td></tr>
+  <tr><td>③ Comment contains demor</td><td class="num">39</td><td class="num">143</td><td class="num">224</td><td class="num">157</td><td class="num">45</td></tr>
+  <tr class="hi"><td>Slowness complaint rate ③ ÷ ②</td><td class="num">0.3%</td><td class="num">1.0%</td><td class="num">3.6%</td><td class="num">7.3%</td><td class="num">10.9%</td></tr>
+</table>
+<p>For example, a 1-star comment after a 29-day wait: "Apesar de estar no prazo de entrega o produto demorou muito para chegar, fiz o pedido do mesmo produto em um concorrente do stark que entregou bem antes." (Although it arrived within the delivery window, the product took a long time; I ordered the same product from another store, which delivered much sooner.)</p>
+<p><b>Conclusion: the most likely explanation is that estimated delivery dates are very generous and customers actually expect delivery sooner than the estimate; but the data does not show customers' expectations at purchase, so this cannot be directly confirmed.</b> The keyword count uses only one stem and is a rough measure that only shows the trend.</p>
+<h3>Another finding: orders from multiple sellers score especially low</h3>
+<p>When an order's items come from 2 or more sellers, even orders delivered on time within 7 days average only 2.91 points, far below the 4.41 of all on-time orders in the same wait group:</p>
+<table>
+  <tr><th>On-time orders</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th></tr>
+  <tr><td>All: avg score</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
+  <tr class="hi"><td>Items from 2+ sellers: avg score</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
+  <tr><td>Items from 2+ sellers: orders</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
+</table>
+<p class="howto">There are 1,249 on-time multi-seller orders in total; only 1 waited 31+ days, so that group is not shown.</p>
+<p>These orders are usually shipped separately, so some items may arrive before others, but the data does not record each item's delivery date; split-shipment records would be needed to confirm the cause.</p>
+<details><summary>SQL: rule out possible explanations (on-time orders only)</summary>
+<div class="sqltags"><span class="tag">Aggregate first, then JOIN</span><span class="tag">UNION ALL for group comparison</span><span class="tag">MEDIAN</span></div>
+<pre><code>WITH items AS (                    -- collapse order items to one row per order
+  SELECT i.order_id,
+         COUNT(*)                    AS n_items,
+         COUNT(DISTINCT i.seller_id) AS n_sellers,
+         SUM(p.product_weight_g)     AS total_weight_g
+  FROM workspace.olist.silver_order_items AS i
+  LEFT JOIN workspace.olist.silver_products AS p ON i.product_id = p.product_id
+  GROUP BY i.order_id
+),
+ontime AS (
+  SELECT DATEDIFF(CAST(o.order_delivered_customer_date AS DATE), CAST(o.order_purchase_timestamp AS DATE)) AS wait_days,
+         DATEDIFF(CAST(o.order_delivered_carrier_date AS DATE),  CAST(o.order_purchase_timestamp AS DATE)) AS seller_days,
+         it.n_items, it.n_sellers, it.total_weight_g, r.review_score
+  FROM workspace.olist.silver_orders AS o
+  JOIN workspace.olist.silver_order_reviews AS r ON o.order_id = r.order_id AND r.is_latest_for_order
+  LEFT JOIN items AS it ON o.order_id = it.order_id
+  WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+    AND DATEDIFF(CAST(o.order_delivered_customer_date AS DATE),
+                 CAST(o.order_estimated_delivery_date AS DATE)) &lt;= 0
+),
+groups AS (                        -- one order can belong to several groups
+  SELECT 'all' AS grp, * FROM ontime
+  UNION ALL SELECT 'single item',         * FROM ontime WHERE n_items = 1
+  UNION ALL SELECT 'total weight <= 500g', * FROM ontime WHERE total_weight_g &lt;= 500
+  UNION ALL SELECT 'seller hands over within 2 days', * FROM ontime WHERE seller_days &lt;= 2
+  UNION ALL SELECT 'multiple sellers',    * FROM ontime WHERE n_sellers &gt; 1
+)
+SELECT grp, COUNT(*) AS orders,
+       ROUND(AVG(IF(wait_days &lt;= 7,              review_score, NULL)), 2) AS w0_7,
+       ROUND(AVG(IF(wait_days BETWEEN 8  AND 14, review_score, NULL)), 2) AS w8_14,
+       ROUND(AVG(IF(wait_days BETWEEN 15 AND 21, review_score, NULL)), 2) AS w15_21,
+       ROUND(AVG(IF(wait_days BETWEEN 22 AND 30, review_score, NULL)), 2) AS w22_30,
+       ROUND(AVG(IF(wait_days &gt; 30,              review_score, NULL)), 2) AS w31_plus
+FROM groups
+GROUP BY grp;
+
+-- estimated vs. actual delivery time
+SELECT MEDIAN(DATEDIFF(CAST(order_estimated_delivery_date AS DATE), CAST(order_purchase_timestamp AS DATE))) AS promise_days_median,
+       MEDIAN(DATEDIFF(CAST(order_delivered_customer_date AS DATE), CAST(order_purchase_timestamp AS DATE))) AS actual_days_median
+FROM workspace.olist.silver_orders
+WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;</code></pre>
+</details>
+</details>
+
+<details class="sec">
+<summary><h2>Monitoring in production</h2></summary>
+<p>If this analysis became a daily report, two things should be monitored: ① run the quality VIEW after every daily data update, alert when any ERROR rule fails or any WARN rule's count exceeds its threshold, and pause updates to the gold layer used for analysis; ② list each day the number of orders close to their estimated delivery date but not yet delivered, and track the monthly late rate and median actual delivery time.</p>
+</details>
+
+<details class="sec">
+<summary><h2>To dig further: data needed</h2></summary>
+<table>
+  <tr><th>Data needed</th><th>What it would show</th></tr>
+  <tr><td>An experiment (random assignment) notifying or compensating customers of late orders</td><td>Whether delays <i>cause</i> lower scores, and whether notifications reduce negative reviews</td></tr>
+  <tr><td>The estimated delivery date and other shipping options customers saw at purchase</td><td>Customers' actual expectations; whether shorter estimated delivery dates make customers more willing to buy</td></tr>
+  <tr><td>Shipping and delivery records for each item</td><td>Whether multi-seller orders score low because items arrive separately</td></tr>
+  <tr><td>How long after delivery reviews are written, and whether the platform invites them</td><td>Whether the 646 delivered orders without a review are as satisfied as reviewed orders</td></tr>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>Limitations</h2></summary>
+<ul>
+  <li>The analysis shows associations in observational data. Late orders may have other problems at the same time (e.g., items back-ordered and sent later), so low scores may not come from delay alone; the within-state comparison only rules out region as one factor.</li>
+  <li>Only delivered orders with a review are analyzed (95,824 orders); canceled and undelivered orders have no delivery date and are out of scope.</li>
+  <li>Days late compare dates only; a delivery on the evening of the estimated delivery date counts as on time.</li>
+  <li>The comment keyword count uses only the stem "demor", so it is a rough measure that only shows the trend.</li>
+</ul>
+</details>
+
+<footer>
+  <p>Tools: Databricks Free Edition (SQL Editor; Unity Catalog, the catalog that manages tables and permissions; Delta Lake), Python (pandas, to check every query result against the raw files), Claude Code. Data: Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a> (Kaggle). Query dates: 2026-10-13 to 14.</p>
+</footer>
+</template>
+<script>
+// 語言切換：中文寫在 <main>，英文版放在 template#main-en，切換時整塊替換；選擇記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }  // 從帶參數的連結進來，也記住語言
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;  // 第一次載入且是中文就不用重建
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    // 站內連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || a.getAttribute('href').startsWith('#')) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    if (!first) document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);  // 網址同步，分享出去的連結語言一致
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+</script><!-- i18n:end -->
+</body>
+</html>
