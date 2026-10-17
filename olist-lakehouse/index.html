@@ -207,15 +207,18 @@
 </table>
 <table>
   <tr><th>分析用到的欄位</th><th>所在的檔案</th><th>意思</th></tr>
+  <tr><td><code>order_id</code>、<code>customer_id</code>、<code>product_id</code></td><td>多個檔案共有</td><td>串接用的代號：order_id 接起訂單、訂單明細、評價；customer_id 接顧客；product_id 接商品</td></tr>
+  <tr><td><code>order_status</code></td><td>orders 訂單</td><td>訂單狀態，分析只取「已送達」（delivered）</td></tr>
   <tr><td><code>order_purchase_timestamp</code></td><td>orders 訂單</td><td>下單時間</td></tr>
   <tr><td><code>order_delivered_carrier_date</code></td><td>orders 訂單</td><td>賣家把貨交給物流的時間</td></tr>
   <tr><td><code>order_delivered_customer_date</code></td><td>orders 訂單</td><td>實際送達顧客的時間</td></tr>
   <tr><td><code>order_estimated_delivery_date</code></td><td>orders 訂單</td><td>下單時告訴顧客的預計送達日</td></tr>
   <tr><td><code>review_score</code></td><td>order_reviews 評價</td><td>顧客給的評分，1～5 分</td></tr>
+  <tr><td><code>review_answer_timestamp</code></td><td>order_reviews 評價</td><td>評價回覆時間；silver 層依此標出每張訂單最後回覆的一則（<code>is_latest_for_order</code>），分析只取這一則</td></tr>
+  <tr><td><code>review_comment_message</code></td><td>order_reviews 評價</td><td>評價留言，附錄找抱怨慢的留言</td></tr>
   <tr><td><code>customer_state</code></td><td>customers 顧客</td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
   <tr><td><code>product_weight_g</code></td><td>products 商品</td><td>商品重量（克），附錄算訂單總重</td></tr>
   <tr><td><code>seller_id</code></td><td>order_items 訂單明細</td><td>賣家代號，附錄判斷一張訂單有幾個賣家</td></tr>
-  <tr><td><code>review_comment_message</code></td><td>order_reviews 評價</td><td>評價留言，附錄找抱怨慢的留言</td></tr>
 </table>
 </details>
 
@@ -710,15 +713,18 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </table>
 <table>
   <tr><th>Fields used in the analysis</th><th>File</th><th>Meaning</th></tr>
+  <tr><td><code>order_id</code>, <code>customer_id</code>, <code>product_id</code></td><td>Several files</td><td>Join IDs: order_id links orders, order items, and reviews; customer_id links customers; product_id links products</td></tr>
+  <tr><td><code>order_status</code></td><td>orders</td><td>Order status; the analysis keeps only delivered orders</td></tr>
   <tr><td><code>order_purchase_timestamp</code></td><td>orders</td><td>Purchase time</td></tr>
   <tr><td><code>order_delivered_carrier_date</code></td><td>orders</td><td>Time the seller handed the order to the carrier</td></tr>
   <tr><td><code>order_delivered_customer_date</code></td><td>orders</td><td>Actual delivery time to the customer</td></tr>
   <tr><td><code>order_estimated_delivery_date</code></td><td>orders</td><td>Estimated delivery date shown to the customer at purchase</td></tr>
   <tr><td><code>review_score</code></td><td>order_reviews</td><td>Customer's score, 1–5</td></tr>
+  <tr><td><code>review_answer_timestamp</code></td><td>order_reviews</td><td>Review answer time; the silver layer uses it to flag each order's most recent review (<code>is_latest_for_order</code>), and the analysis uses only that one</td></tr>
+  <tr><td><code>review_comment_message</code></td><td>order_reviews</td><td>Review comment, used in the appendix to find complaints about slowness</td></tr>
   <tr><td><code>customer_state</code></td><td>customers</td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
   <tr><td><code>product_weight_g</code></td><td>products</td><td>Product weight (grams), used in the appendix for order total weight</td></tr>
   <tr><td><code>seller_id</code></td><td>order_items</td><td>Seller ID, used in the appendix to count sellers per order</td></tr>
-  <tr><td><code>review_comment_message</code></td><td>order_reviews</td><td>Review comment, used in the appendix to find complaints about slowness</td></tr>
 </table>
 </details>
 
