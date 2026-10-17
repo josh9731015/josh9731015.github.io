@@ -615,13 +615,13 @@ ORDER BY wait_bucket;</code></pre>
 </table>
 <p>例如一則等了 29 天、給 1 星的留言：「Apesar de estar no prazo de entrega o produto demorou muito para chegar, fiz o pedido do mesmo produto em um concorrente do stark que entregou bem antes.」（雖然在期限內送達，但商品很久才到；我在另一家店訂了同樣的商品，對方早很多就送到了）。</p>
 <p><b>結論：最可能的解釋是預計送達日抓得很寬，顧客實際的期待比預計送達日短；但資料看不到顧客下單時的期待，這一點無法直接證實。</b>關鍵字只抓一種寫法，屬於粗略計算，只能看趨勢。</p>
-<h3>另一個發現：一張訂單向多個賣家購買時，分數特別低</h3>
-<p>Olist 上不同商品可能由不同賣家出貨；一張訂單裡的商品如果分別向 2 個以上賣家購買（例如 A 賣家的衣服加 B 賣家的杯子一起結帳），即使準時且 7 天內送達，平均也只有 2.91 分，遠低於全部準時訂單同組的 4.41 分：</p>
+<h3>另一個發現：多個賣家的訂單分數特別低</h3>
+<p>同一張訂單的商品來自 2 個以上賣家時，即使準時且 7 天內送達，平均也只有 2.91 分，遠低於全部準時訂單同組的 4.41 分：</p>
 <table>
   <tr><th>準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th></tr>
   <tr><td>全部：平均分數</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
-  <tr class="hi"><td>向 2 個以上賣家購買的訂單：平均分數</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
-  <tr><td>向 2 個以上賣家購買的訂單：訂單數</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
+  <tr class="hi"><td>商品來自 2 個以上賣家：平均分數</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
+  <tr><td>商品來自 2 個以上賣家：訂單數</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
 </table>
 <p class="howto">準時的多賣家訂單共 1,249 張；等 31 天以上只有 1 張，不列入。</p>
 <p>這類訂單通常分開出貨，可能有部分商品先到、部分後到的情形，但資料沒有記錄每件商品各自的送達日，需要分批出貨的紀錄才能確認原因。</p>
@@ -1147,13 +1147,13 @@ ORDER BY wait_bucket;</code></pre>
 </table>
 <p>For example, a 1-star comment after a 29-day wait: "Apesar de estar no prazo de entrega o produto demorou muito para chegar, fiz o pedido do mesmo produto em um concorrente do stark que entregou bem antes." (Although it arrived within the delivery window, the product took a long time; I ordered the same product from another store, which delivered much sooner.)</p>
 <p><b>Conclusion: the most likely explanation is that estimated delivery dates are very generous and customers actually expect delivery sooner than the estimate; but the data does not show customers' expectations at purchase, so this cannot be directly confirmed.</b> The keyword count uses only one stem and is a rough measure that only shows the trend.</p>
-<h3>Another finding: orders that buy from multiple sellers score especially low</h3>
-<p>On Olist, different products in one order can be shipped by different sellers. When an order buys from 2 or more sellers (e.g., a shirt from seller A and a mug from seller B checked out together), even orders delivered on time within 7 days average only 2.91 points, far below the 4.41 of all on-time orders in the same wait group:</p>
+<h3>Another finding: orders from multiple sellers score especially low</h3>
+<p>When an order's items come from 2 or more sellers, even orders delivered on time within 7 days average only 2.91 points, far below the 4.41 of all on-time orders in the same wait group:</p>
 <table>
   <tr><th>On-time orders</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th></tr>
   <tr><td>All: avg score</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
-  <tr class="hi"><td>Orders buying from 2+ sellers: avg score</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
-  <tr><td>Orders buying from 2+ sellers: orders</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
+  <tr class="hi"><td>Items from 2+ sellers: avg score</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
+  <tr><td>Items from 2+ sellers: orders</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
 </table>
 <p class="howto">There are 1,249 on-time multi-seller orders in total; only 1 waited 31+ days, so that group is not shown.</p>
 <p>These orders are usually shipped separately, so some items may arrive before others, but the data does not record each item's delivery date; split-shipment records would be needed to confirm the cause.</p>
