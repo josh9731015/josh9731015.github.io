@@ -458,7 +458,7 @@ ORDER BY delay_bucket;</code></pre>
 
 <p class="bridge"><b>為什麼接著看這個：</b>偏遠的州可能本來就「常晚到、評分也偏低」，例如選擇較少、運費較高。如果是這樣，分析一的落差有一部分是地區造成的，不是延遲。檢查方法是在同一州裡比較晚到與準時的訂單。</p>
 
-<h3>分析二：在同一州裡比較，晚到的分數一樣低</h3>
+<h3>分析二：排除地區差異，14 個州裡晚到都比準時低 1.6～2.3 分</h3>
 <p>只列出晚到訂單在 100 張以上的州（晚到訂單太少時，平均分數容易受少數訂單影響）。這 14 個州合計占全部 95,824 張訂單的 95.2%、晚到訂單的 92.8%。</p>
 <table>
   <tr><th>州</th><th class="num">訂單數</th><th class="num">晚到比例</th><th class="num">準時：平均分數</th><th class="num">晚到：平均分數</th><th class="num">差距（準時 − 晚到）</th></tr>
@@ -508,7 +508,7 @@ ORDER BY gap DESC;</code></pre>
 
 <p class="bridge"><b>為什麼接著看這個：</b>晚到的訂單通常也等得比較久。顧客給低分，可能是因為「沒有在說好的日期送到」，也可能只是「等太久」。兩者的改善方式不同：前者可以從預計送達日的設定著手，後者需要縮短實際配送時間。</p>
 
-<h3>分析三：等待天數相同時，晚到的分數仍低得多</h3>
+<h3>分析三：排除等待天數，等一樣久時晚到比準時低 0.4～1.8 分</h3>
 <p>把訂單依「下單到送達實際等了幾天」分組，每組再分成準時與晚到比較。</p>
 <div class="chart-title">同樣等 22～30 天，準時送達平均 3.94 分，晚到只有 2.55 分</div>
 <div class="legend"><i style="background:var(--mute)"></i>準時或提早<i style="background:var(--neg)"></i>晚到</div>
@@ -990,7 +990,7 @@ ORDER BY delay_bucket;</code></pre>
 
 <p class="bridge"><b>Why look at this next:</b> remote states may already be "often late and lower-rated", for example because of fewer choices or higher freight costs. If so, part of the gap in Analysis 1 would come from region rather than delay. The check is to compare late and on-time orders within the same state.</p>
 
-<h3>Analysis 2: within each state, late orders still score much lower</h3>
+<h3>Analysis 2: ruling out region, late orders score 1.6–2.3 points lower than on-time orders in all 14 states</h3>
 <p>Only states with at least 100 late orders are listed (with too few late orders, an average is easily swayed by a few orders). These 14 states account for 95.2% of all 95,824 orders and 92.8% of late orders.</p>
 <table>
   <tr><th>State</th><th class="num">Orders</th><th class="num">Late rate</th><th class="num">On time: avg score</th><th class="num">Late: avg score</th><th class="num">Gap (on time − late)</th></tr>
@@ -1040,7 +1040,7 @@ ORDER BY gap DESC;</code></pre>
 
 <p class="bridge"><b>Why look at this next:</b> late orders usually also take longer to arrive. A low score may come from "not delivered by the estimated delivery date" or simply from "waiting too long". The fixes differ: the former can be addressed by how estimated delivery dates are set, the latter requires shortening actual delivery time.</p>
 
-<h3>Analysis 3: with the same wait time, late orders still score much lower</h3>
+<h3>Analysis 3: ruling out wait time, late orders score 0.4–1.8 points lower than on-time orders with the same wait</h3>
 <p>Orders are grouped by how many days they actually took from purchase to delivery, and each group is split into on-time and late orders.</p>
 <div class="chart-title">With the same 22–30 day wait, on-time orders average 3.94 and late orders only 2.55</div>
 <div class="legend"><i style="background:var(--mute)"></i>On time or early<i style="background:var(--neg)"></i>Late</div>
