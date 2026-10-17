@@ -206,13 +206,16 @@
   <tr><td>其他：sellers 賣家、payments 付款、geolocation 郵遞區號座標、品類英文翻譯</td><td class="num">—</td><td>建表與品質檢查時使用</td></tr>
 </table>
 <table>
-  <tr><th>分析用到的欄位</th><th>意思</th></tr>
-  <tr><td><code>order_purchase_timestamp</code></td><td>下單時間</td></tr>
-  <tr><td><code>order_delivered_carrier_date</code></td><td>賣家把貨交給物流的時間</td></tr>
-  <tr><td><code>order_delivered_customer_date</code></td><td>實際送達顧客的時間</td></tr>
-  <tr><td><code>order_estimated_delivery_date</code></td><td>下單時告訴顧客的預計送達日</td></tr>
-  <tr><td><code>review_score</code></td><td>顧客給的評分，1～5 分</td></tr>
-  <tr><td><code>customer_state</code></td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
+  <tr><th>分析用到的欄位</th><th>所在的檔案</th><th>意思</th></tr>
+  <tr><td><code>order_purchase_timestamp</code></td><td>orders 訂單</td><td>下單時間</td></tr>
+  <tr><td><code>order_delivered_carrier_date</code></td><td>orders 訂單</td><td>賣家把貨交給物流的時間</td></tr>
+  <tr><td><code>order_delivered_customer_date</code></td><td>orders 訂單</td><td>實際送達顧客的時間</td></tr>
+  <tr><td><code>order_estimated_delivery_date</code></td><td>orders 訂單</td><td>下單時告訴顧客的預計送達日</td></tr>
+  <tr><td><code>review_score</code></td><td>order_reviews 評價</td><td>顧客給的評分，1～5 分</td></tr>
+  <tr><td><code>customer_state</code></td><td>customers 顧客</td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
+  <tr><td><code>product_weight_g</code></td><td>products 商品</td><td>商品重量（克），附錄算訂單總重</td></tr>
+  <tr><td><code>seller_id</code></td><td>order_items 訂單明細</td><td>賣家代號，附錄判斷一張訂單有幾個賣家</td></tr>
+  <tr><td><code>review_comment_message</code></td><td>order_reviews 評價</td><td>評價留言，附錄找抱怨慢的留言</td></tr>
 </table>
 </details>
 
@@ -222,7 +225,7 @@
 <div class="flow">
   <div class="layer"><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另加「何時讀入、來自哪個檔案」兩個欄位</span><em>10 張表（含 1 張用預設設定讀評價檔的對照表）</em></div>
   <div class="arrow">→</div>
-  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類</span><em>8 張表＋15 條品質規則</em></div>
+  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類（orders、order_items、order_reviews、order_payments、customers、sellers、products、geolocation；品類翻譯併入 products）</span><em>8 張表＋15 條品質規則</em></div>
   <div class="arrow">→</div>
   <div class="layer"><b>gold 分析層</b><span>依分析需求組成星狀結構（1 張事實表＋4 張維度表）</span><em>5 張表</em></div>
 </div>
@@ -231,7 +234,7 @@
 <p>bronze 層的原則是「不修改內容」，之後清洗出錯時，隨時可以從這一層重來。讀進來後立刻比對每張表的列數與原始檔，發現兩個讀取問題：</p>
 <ul>
   <li><b>評價留言含換行，一則評價被切成好幾列：</b>用預設設定讀取（存成對照表 <code>bronze_reviews_naive</code>），評價表有 104,162 列，比原始檔的 99,224 則多出 4,938 列碎片。加上「一筆資料可以跨好幾行」與「引號內的符號照原樣讀」兩項設定（multiLine、escape）後，列數與原始檔一致。</li>
-  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定這個欄位以文字讀入（schemaHints 設定），重建後所有郵遞區號都是 5 碼。</li>
+  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定郵遞區號欄位以文字讀入（schemaHints 設定），顧客、賣家、座標 3 張 bronze 表都重建，重建後所有郵遞區號都是 5 碼。</li>
 </ul>
 <details><summary>SQL：讀取原始檔（以評價表為例）</summary>
 <div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine／escape</span><span class="tag">_metadata 來源欄位</span></div>
@@ -247,12 +250,12 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
 <h3>silver：清洗規則——可疑的資料只標記，不刪除</h3>
 <p>建 silver 層前，先在 bronze 層數出每一種問題有幾列，再決定處理方式。可疑但可能是真實情況的資料（例如送達時間早於出貨時間）只加一個標記欄，不刪除，讓之後的分析自己決定要不要排除。</p>
 <table>
-  <tr><th>發現的問題</th><th class="num">數量</th><th>處理方式</th></tr>
-  <tr><td>同一張訂單有多則評價（547 張訂單有 2 則以上評價，比一張一則多出的則數）</td><td class="num">551 則</td><td>保留全部，標出每張訂單「最後回覆的那一則」，分析時每張訂單只取這一則</td></tr>
-  <tr><td>座標表同一個郵遞區號、同一組經緯度重複出現</td><td class="num">280,009 列</td><td>重複的只留一筆，再刪除巴西國境外的 27 筆，最後每個郵遞區號取平均座標（1,000,163 列 → 19,011 個郵遞區號）</td></tr>
-  <tr><td>商品沒有品類</td><td class="num">610 個</td><td>品類填「unknown」；有對照的品類翻成英文（13 個商品的品類沒有對照，保留葡萄牙文）</td></tr>
-  <tr><td>狀態是「已送達」卻沒有送達日</td><td class="num">8 張</td><td>加標記欄；配送分析排除</td></tr>
-  <tr><td>送達時間早於交給物流的時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
+  <tr><th>清洗的表</th><th>發現的問題</th><th class="num">數量</th><th>處理方式</th></tr>
+  <tr><td><code>silver_order_reviews</code></td><td>同一張訂單有多則評價（547 張訂單有 2 則以上評價，比一張一則多出的則數）</td><td class="num">551 則</td><td>保留全部，標出每張訂單「最後回覆的那一則」，分析時每張訂單只取這一則</td></tr>
+  <tr><td><code>silver_geolocation</code></td><td>座標表同一個郵遞區號、同一組經緯度重複出現</td><td class="num">280,009 列</td><td>重複的只留一筆，再刪除巴西國境外的 27 筆，最後每個郵遞區號取平均座標（1,000,163 列 → 19,011 個郵遞區號）</td></tr>
+  <tr><td><code>silver_products</code></td><td>商品沒有品類</td><td class="num">610 個</td><td>品類填「unknown」；有對照的品類翻成英文（13 個商品的品類沒有對照，保留葡萄牙文）</td></tr>
+  <tr><td><code>silver_orders</code></td><td>狀態是「已送達」卻沒有送達日</td><td class="num">8 張</td><td>加標記欄；配送分析排除</td></tr>
+  <tr><td><code>silver_orders</code></td><td>送達時間早於交給物流的時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
 </table>
 <p class="howto">座標表的重複列中，261,831 列連城市寫法等所有欄位都相同。數量是 Databricks 的查詢結果，並與本機用 Python 讀原始檔算出的數字逐項核對一致。</p>
 
@@ -309,7 +312,7 @@ LIMIT 5;</code></pre>
 
 <details class="sec">
 <summary><h2>資料品質檢查</h2></summary>
-<p>品質規則寫成一個 VIEW（存起來的查詢，名稱 <code>silver_quality_checks</code>），每次資料更新後只要執行一行查詢，15 條規則就會全部重跑一次。規則依常見的四個面向分類：</p>
+<p>品質規則寫成一個 VIEW（存起來的查詢，名稱 <code>silver_quality_checks</code>），每次資料更新後只要執行一行查詢，15 條規則就會全部重跑一次。規則檢查的都是 silver 層的表。規則依常見的四個面向分類：</p>
 <table>
   <tr><th>面向</th><th>例子</th><th class="num">規則數</th></tr>
   <tr><td>唯一性：該唯一的代號有沒有重複</td><td>訂單編號不重複；每張有評價的訂單剛好一則「最後回覆」</td><td class="num">4</td></tr>
@@ -319,15 +322,15 @@ LIMIT 5;</code></pre>
   <tr class="total"><td>合計</td><td></td><td class="num">15</td></tr>
 </table>
 <p>規則分兩級：11 條是 <b>ERROR</b>（錯誤），一列都不能違反；4 條是 <b>WARN</b>（警告），對應已知、目前不修的問題，例如上一節的 23 張「送達早於交貨」，只要筆數沒有比現在多就算通過，用來發現問題是否變嚴重。目前 15 條全部通過。</p>
-<p>WARN 中有一條是「付款總額與商品＋運費不符（差超過 1 雷亞爾）」，共 249 張訂單，其中 232 張是付款多於商品＋運費。這 232 張有 98.7% 選擇分期付款（期數大於 1），金額相符的訂單用分期付款的只有 51.4%，多付的部分可能是分期利息，但資料無法證實；另外 17 張付款少於商品＋運費，原因不明。因此兩者都列為已知問題、不修改金額。</p>
+<p>WARN 中有一條是「付款總額與商品＋運費不符（差超過 1 雷亞爾）」（比對 <code>silver_order_payments</code> 與 <code>silver_order_items</code>），共 249 張訂單，其中 232 張是付款多於商品＋運費。這 232 張有 98.7% 選擇分期付款（期數大於 1），金額相符的訂單用分期付款的只有 51.4%，多付的部分可能是分期利息，但資料無法證實；另外 17 張付款少於商品＋運費，原因不明。因此兩者都列為已知問題、不修改金額。</p>
 
 <h3>表上的「門禁」：哪些規則會在寫入時擋下壞資料</h3>
 <p>品質 VIEW 是資料寫進去之後才檢查；Delta 格式的表另外可以設定「寫入時就檢查」的規則，像大樓門禁，不合規的資料進不來。實際測試三種寫法：</p>
 <table>
-  <tr><th>寫法</th><th>測試</th><th>結果</th></tr>
-  <tr class="hi"><td>CHECK 條件（評分 1～5）</td><td>寫入一筆 6 分的評價</td><td>被擋下，資料沒有寫入</td></tr>
-  <tr><td>CHECK 條件（評分至少 3）</td><td>對已有 1、2 分評價的表加上這條規則</td><td>加不上去：系統會先檢查現有資料，14,575 列違反</td></tr>
-  <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，不會強制。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
+  <tr><th>寫法</th><th>測試的表</th><th>測試</th><th>結果</th></tr>
+  <tr class="hi"><td>CHECK 條件（評分 1～5）</td><td><code>silver_order_reviews</code></td><td>寫入一筆 6 分的評價</td><td>被擋下，資料沒有寫入</td></tr>
+  <tr><td>CHECK 條件（評分至少 3）</td><td><code>silver_order_reviews</code></td><td>對已有 1、2 分評價的表加上這條規則</td><td>加不上去：系統會先檢查現有資料，14,575 列違反</td></tr>
+  <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td><code>silver_orders</code></td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，不會強制。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
 </table>
 <p>因此「不准重複」不能靠主鍵，要在寫入時處理：新資料用 <code>MERGE</code>（合併寫入）指令寫入，同一張訂單已存在就更新、不存在才新增。測試時也發現，如果同一批新資料裡同一張新訂單出現兩次，<code>MERGE</code> 會新增兩列，所以寫入前要先在新資料裡去重。</p>
 <details><summary>SQL：先去重再 MERGE</summary>
@@ -354,11 +357,11 @@ WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
 <p>Delta 表每次寫入、更新或刪除都會留下一個新版本。這個功能讓分析師可以查「某個時間點的資料長什麼樣」，也能在誤刪後還原。</p>
 <table>
   <tr><th>指令</th><th>做什麼</th><th>本專案的實測</th></tr>
-  <tr><td><code>DESCRIBE HISTORY</code></td><td>列出每個版本做了什麼動作、影響幾列</td><td>訂單表在建置與測試過程中共產生 13 個版本（版本 0～12）</td></tr>
-  <tr><td><code>VERSION AS OF</code></td><td>查詢過去某個版本，不影響現在的表</td><td>查訂單表的版本 2 有 99,443 列（含 2 筆主鍵測試訂單），現在是 99,441 列</td></tr>
+  <tr><td><code>DESCRIBE HISTORY</code></td><td>列出每個版本做了什麼動作、影響幾列</td><td>訂單表 <code>silver_orders</code> 在建置與測試過程中共產生 13 個版本（版本 0～12）</td></tr>
+  <tr><td><code>VERSION AS OF</code></td><td>查詢過去某個版本，不影響現在的表</td><td>查 <code>silver_orders</code> 的版本 2 有 99,443 列（含 2 筆主鍵測試訂單），現在是 99,441 列</td></tr>
   <tr class="hi"><td><code>RESTORE</code></td><td>把表還原成過去某個版本</td><td>在練習用的複製表上故意執行忘了指定刪除條件（沒有 WHERE）的 DELETE，整張表被刪光；還原到版本 0 後回到 99,441 列</td></tr>
 </table>
-<p>還原不會抹掉誤刪的紀錄，而是再新增一個版本（練習表：版本 0 建立 → 版本 1 誤刪 → 版本 2 還原），像會計用一筆沖銷分錄更正，而不是撕掉錯的那一頁。版本回溯有期限：依 Databricks 官方文件的預設值，「每個版本做了什麼」的紀錄保留 30 天，但舊版本的資料檔只保證保留 7 天，超過後可能被清除，就查不到當時的資料了，只看得到紀錄。需要長期保存的資料（例如月結數字）要另外存成帶日期的快照表，本專案存了一張 <code>snapshot_orders_20261013</code>。</p>
+<p>還原不會抹掉誤刪的紀錄，而是再新增一個版本（練習表：版本 0 建立 → 版本 1 誤刪 → 版本 2 還原），像會計用一筆沖銷分錄更正，而不是撕掉錯的那一頁。版本回溯有期限：依 Databricks 官方文件的預設值，「每個版本做了什麼」的紀錄保留 30 天，但舊版本的資料檔只保證保留 7 天，超過後可能被清除，就查不到當時的資料了，只看得到紀錄。需要長期保存的資料（例如月結數字）要另外存成帶日期的快照表，本專案把 <code>silver_orders</code> 存成一張 <code>snapshot_orders_20261013</code>。</p>
 <details><summary>SQL：誤刪後還原</summary>
 <div class="sqltags"><span class="tag">DESCRIBE HISTORY</span><span class="tag">RESTORE TABLE</span></div>
 <pre><code>-- 練習用的複製表（版本 0）
@@ -706,13 +709,16 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>Others: sellers, payments, geolocation (zip code coordinates), category English translation</td><td class="num">—</td><td>Used for building tables and quality checks</td></tr>
 </table>
 <table>
-  <tr><th>Fields used in the analysis</th><th>Meaning</th></tr>
-  <tr><td><code>order_purchase_timestamp</code></td><td>Purchase time</td></tr>
-  <tr><td><code>order_delivered_carrier_date</code></td><td>Time the seller handed the order to the carrier</td></tr>
-  <tr><td><code>order_delivered_customer_date</code></td><td>Actual delivery time to the customer</td></tr>
-  <tr><td><code>order_estimated_delivery_date</code></td><td>Estimated delivery date shown to the customer at purchase</td></tr>
-  <tr><td><code>review_score</code></td><td>Customer's score, 1–5</td></tr>
-  <tr><td><code>customer_state</code></td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
+  <tr><th>Fields used in the analysis</th><th>File</th><th>Meaning</th></tr>
+  <tr><td><code>order_purchase_timestamp</code></td><td>orders</td><td>Purchase time</td></tr>
+  <tr><td><code>order_delivered_carrier_date</code></td><td>orders</td><td>Time the seller handed the order to the carrier</td></tr>
+  <tr><td><code>order_delivered_customer_date</code></td><td>orders</td><td>Actual delivery time to the customer</td></tr>
+  <tr><td><code>order_estimated_delivery_date</code></td><td>orders</td><td>Estimated delivery date shown to the customer at purchase</td></tr>
+  <tr><td><code>review_score</code></td><td>order_reviews</td><td>Customer's score, 1–5</td></tr>
+  <tr><td><code>customer_state</code></td><td>customers</td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
+  <tr><td><code>product_weight_g</code></td><td>products</td><td>Product weight (grams), used in the appendix for order total weight</td></tr>
+  <tr><td><code>seller_id</code></td><td>order_items</td><td>Seller ID, used in the appendix to count sellers per order</td></tr>
+  <tr><td><code>review_comment_message</code></td><td>order_reviews</td><td>Review comment, used in the appendix to find complaints about slowness</td></tr>
 </table>
 </details>
 
@@ -722,7 +728,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <div class="flow">
   <div class="layer"><b>Bronze (raw)</b><span>9 CSV files loaded as-is, plus two columns recording when each row was loaded and from which file</span><em>10 tables (incl. 1 comparison table that reads the review file with default settings)</em></div>
   <div class="arrow">→</div>
-  <div class="layer"><b>Silver (cleaned)</b><span>Fix loading errors, deduplicate, flag suspicious records, translate categories</span><em>8 tables + 15 quality rules</em></div>
+  <div class="layer"><b>Silver (cleaned)</b><span>Fix loading errors, deduplicate, flag suspicious records, translate categories (orders, order_items, order_reviews, order_payments, customers, sellers, products, geolocation; the category translation is merged into products)</span><em>8 tables + 15 quality rules</em></div>
   <div class="arrow">→</div>
   <div class="layer"><b>Gold (analysis)</b><span>Star schema built for analysis (1 fact table + 4 dimension tables)</span><em>5 tables</em></div>
 </div>
@@ -731,7 +737,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <p>The bronze layer's rule is "do not modify content", so if cleaning goes wrong, it can always be rerun from this layer. Right after loading, each table's row count was compared with its source file, which revealed two loading problems:</p>
 <ul>
   <li><b>Review comments contain line breaks, splitting one review into several rows:</b> loaded with default settings (saved as the comparison table <code>bronze_reviews_naive</code>), the review table had 104,162 rows, 4,938 fragment rows more than the 99,224 reviews in the source file. After adding two settings, "one record may span several lines" and "read characters inside quotes as-is" (multiLine, escape), the row count matched the source file.</li>
-  <li><b>Leading zeros of zip codes disappeared:</b> the system guessed zip codes were numbers, so 23,995 rows in the customer table lost their leading 0 (e.g., 01310 became 1310) and would not match the coordinate table. Reading this column as text at load time (the schemaHints setting) and rebuilding made every zip code 5 digits.</li>
+  <li><b>Leading zeros of zip codes disappeared:</b> the system guessed zip codes were numbers, so 23,995 rows in the customer table lost their leading 0 (e.g., 01310 became 1310) and would not match the coordinate table. Reading the zip code column as text at load time (the schemaHints setting) and rebuilding the 3 bronze tables that have it (customers, sellers, geolocation) made every zip code 5 digits.</li>
 </ul>
 <details><summary>SQL: load a raw file (review table as an example)</summary>
 <div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine / escape</span><span class="tag">_metadata source columns</span></div>
@@ -747,12 +753,12 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
 <h3>Silver: cleaning rules — flag suspicious records, do not delete them</h3>
 <p>Before building the silver layer, each type of problem was counted in the bronze layer, then a handling rule was chosen. Records that look suspicious but may be real (e.g., delivered before being shipped) only get a flag column and are not deleted, so later analyses can decide whether to exclude them.</p>
 <table>
-  <tr><th>Problem found</th><th class="num">Count</th><th>Handling</th></tr>
-  <tr><td>Orders with multiple reviews (551 extra reviews across 547 orders with 2+ reviews)</td><td class="num">551 reviews</td><td>Keep all; mark each order's most recent review, and use only that one per order in analysis</td></tr>
-  <tr><td>Coordinate table: same zip code and same latitude/longitude repeated</td><td class="num">280,009 rows</td><td>Keep one of each duplicate, remove 27 rows outside Brazil, then average coordinates per zip code (1,000,163 rows → 19,011 zip codes)</td></tr>
-  <tr><td>Products without a category</td><td class="num">610 products</td><td>Set category to "unknown"; translate categories that have a mapping into English (13 products' categories have no mapping and stay in Portuguese)</td></tr>
-  <tr><td>Status "delivered" but no delivery date</td><td class="num">8 orders</td><td>Add a flag column; excluded from the delivery analysis</td></tr>
-  <tr><td>Delivered before being handed to the carrier</td><td class="num">23 orders</td><td>Add a flag column; not deleted</td></tr>
+  <tr><th>Table cleaned</th><th>Problem found</th><th class="num">Count</th><th>Handling</th></tr>
+  <tr><td><code>silver_order_reviews</code></td><td>Orders with multiple reviews (551 extra reviews across 547 orders with 2+ reviews)</td><td class="num">551 reviews</td><td>Keep all; mark each order's most recent review, and use only that one per order in analysis</td></tr>
+  <tr><td><code>silver_geolocation</code></td><td>Coordinate table: same zip code and same latitude/longitude repeated</td><td class="num">280,009 rows</td><td>Keep one of each duplicate, remove 27 rows outside Brazil, then average coordinates per zip code (1,000,163 rows → 19,011 zip codes)</td></tr>
+  <tr><td><code>silver_products</code></td><td>Products without a category</td><td class="num">610 products</td><td>Set category to "unknown"; translate categories that have a mapping into English (13 products' categories have no mapping and stay in Portuguese)</td></tr>
+  <tr><td><code>silver_orders</code></td><td>Status "delivered" but no delivery date</td><td class="num">8 orders</td><td>Add a flag column; excluded from the delivery analysis</td></tr>
+  <tr><td><code>silver_orders</code></td><td>Delivered before being handed to the carrier</td><td class="num">23 orders</td><td>Add a flag column; not deleted</td></tr>
 </table>
 <p class="howto">Of the duplicate coordinate rows, 261,831 rows are identical in every column, including city spelling. Counts are Databricks query results, each checked against figures computed locally in Python from the raw files.</p>
 
@@ -809,7 +815,7 @@ LIMIT 5;</code></pre>
 
 <details class="sec">
 <summary><h2>Data quality checks</h2></summary>
-<p>The quality rules are written as a VIEW (a saved query, named <code>silver_quality_checks</code>); after each data update, running one query re-runs all 15 rules. The rules are grouped into four common dimensions:</p>
+<p>The quality rules are written as a VIEW (a saved query, named <code>silver_quality_checks</code>); after each data update, running one query re-runs all 15 rules. All rules check silver-layer tables. The rules are grouped into four common dimensions:</p>
 <table>
   <tr><th>Dimension</th><th>Example</th><th class="num">Rules</th></tr>
   <tr><td>Uniqueness: are IDs that should be unique duplicated?</td><td>Order IDs are unique; each reviewed order has exactly one most recent review</td><td class="num">4</td></tr>
@@ -824,10 +830,10 @@ LIMIT 5;</code></pre>
 <h3>Table "gatekeeping": which rules block bad data at write time</h3>
 <p>The quality VIEW checks data after it is written; Delta tables can also have rules that check data at write time, like building security that keeps non-compliant data out. Three approaches were tested:</p>
 <table>
-  <tr><th>Approach</th><th>Test</th><th>Result</th></tr>
-  <tr class="hi"><td>CHECK constraint (score 1–5)</td><td>Write a review with a score of 6</td><td>Blocked; the row was not written</td></tr>
-  <tr><td>CHECK constraint (score at least 3)</td><td>Add this rule to a table that already has 1- and 2-point reviews</td><td>Could not be added: the system first checks existing data, and 14,575 rows violate it</td></tr>
-  <tr><td>PRIMARY KEY (declares order IDs unique)</td><td>Write 2 test orders with the same ID</td><td>Not blocked; both rows were written. In Databricks, primary keys are informational only and not enforced. The quality VIEW's uniqueness rule therefore showed FAIL, and the test rows were then deleted</td></tr>
+  <tr><th>Approach</th><th>Table tested</th><th>Test</th><th>Result</th></tr>
+  <tr class="hi"><td>CHECK constraint (score 1–5)</td><td><code>silver_order_reviews</code></td><td>Write a review with a score of 6</td><td>Blocked; the row was not written</td></tr>
+  <tr><td>CHECK constraint (score at least 3)</td><td><code>silver_order_reviews</code></td><td>Add this rule to a table that already has 1- and 2-point reviews</td><td>Could not be added: the system first checks existing data, and 14,575 rows violate it</td></tr>
+  <tr><td>PRIMARY KEY (declares order IDs unique)</td><td><code>silver_orders</code></td><td>Write 2 test orders with the same ID</td><td>Not blocked; both rows were written. In Databricks, primary keys are informational only and not enforced. The quality VIEW's uniqueness rule therefore showed FAIL, and the test rows were then deleted</td></tr>
 </table>
 <p>So "no duplicates" cannot rely on primary keys and must be handled at write time: new data is written with the <code>MERGE</code> command, which updates an order if it already exists and inserts it only if it does not. Testing also showed that if the same new order appears twice in one batch, <code>MERGE</code> inserts two rows, so new data must be deduplicated before writing.</p>
 <details><summary>SQL: deduplicate first, then MERGE</summary>
@@ -854,8 +860,8 @@ WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
 <p>Every write, update, or delete on a Delta table creates a new version. This lets an analyst see what the data looked like at a point in time and restore it after an accidental deletion.</p>
 <table>
   <tr><th>Command</th><th>What it does</th><th>Tested in this project</th></tr>
-  <tr><td><code>DESCRIBE HISTORY</code></td><td>Lists what each version did and how many rows it affected</td><td>The order table produced 13 versions (versions 0–12) during building and testing</td></tr>
-  <tr><td><code>VERSION AS OF</code></td><td>Queries a past version without changing the current table</td><td>Version 2 of the order table has 99,443 rows (including the 2 primary-key test orders); it now has 99,441</td></tr>
+  <tr><td><code>DESCRIBE HISTORY</code></td><td>Lists what each version did and how many rows it affected</td><td>The order table <code>silver_orders</code> produced 13 versions (versions 0–12) during building and testing</td></tr>
+  <tr><td><code>VERSION AS OF</code></td><td>Queries a past version without changing the current table</td><td>Version 2 of <code>silver_orders</code> has 99,443 rows (including the 2 primary-key test orders); it now has 99,441</td></tr>
   <tr class="hi"><td><code>RESTORE</code></td><td>Restores a table to a past version</td><td>On a practice copy, a DELETE without a deletion condition (no WHERE) was run on purpose, wiping the whole table; after restoring to version 0 it was back to 99,441 rows</td></tr>
 </table>
 <p>Restoring does not erase the record of the deletion; it adds another version (practice table: version 0 created → version 1 deleted by mistake → version 2 restored), like an accountant correcting with a reversing entry instead of tearing out the wrong page. Version history has a time limit: under Databricks' documented defaults, the record of what each version did is kept for 30 days, but old versions' data files are only guaranteed for 7 days; after that they may be removed, and the data at that time can no longer be queried, only the record. Data that must be kept long term (e.g., month-end figures) should be saved as a dated snapshot table; this project saved <code>snapshot_orders_20261013</code>.</p>
