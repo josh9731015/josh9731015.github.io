@@ -73,6 +73,15 @@
   tr.hi td { background: var(--accent-soft); }
   tr.total td { font-weight: 600; border-bottom: none; }
   .chart-title { font-size: 15.5px; font-weight: 600; margin: 4px 0 10px; }
+  .star { display: block; width: 100%; max-width: 560px; margin: 14px auto 4px; }
+  .star .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  .star .box.fact { fill: var(--accent-soft); stroke: var(--accent); }
+  .star .link { stroke: var(--mute); stroke-width: 2; }
+  .star text { fill: var(--ink); font-size: 14px; text-anchor: middle; }
+  .star .nm { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 13.5px; }
+  .star .sub { fill: var(--ink-2); font-size: 12.5px; }
+  .star .key { fill: var(--accent); font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  .star-cap { text-align: center; font-size: 13.5px; color: var(--ink-2); margin: 0 0 18px; }
   .legend { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 12px; vertical-align: -1px; }
   .legend i:first-child { margin-left: 0; }
@@ -249,6 +258,35 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
 
 <h3>gold：星狀結構——一張事實表，四張維度表</h3>
 <p>gold 層依分析需求組合資料，常見做法是星狀結構：中間一張<b>事實表</b>記錄「發生了什麼」，本專案是 <code>gold_fact_sales</code>，一列代表「賣出的一件商品」（112,650 列），記價格與運費；周圍幾張<b>維度表</b>記錄「是誰、是什麼、在哪天」（顧客、商品、賣家、日期），查詢時用代號把它們接上事實表，例如用商品代號查出品類。日期維度表包含 2016-09-04～2018-10-17 每一天（774 天），沒有訂單的日子也有一列，按月彙總時才不會漏掉月份。</p>
+<svg class="star" viewBox="0 0 440 400" role="img" aria-label="星狀結構：中間一張事實表，四張維度表各用一個代號接上">
+  <line class="link" x1="220" y1="78" x2="220" y2="140"/>
+  <line class="link" x1="220" y1="260" x2="220" y2="322"/>
+  <line class="link" x1="115" y1="200" x2="140" y2="200"/>
+  <line class="link" x1="300" y1="200" x2="325" y2="200"/>
+  <rect class="box fact" x="140" y="140" width="160" height="120" rx="8"/>
+  <text class="nm" x="220" y="167">gold_fact_sales</text>
+  <text class="sub" x="220" y="186">事實表</text>
+  <text class="" x="220" y="205">一列＝賣出的一件商品</text>
+  <text class="" x="220" y="224">112,650 列</text>
+  <text class="sub" x="220" y="243">價格、運費</text>
+  <rect class="box" x="155" y="0" width="130" height="78" rx="8"/>
+  <text class="nm" x="220" y="25">dim_customer</text>
+  <text class="" x="220" y="44">99,441 列</text>
+  <text class="key" x="220" y="63">customer_id</text>
+  <rect class="box" x="0" y="161" width="115" height="78" rx="8"/>
+  <text class="nm" x="57.5" y="186">dim_product</text>
+  <text class="" x="57.5" y="205">32,951 款商品</text>
+  <text class="key" x="57.5" y="224">product_id</text>
+  <rect class="box" x="325" y="161" width="115" height="78" rx="8"/>
+  <text class="nm" x="382.5" y="186">dim_seller</text>
+  <text class="" x="382.5" y="205">3,095 位賣家</text>
+  <text class="key" x="382.5" y="224">seller_id</text>
+  <rect class="box" x="155" y="322" width="130" height="78" rx="8"/>
+  <text class="nm" x="220" y="347">dim_date</text>
+  <text class="" x="220" y="366">774 天</text>
+  <text class="key" x="220" y="385">date_key</text>
+</svg>
+<p class="star-cap">藍字＝用來接事實表的代號；Databricks 上的表名都有 <code>gold_</code> 前綴。</p>
 <p>事實表的一列是「一件商品」（資料的最小單位，稱為粒度），所以本頁的配送分析<b>不用</b>這張表，而是回到 silver 層以「一張訂單」為單位：同一張訂單買 3 件商品，在事實表會有 3 列、3 列都帶著同一個評分，直接平均會讓多件訂單的評分被重複計算。</p>
 <details><summary>SQL：用星狀結構回答「2018 年營收最高的品類」</summary>
 <div class="sqltags"><span class="tag">事實表 JOIN 維度表</span><span class="tag">COUNT(DISTINCT)</span></div>
@@ -720,6 +758,35 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
 
 <h3>Gold: star schema — one fact table, four dimension tables</h3>
 <p>The gold layer combines data for analysis, commonly as a star schema: a central <b>fact table</b> records "what happened", here <code>gold_fact_sales</code>, where one row is one item sold (112,650 rows) with its price and freight; surrounding <b>dimension tables</b> record "who, what, and when" (customer, product, seller, date) and are joined to the fact table by ID, e.g., looking up a product's category by its product ID. The date dimension contains every day from 2016-09-04 to 2018-10-17 (774 days), including days without orders, so monthly summaries do not skip months.</p>
+<svg class="star" viewBox="0 0 440 400" role="img" aria-label="Star schema: one fact table in the center, four dimension tables each joined by one ID">
+  <line class="link" x1="220" y1="78" x2="220" y2="140"/>
+  <line class="link" x1="220" y1="260" x2="220" y2="322"/>
+  <line class="link" x1="115" y1="200" x2="140" y2="200"/>
+  <line class="link" x1="300" y1="200" x2="325" y2="200"/>
+  <rect class="box fact" x="140" y="140" width="160" height="120" rx="8"/>
+  <text class="nm" x="220" y="167">gold_fact_sales</text>
+  <text class="sub" x="220" y="186">fact table</text>
+  <text class="" x="220" y="205">row = one item sold</text>
+  <text class="" x="220" y="224">112,650 rows</text>
+  <text class="sub" x="220" y="243">price, freight</text>
+  <rect class="box" x="155" y="0" width="130" height="78" rx="8"/>
+  <text class="nm" x="220" y="25">dim_customer</text>
+  <text class="" x="220" y="44">99,441 rows</text>
+  <text class="key" x="220" y="63">customer_id</text>
+  <rect class="box" x="0" y="161" width="115" height="78" rx="8"/>
+  <text class="nm" x="57.5" y="186">dim_product</text>
+  <text class="" x="57.5" y="205">32,951 products</text>
+  <text class="key" x="57.5" y="224">product_id</text>
+  <rect class="box" x="325" y="161" width="115" height="78" rx="8"/>
+  <text class="nm" x="382.5" y="186">dim_seller</text>
+  <text class="" x="382.5" y="205">3,095 sellers</text>
+  <text class="key" x="382.5" y="224">seller_id</text>
+  <rect class="box" x="155" y="322" width="130" height="78" rx="8"/>
+  <text class="nm" x="220" y="347">dim_date</text>
+  <text class="" x="220" y="366">774 days</text>
+  <text class="key" x="220" y="385">date_key</text>
+</svg>
+<p class="star-cap">Blue text = the ID used to join the fact table; all table names in Databricks carry a <code>gold_</code> prefix.</p>
 <p>One row in the fact table is one item (the smallest unit of the data, called the grain), so the delivery analysis on this page does <b>not</b> use this table. It goes back to the silver layer and works at the order level: an order with 3 items has 3 rows in the fact table, each carrying the same review score, so a direct average would count multi-item orders' scores several times.</p>
 <details><summary>SQL: use the star schema to answer "which categories had the highest 2018 revenue"</summary>
 <div class="sqltags"><span class="tag">Fact table JOIN dimension tables</span><span class="tag">COUNT(DISTINCT)</span></div>
