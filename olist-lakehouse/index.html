@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>電商資料湖倉分析</title>
-<meta name="description" content="余家丞的自學專案：在 Databricks 把 Olist 巴西電商原始檔整理成 bronze／silver／gold 三層資料表，建立品質檢查與版本回溯，並分析配送延遲與評論分數的關係。">
+<meta name="description" content="余家丞的自學專案：在 Databricks 把 Olist 巴西電商原始檔整理成 bronze／silver／gold 三層資料表，建立品質檢查，並分析配送延遲與評論分數的關係。">
 <style>
   /* 顏色一律用變數，深色模式換一組 */
   :root {
@@ -81,6 +81,8 @@
   .star .nm { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 13.5px; }
   .star .sub { fill: var(--ink-2); font-size: 12.5px; }
   .star .key { fill: var(--accent); font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  table.fields tr.file td { font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 14px; background: var(--accent-soft); padding-top: 9px; }
+  table.fields td:first-child { width: 48%; }
   .star-cap { text-align: center; font-size: 13.5px; color: var(--ink-2); margin: 0 0 18px; }
   .legend { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 12px; vertical-align: -1px; }
@@ -176,7 +178,7 @@
   <p class="meta">余家丞 ｜ Olist 巴西電商公開資料 ｜ Databricks SQL、Delta Lake、Claude Code</p>
 </header>
 
-<p>本專案示範資料分析師如何「使用」資料湖倉（lakehouse，把原始檔案與整理好的資料表放在同一個平台管理）：把 9 個原始 CSV 檔放進 Databricks 雲端資料平台，依業界常見的三層架構整理成可以直接分析的表，沿途建立資料品質檢查與版本回溯，最後用整理好的表回答一個商業問題：「<b>配送延遲會不會拉低顧客的評論分數？</b>」資料是巴西電商平台 Olist 公開的約 10 萬筆訂單（2016-09～2018-10）。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對；分析題目與頁面呈現由本人決定。</p>
+<p>本專案示範資料分析師如何「使用」資料湖倉（lakehouse，把原始檔案與整理好的資料表放在同一個平台管理）：把 9 個原始 CSV 檔放進 Databricks 雲端資料平台，依業界常見的三層架構整理成可以直接分析的表，沿途建立資料品質檢查，最後用整理好的表回答一個商業問題：「<b>配送延遲會不會拉低顧客的評論分數？</b>」資料是巴西電商平台 Olist 公開的約 10 萬筆訂單（2016-09～2018-10）。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對；分析題目與頁面呈現由本人決定。</p>
 
 <div class="caveat">
   <p><b>先說明資料的限制：</b>顧客與賣家代號已匿名化，資料不代表 Olist 全部業績。本頁的分析是「晚到的訂單分數比較低」這類<b>關聯</b>，沒有做實驗，不能直接證明是延遲「造成」低分（見「限制」）。</p>
@@ -205,30 +207,39 @@
   <tr><td>products 商品</td><td class="num">32,951</td><td>一個商品（品類、重量）</td></tr>
   <tr><td>其他：sellers 賣家、payments 付款、geolocation 郵遞區號座標、品類英文翻譯</td><td class="num">—</td><td>建表與品質檢查時使用</td></tr>
 </table>
-<table>
-  <tr><th>分析用到的欄位</th><th>所在的檔案</th><th>意思</th></tr>
-  <tr><td><code>order_id</code>、<code>customer_id</code>、<code>product_id</code></td><td>多個檔案共有</td><td>串接用的代號：order_id 接起訂單、訂單明細、評價；customer_id 接顧客；product_id 接商品</td></tr>
-  <tr><td><code>order_status</code></td><td>orders 訂單</td><td>訂單狀態，分析只取「已送達」（delivered）</td></tr>
-  <tr><td><code>order_purchase_timestamp</code></td><td>orders 訂單</td><td>下單時間</td></tr>
-  <tr><td><code>order_delivered_carrier_date</code></td><td>orders 訂單</td><td>賣家把貨交給物流的時間</td></tr>
-  <tr><td><code>order_delivered_customer_date</code></td><td>orders 訂單</td><td>實際送達顧客的時間</td></tr>
-  <tr><td><code>order_estimated_delivery_date</code></td><td>orders 訂單</td><td>下單時告訴顧客的預計送達日</td></tr>
-  <tr><td><code>review_score</code></td><td>order_reviews 評價</td><td>顧客給的評分，1～5 分</td></tr>
-  <tr><td><code>review_answer_timestamp</code></td><td>order_reviews 評價</td><td>評價回覆時間；silver 層依此標出每張訂單最後回覆的一則（<code>is_latest_for_order</code>），分析只取這一則</td></tr>
-  <tr><td><code>review_comment_message</code></td><td>order_reviews 評價</td><td>評價留言，附錄找抱怨慢的留言</td></tr>
-  <tr><td><code>customer_state</code></td><td>customers 顧客</td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
-  <tr><td><code>product_weight_g</code></td><td>products 商品</td><td>商品重量（克），附錄算訂單總重</td></tr>
-  <tr><td><code>seller_id</code></td><td>order_items 訂單明細</td><td>賣家代號，附錄判斷一張訂單有幾個賣家</td></tr>
+<table class="fields">
+  <tr><th>分析用到的欄位</th><th>意思</th></tr>
+  <tr class="file"><td colspan="2">orders</td></tr>
+  <tr><td><code>order_<wbr>id</code>、<code>customer_<wbr>id</code></td><td>串接用的代號：order_id 接訂單明細、評價；customer_id 接顧客</td></tr>
+  <tr><td><code>order_<wbr>status</code></td><td>訂單狀態，分析只取「已送達」（delivered）</td></tr>
+  <tr><td><code>order_<wbr>purchase_<wbr>timestamp</code></td><td>下單時間</td></tr>
+  <tr><td><code>order_<wbr>delivered_<wbr>carrier_<wbr>date</code></td><td>賣家把貨交給物流的時間</td></tr>
+  <tr><td><code>order_<wbr>delivered_<wbr>customer_<wbr>date</code></td><td>實際送達顧客的時間</td></tr>
+  <tr><td><code>order_<wbr>estimated_<wbr>delivery_<wbr>date</code></td><td>下單時告訴顧客的預計送達日</td></tr>
+  <tr class="file"><td colspan="2">order_items</td></tr>
+  <tr><td><code>order_<wbr>id</code>、<code>product_<wbr>id</code></td><td>串接用的代號：接訂單、商品</td></tr>
+  <tr><td><code>seller_<wbr>id</code></td><td>賣家代號，附錄判斷一張訂單有幾個賣家</td></tr>
+  <tr class="file"><td colspan="2">order_reviews</td></tr>
+  <tr><td><code>order_<wbr>id</code></td><td>串接用的代號：接訂單</td></tr>
+  <tr><td><code>review_<wbr>score</code></td><td>顧客給的評分，1～5 分</td></tr>
+  <tr><td><code>review_<wbr>answer_<wbr>timestamp</code></td><td>評價回覆時間；silver 層依此標出每張訂單最後回覆的一則（<code>is_latest_for_order</code>），分析只取這一則</td></tr>
+  <tr><td><code>review_<wbr>comment_<wbr>message</code></td><td>評價留言，附錄找抱怨慢的留言</td></tr>
+  <tr class="file"><td colspan="2">customers</td></tr>
+  <tr><td><code>customer_<wbr>id</code></td><td>串接用的代號：接訂單</td></tr>
+  <tr><td><code>customer_<wbr>state</code></td><td>顧客所在的州（巴西有 27 個州級行政區）</td></tr>
+  <tr class="file"><td colspan="2">products</td></tr>
+  <tr><td><code>product_<wbr>id</code></td><td>串接用的代號：接訂單明細</td></tr>
+  <tr><td><code>product_<wbr>weight_<wbr>g</code></td><td>商品重量（克），附錄算訂單總重</td></tr>
 </table>
 </details>
 
 <details class="sec">
 <summary><h2>資料湖倉的三層架構</h2></summary>
-<p><b>資料湖（data lake）</b>是存放原始檔案的地方，什麼格式都能放，但不保證乾淨；<b>資料倉儲（data warehouse）</b>存放整理好、可以直接查詢的表。<b>資料湖倉（lakehouse）</b>把兩者放在同一個地方：原始檔與整理好的表都在 Databricks 裡，表使用 Delta Lake 格式，因此能做到一般檔案做不到的事，例如擋下不合規的資料、查詢過去的版本（見「版本回溯」）。資料由原始到可用分成三層，業界常稱為 medallion（獎牌）架構，類似餐廳處理食材：進貨原樣保存（bronze）→ 清洗、切好備料（silver）→ 依菜單組合成餐點（gold）。這樣分層的好處是：原始資料永遠留著，清洗出錯可以重來；每一層都能各自跑品質檢查。搭配 Delta 格式，還能查回過去的版本。用一般的說法，這三層就是一個 ETL 流程（讀取、清洗、寫成分析用的表），gold 層則相當於給銷售分析用的 data mart。</p>
+<p><b>資料湖（data lake）</b>是存放原始檔案的地方，什麼格式都能放，但不保證乾淨；<b>資料倉儲（data warehouse）</b>存放整理好、可以直接查詢的表。<b>資料湖倉（lakehouse）</b>把兩者放在同一個地方：原始檔與整理好的表都在 Databricks 裡，表使用 Delta Lake 格式，因此能做到一般檔案做不到的事，例如在寫入時擋下不合規的資料。資料由原始到可用分成三層，業界常稱為 medallion（獎牌）架構，類似餐廳處理食材：進貨原樣保存（bronze）→ 清洗、切好備料（silver）→ 依菜單組合成餐點（gold）。這樣分層的好處是：原始資料永遠留著，清洗出錯可以重來；每一層都能各自跑品質檢查。用一般的說法，這三層就是一個 ETL 流程（讀取、清洗、寫成分析用的表），gold 層則相當於給銷售分析用的 data mart。</p>
 <div class="flow">
   <div class="layer"><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另加「何時讀入、來自哪個檔案」兩個欄位</span><em>10 張表（含 1 張用預設設定讀評價檔的對照表）</em></div>
   <div class="arrow">→</div>
-  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類（orders、order_items、order_reviews、order_payments、customers、sellers、products、geolocation；品類翻譯併入 products）</span><em>8 張表＋15 條品質規則</em></div>
+  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類</span><em>8 張表＋15 條品質規則</em></div>
   <div class="arrow">→</div>
   <div class="layer"><b>gold 分析層</b><span>依分析需求組成星狀結構（1 張事實表＋4 張維度表）</span><em>5 張表</em></div>
 </div>
@@ -236,8 +247,8 @@
 <h3>bronze：先原樣保存，讀取時就發現兩個問題</h3>
 <p>bronze 層的原則是「不修改內容」，之後清洗出錯時，隨時可以從這一層重來。讀進來後立刻比對每張表的列數與原始檔，發現兩個讀取問題：</p>
 <ul>
-  <li><b>評價留言含換行，一則評價被切成好幾列：</b>用預設設定讀取（存成對照表 <code>bronze_reviews_naive</code>），評價表有 104,162 列，比原始檔的 99,224 則多出 4,938 列碎片。加上「一筆資料可以跨好幾行」與「引號內的符號照原樣讀」兩項設定（multiLine、escape）後，列數與原始檔一致。</li>
-  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定郵遞區號欄位以文字讀入（schemaHints 設定），顧客、賣家、座標 3 張 bronze 表都重建，重建後所有郵遞區號都是 5 碼。</li>
+  <li><b>評價留言含換行，一則評價被切成好幾列：</b>用預設設定讀取（存成對照表 <code>bronze_reviews_naive</code>），評價表有 104,162 列，比原始檔的 99,224 則多出 4,938 列。加上「一筆資料可以跨好幾行」與「引號內的符號照原樣讀」兩項設定後，列數與原始檔一致。</li>
+  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定郵遞區號欄位以文字讀入，顧客、賣家、座標 3 張 bronze 表都重建，重建後所有郵遞區號都是 5 碼。</li>
 </ul>
 <details><summary>SQL：讀取原始檔（以評價表為例）</summary>
 <div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine／escape</span><span class="tag">_metadata 來源欄位</span></div>
@@ -261,6 +272,36 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
   <tr><td><code>silver_orders</code></td><td>送達時間早於交給物流的時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
 </table>
 <p class="howto">座標表的重複列中，261,831 列連城市寫法等所有欄位都相同。數量是 Databricks 的查詢結果，並與本機用 Python 讀原始檔算出的數字逐項核對一致。</p>
+<details><summary>SQL：清洗規則怎麼寫（摘錄訂單、商品、評價 3 張表）</summary>
+<div class="sqltags"><span class="tag">標記欄</span><span class="tag">COALESCE</span><span class="tag">ROW_NUMBER 視窗函數</span></div>
+<pre><code>-- 訂單：一列都不刪，可疑的加標記欄
+CREATE OR REPLACE TABLE workspace.olist.silver_orders AS
+SELECT order_id, customer_id, order_status,
+  order_purchase_timestamp, order_delivered_carrier_date,
+  order_delivered_customer_date, order_estimated_delivery_date,
+  -- 已送達卻沒有送達日
+  (order_status = 'delivered' AND order_delivered_customer_date IS NULL) AS flag_delivered_no_date,
+  -- 送達早於交給物流（任一日期是空值時記為 false）
+  COALESCE(order_delivered_customer_date &lt; order_delivered_carrier_date, false) AS flag_date_anomaly
+FROM workspace.olist.bronze_orders;
+
+-- 商品：品類有英文就用英文，沒有對照留葡萄牙文，沒有品類填 unknown
+CREATE OR REPLACE TABLE workspace.olist.silver_products AS
+SELECT p.product_id,
+       COALESCE(t.product_category_name_english, p.product_category_name, 'unknown') AS category,
+       p.product_weight_g
+FROM workspace.olist.bronze_products AS p
+LEFT JOIN workspace.olist.bronze_category_translation AS t
+  ON p.product_category_name = t.product_category_name;
+
+-- 評價：一列都不刪，每張訂單標出最後回覆的那一則
+CREATE OR REPLACE TABLE workspace.olist.silver_order_reviews AS
+SELECT review_id, order_id, review_score, review_comment_message, review_answer_timestamp,
+  -- 同一張訂單依回覆時間排序，最新的一則為 true
+  ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1 AS is_latest_for_order
+FROM workspace.olist.bronze_order_reviews;</code></pre>
+<p class="howto">為了好讀，這裡只列分析會用到的欄位；實際的表還保留其他原樣帶過的欄位。</p>
+</details>
 
 <h3>gold：星狀結構——一張事實表，四張維度表</h3>
 <p>gold 層依分析需求組合資料，常見做法是星狀結構：中間一張<b>事實表</b>記錄「發生了什麼」，本專案是 <code>gold_fact_sales</code>，一列代表「賣出的一件商品」（112,650 列），記價格與運費；周圍幾張<b>維度表</b>記錄「是誰、是什麼、在哪天」（顧客、商品、賣家、日期），查詢時用代號把它們接上事實表，例如用商品代號查出品類。日期維度表包含 2016-09-04～2018-10-17 每一天（774 天），沒有訂單的日子也有一列，按月彙總時才不會漏掉月份。</p>
@@ -293,6 +334,15 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
   <text class="key" x="220" y="385">date_key</text>
 </svg>
 <p class="star-cap">藍字＝用來接事實表的代號；Databricks 上的表名都有 <code>gold_</code> 前綴。</p>
+<p>5 張 gold 表都從 silver 層的表組出來，不回頭讀 bronze 或原始檔：</p>
+<table>
+  <tr><th>gold 表</th><th>來源（silver 層）</th><th>怎麼組</th></tr>
+  <tr><td><code>gold_fact_sales</code></td><td><code>silver_order_items</code>＋<code>silver_orders</code></td><td>訂單明細用訂單代號接上訂單，帶入顧客代號、下單日期、訂單狀態</td></tr>
+  <tr><td><code>gold_dim_customer</code></td><td><code>silver_customers</code>＋<code>silver_geolocation</code></td><td>顧客資料用郵遞區號接上座標</td></tr>
+  <tr><td><code>gold_dim_product</code></td><td><code>silver_products</code></td><td>直接沿用（品類已翻成英文）</td></tr>
+  <tr><td><code>gold_dim_seller</code></td><td><code>silver_sellers</code>＋<code>silver_geolocation</code></td><td>賣家資料用郵遞區號接上座標</td></tr>
+  <tr><td><code>gold_dim_date</code></td><td><code>silver_orders</code></td><td>從最早到最晚的下單日，每一天產生一列</td></tr>
+</table>
 <p>事實表的一列是「一件商品」（資料的最小單位，稱為粒度），所以本頁的配送分析<b>不用</b>這張表，而是回到 silver 層以「一張訂單」為單位：同一張訂單買 3 件商品，在事實表會有 3 列、3 列都帶著同一個評分，直接平均會讓多件訂單的評分被重複計算。</p>
 <details><summary>SQL：用星狀結構回答「2018 年營收最高的品類」</summary>
 <div class="sqltags"><span class="tag">事實表 JOIN 維度表</span><span class="tag">COUNT(DISTINCT)</span></div>
@@ -352,28 +402,6 @@ WHEN MATCHED THEN UPDATE SET t.order_status = s.order_status
 WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
   VALUES (s.order_id, (SELECT MIN(customer_id) FROM workspace.olist.silver_customers), s.order_status);</code></pre>
 <p class="howto">測試用的訂單借用一位既有顧客的代號，避免違反「訂單的顧客都在顧客表裡」這條規則；測試完已刪除，訂單表回到 99,441 列。</p>
-</details>
-</details>
-
-<details class="sec">
-<summary><h2>版本回溯</h2></summary>
-<p>Delta 表每次寫入、更新或刪除都會留下一個新版本。這個功能讓分析師可以查「某個時間點的資料長什麼樣」，也能在誤刪後還原。</p>
-<table>
-  <tr><th>指令</th><th>做什麼</th><th>本專案的實測</th></tr>
-  <tr><td><code>DESCRIBE HISTORY</code></td><td>列出每個版本做了什麼動作、影響幾列</td><td>訂單表 <code>silver_orders</code> 在建置與測試過程中共產生 13 個版本（版本 0～12）</td></tr>
-  <tr><td><code>VERSION AS OF</code></td><td>查詢過去某個版本，不影響現在的表</td><td>查 <code>silver_orders</code> 的版本 2 有 99,443 列（含 2 筆主鍵測試訂單），現在是 99,441 列</td></tr>
-  <tr class="hi"><td><code>RESTORE</code></td><td>把表還原成過去某個版本</td><td>在練習用的複製表上故意執行忘了指定刪除條件（沒有 WHERE）的 DELETE，整張表被刪光；還原到版本 0 後回到 99,441 列</td></tr>
-</table>
-<p>還原不會抹掉誤刪的紀錄，而是再新增一個版本（練習表：版本 0 建立 → 版本 1 誤刪 → 版本 2 還原），像會計用一筆沖銷分錄更正，而不是撕掉錯的那一頁。版本回溯有期限：依 Databricks 官方文件的預設值，「每個版本做了什麼」的紀錄保留 30 天，但舊版本的資料檔只保證保留 7 天，超過後可能被清除，就查不到當時的資料了，只看得到紀錄。需要長期保存的資料（例如月結數字）要另外存成帶日期的快照表，本專案把 <code>silver_orders</code> 存成一張 <code>snapshot_orders_20261013</code>。</p>
-<details><summary>SQL：誤刪後還原</summary>
-<div class="sqltags"><span class="tag">DESCRIBE HISTORY</span><span class="tag">RESTORE TABLE</span></div>
-<pre><code>-- 練習用的複製表（版本 0）
-CREATE OR REPLACE TABLE workspace.olist.sandbox_orders AS
-SELECT * FROM workspace.olist.silver_orders;
-
-DELETE FROM workspace.olist.sandbox_orders;                      -- 失誤：忘了寫 WHERE（版本 1，0 列）
-RESTORE TABLE workspace.olist.sandbox_orders TO VERSION AS OF 0; -- 還原（版本 2，99,441 列）
-DESCRIBE HISTORY workspace.olist.sandbox_orders;                 -- 三個版本的紀錄都還在</code></pre>
 </details>
 </details>
 
@@ -675,14 +703,14 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 </main>
 
-<!-- i18n:start --><template id="main-en" data-title="E-commerce Lakehouse Analysis" data-desc="Jia Cheng Yu's self-directed project: building bronze/silver/gold tables from Olist Brazilian e-commerce raw files in Databricks, with data quality checks and version history, and analyzing how delivery delays relate to review scores.">
+<!-- i18n:start --><template id="main-en" data-title="E-commerce Lakehouse Analysis" data-desc="Jia Cheng Yu's self-directed project: building bronze/silver/gold tables from Olist Brazilian e-commerce raw files in Databricks, with data quality checks, and analyzing how delivery delays relate to review scores.">
 <header>
   <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
   <h1>E-commerce Lakehouse: From Raw Files to Analysis (Databricks)</h1>
   <p class="meta">Jia Cheng Yu | Olist Brazilian e-commerce public data | Databricks SQL, Delta Lake, Claude Code</p>
 </header>
 
-<p>This project shows how a data analyst <i>uses</i> a lakehouse (a single platform that manages both raw files and cleaned, query-ready tables): 9 raw CSV files are loaded into the Databricks cloud data platform and organized into query-ready tables using the common three-layer architecture, with data quality checks and version history built along the way. The cleaned tables are then used to answer one business question: "<b>Do delivery delays lower customers' review scores?</b>" The data is about 100,000 orders published by Olist, a Brazilian e-commerce platform (2016-09 to 2018-10). The project was done in collaboration with AI: Claude Code helped write the SQL; I ran each step in Databricks and checked the results against answers computed locally from the raw files. The analysis question and page presentation were my decisions.</p>
+<p>This project shows how a data analyst <i>uses</i> a lakehouse (a single platform that manages both raw files and cleaned, query-ready tables): 9 raw CSV files are loaded into the Databricks cloud data platform and organized into query-ready tables using the common three-layer architecture, with data quality checks built along the way. The cleaned tables are then used to answer one business question: "<b>Do delivery delays lower customers' review scores?</b>" The data is about 100,000 orders published by Olist, a Brazilian e-commerce platform (2016-09 to 2018-10). The project was done in collaboration with AI: Claude Code helped write the SQL; I ran each step in Databricks and checked the results against answers computed locally from the raw files. The analysis question and page presentation were my decisions.</p>
 
 <div class="caveat">
   <p><b>Data limitations first:</b> customer and seller IDs are anonymized, and the data does not represent all of Olist's business. The analysis on this page shows <b>associations</b> such as "late orders receive lower scores". No experiment was run, so it cannot directly prove that delays <i>cause</i> lower scores (see "Limitations").</p>
@@ -711,30 +739,39 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>products</td><td class="num">32,951</td><td>One product (category, weight)</td></tr>
   <tr><td>Others: sellers, payments, geolocation (zip code coordinates), category English translation</td><td class="num">—</td><td>Used for building tables and quality checks</td></tr>
 </table>
-<table>
-  <tr><th>Fields used in the analysis</th><th>File</th><th>Meaning</th></tr>
-  <tr><td><code>order_id</code>, <code>customer_id</code>, <code>product_id</code></td><td>Several files</td><td>Join IDs: order_id links orders, order items, and reviews; customer_id links customers; product_id links products</td></tr>
-  <tr><td><code>order_status</code></td><td>orders</td><td>Order status; the analysis keeps only delivered orders</td></tr>
-  <tr><td><code>order_purchase_timestamp</code></td><td>orders</td><td>Purchase time</td></tr>
-  <tr><td><code>order_delivered_carrier_date</code></td><td>orders</td><td>Time the seller handed the order to the carrier</td></tr>
-  <tr><td><code>order_delivered_customer_date</code></td><td>orders</td><td>Actual delivery time to the customer</td></tr>
-  <tr><td><code>order_estimated_delivery_date</code></td><td>orders</td><td>Estimated delivery date shown to the customer at purchase</td></tr>
-  <tr><td><code>review_score</code></td><td>order_reviews</td><td>Customer's score, 1–5</td></tr>
-  <tr><td><code>review_answer_timestamp</code></td><td>order_reviews</td><td>Review answer time; the silver layer uses it to flag each order's most recent review (<code>is_latest_for_order</code>), and the analysis uses only that one</td></tr>
-  <tr><td><code>review_comment_message</code></td><td>order_reviews</td><td>Review comment, used in the appendix to find complaints about slowness</td></tr>
-  <tr><td><code>customer_state</code></td><td>customers</td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
-  <tr><td><code>product_weight_g</code></td><td>products</td><td>Product weight (grams), used in the appendix for order total weight</td></tr>
-  <tr><td><code>seller_id</code></td><td>order_items</td><td>Seller ID, used in the appendix to count sellers per order</td></tr>
+<table class="fields">
+  <tr><th>Fields used in the analysis</th><th>Meaning</th></tr>
+  <tr class="file"><td colspan="2">orders</td></tr>
+  <tr><td><code>order_<wbr>id</code>, <code>customer_<wbr>id</code></td><td>Join IDs: order_id links order items and reviews; customer_id links customers</td></tr>
+  <tr><td><code>order_<wbr>status</code></td><td>Order status; the analysis keeps only delivered orders</td></tr>
+  <tr><td><code>order_<wbr>purchase_<wbr>timestamp</code></td><td>Purchase time</td></tr>
+  <tr><td><code>order_<wbr>delivered_<wbr>carrier_<wbr>date</code></td><td>Time the seller handed the order to the carrier</td></tr>
+  <tr><td><code>order_<wbr>delivered_<wbr>customer_<wbr>date</code></td><td>Actual delivery time to the customer</td></tr>
+  <tr><td><code>order_<wbr>estimated_<wbr>delivery_<wbr>date</code></td><td>Estimated delivery date shown to the customer at purchase</td></tr>
+  <tr class="file"><td colspan="2">order_items</td></tr>
+  <tr><td><code>order_<wbr>id</code>, <code>product_<wbr>id</code></td><td>Join IDs: link orders and products</td></tr>
+  <tr><td><code>seller_<wbr>id</code></td><td>Seller ID, used in the appendix to count sellers per order</td></tr>
+  <tr class="file"><td colspan="2">order_reviews</td></tr>
+  <tr><td><code>order_<wbr>id</code></td><td>Join ID: links orders</td></tr>
+  <tr><td><code>review_<wbr>score</code></td><td>Customer's score, 1–5</td></tr>
+  <tr><td><code>review_<wbr>answer_<wbr>timestamp</code></td><td>Review answer time; the silver layer uses it to flag each order's most recent review (<code>is_latest_for_order</code>), and the analysis uses only that one</td></tr>
+  <tr><td><code>review_<wbr>comment_<wbr>message</code></td><td>Review comment, used in the appendix to find complaints about slowness</td></tr>
+  <tr class="file"><td colspan="2">customers</td></tr>
+  <tr><td><code>customer_<wbr>id</code></td><td>Join ID: links orders</td></tr>
+  <tr><td><code>customer_<wbr>state</code></td><td>Customer's state (Brazil has 27 federative units: 26 states + the Federal District)</td></tr>
+  <tr class="file"><td colspan="2">products</td></tr>
+  <tr><td><code>product_<wbr>id</code></td><td>Join ID: links order items</td></tr>
+  <tr><td><code>product_<wbr>weight_<wbr>g</code></td><td>Product weight (grams), used in the appendix for order total weight</td></tr>
 </table>
 </details>
 
 <details class="sec">
 <summary><h2>The lakehouse's three-layer architecture</h2></summary>
-<p>A <b>data lake</b> stores raw files in any format, with no guarantee they are clean; a <b>data warehouse</b> stores cleaned tables that can be queried directly. A <b>lakehouse</b> puts both in one place: raw files and cleaned tables both live in Databricks, and the tables use the Delta Lake format, which supports things plain files cannot, such as blocking non-compliant data and querying past versions (see "Version history"). Data moves from raw to usable in three layers, commonly called the medallion architecture. It works like a restaurant kitchen: ingredients are stored as delivered (bronze) → washed and prepped (silver) → assembled into dishes on the menu (gold). The benefit of layering: raw data is always kept, so cleaning mistakes can be redone, and each layer can run its own quality checks. With the Delta format, past versions can also be queried. In general terms, the three layers form an ETL process (extract, clean, and load into analysis-ready tables), and the gold layer works as a sales data mart.</p>
+<p>A <b>data lake</b> stores raw files in any format, with no guarantee they are clean; a <b>data warehouse</b> stores cleaned tables that can be queried directly. A <b>lakehouse</b> puts both in one place: raw files and cleaned tables both live in Databricks, and the tables use the Delta Lake format, which supports things plain files cannot, such as blocking non-compliant data at write time. Data moves from raw to usable in three layers, commonly called the medallion architecture. It works like a restaurant kitchen: ingredients are stored as delivered (bronze) → washed and prepped (silver) → assembled into dishes on the menu (gold). The benefit of layering: raw data is always kept, so cleaning mistakes can be redone, and each layer can run its own quality checks. In general terms, the three layers form an ETL process (extract, clean, and load into analysis-ready tables), and the gold layer works as a sales data mart.</p>
 <div class="flow">
   <div class="layer"><b>Bronze (raw)</b><span>9 CSV files loaded as-is, plus two columns recording when each row was loaded and from which file</span><em>10 tables (incl. 1 comparison table that reads the review file with default settings)</em></div>
   <div class="arrow">→</div>
-  <div class="layer"><b>Silver (cleaned)</b><span>Fix loading errors, deduplicate, flag suspicious records, translate categories (orders, order_items, order_reviews, order_payments, customers, sellers, products, geolocation; the category translation is merged into products)</span><em>8 tables + 15 quality rules</em></div>
+  <div class="layer"><b>Silver (cleaned)</b><span>Fix loading errors, deduplicate, flag suspicious records, translate categories</span><em>8 tables + 15 quality rules</em></div>
   <div class="arrow">→</div>
   <div class="layer"><b>Gold (analysis)</b><span>Star schema built for analysis (1 fact table + 4 dimension tables)</span><em>5 tables</em></div>
 </div>
@@ -742,8 +779,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <h3>Bronze: keep everything as-is; two problems found at load time</h3>
 <p>The bronze layer's rule is "do not modify content", so if cleaning goes wrong, it can always be rerun from this layer. Right after loading, each table's row count was compared with its source file, which revealed two loading problems:</p>
 <ul>
-  <li><b>Review comments contain line breaks, splitting one review into several rows:</b> loaded with default settings (saved as the comparison table <code>bronze_reviews_naive</code>), the review table had 104,162 rows, 4,938 fragment rows more than the 99,224 reviews in the source file. After adding two settings, "one record may span several lines" and "read characters inside quotes as-is" (multiLine, escape), the row count matched the source file.</li>
-  <li><b>Leading zeros of zip codes disappeared:</b> the system guessed zip codes were numbers, so 23,995 rows in the customer table lost their leading 0 (e.g., 01310 became 1310) and would not match the coordinate table. Reading the zip code column as text at load time (the schemaHints setting) and rebuilding the 3 bronze tables that have it (customers, sellers, geolocation) made every zip code 5 digits.</li>
+  <li><b>Review comments contain line breaks, splitting one review into several rows:</b> loaded with default settings (saved as the comparison table <code>bronze_reviews_naive</code>), the review table had 104,162 rows, 4,938 rows more than the 99,224 reviews in the source file. After adding two settings, "one record may span several lines" and "read characters inside quotes as-is" the row count matched the source file.</li>
+  <li><b>Leading zeros of zip codes disappeared:</b> the system guessed zip codes were numbers, so 23,995 rows in the customer table lost their leading 0 (e.g., 01310 became 1310) and would not match the coordinate table. Reading the zip code column as text at load time and rebuilding the 3 bronze tables that have it (customers, sellers, geolocation) made every zip code 5 digits.</li>
 </ul>
 <details><summary>SQL: load a raw file (review table as an example)</summary>
 <div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine / escape</span><span class="tag">_metadata source columns</span></div>
@@ -767,6 +804,36 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
   <tr><td><code>silver_orders</code></td><td>Delivered before being handed to the carrier</td><td class="num">23 orders</td><td>Add a flag column; not deleted</td></tr>
 </table>
 <p class="howto">Of the duplicate coordinate rows, 261,831 rows are identical in every column, including city spelling. Counts are Databricks query results, each checked against figures computed locally in Python from the raw files.</p>
+<details><summary>SQL: how the cleaning rules are written (excerpt: orders, products, reviews)</summary>
+<div class="sqltags"><span class="tag">Flag columns</span><span class="tag">COALESCE</span><span class="tag">ROW_NUMBER window function</span></div>
+<pre><code>-- Orders: delete nothing, add flag columns for suspicious rows
+CREATE OR REPLACE TABLE workspace.olist.silver_orders AS
+SELECT order_id, customer_id, order_status,
+  order_purchase_timestamp, order_delivered_carrier_date,
+  order_delivered_customer_date, order_estimated_delivery_date,
+  -- delivered but no delivery date
+  (order_status = 'delivered' AND order_delivered_customer_date IS NULL) AS flag_delivered_no_date,
+  -- delivered before handed to carrier (false if either date is null)
+  COALESCE(order_delivered_customer_date &lt; order_delivered_carrier_date, false) AS flag_date_anomaly
+FROM workspace.olist.bronze_orders;
+
+-- Products: use the English category if mapped, keep Portuguese if not, unknown if missing
+CREATE OR REPLACE TABLE workspace.olist.silver_products AS
+SELECT p.product_id,
+       COALESCE(t.product_category_name_english, p.product_category_name, 'unknown') AS category,
+       p.product_weight_g
+FROM workspace.olist.bronze_products AS p
+LEFT JOIN workspace.olist.bronze_category_translation AS t
+  ON p.product_category_name = t.product_category_name;
+
+-- Reviews: delete nothing, flag the most recent review of each order
+CREATE OR REPLACE TABLE workspace.olist.silver_order_reviews AS
+SELECT review_id, order_id, review_score, review_comment_message, review_answer_timestamp,
+  -- within each order, sort by answer time; the latest one is true
+  ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1 AS is_latest_for_order
+FROM workspace.olist.bronze_order_reviews;</code></pre>
+<p class="howto">For readability, only the columns used in the analysis are listed; the actual tables also keep other columns carried over unchanged.</p>
+</details>
 
 <h3>Gold: star schema — one fact table, four dimension tables</h3>
 <p>The gold layer combines data for analysis, commonly as a star schema: a central <b>fact table</b> records "what happened", here <code>gold_fact_sales</code>, where one row is one item sold (112,650 rows) with its price and freight; surrounding <b>dimension tables</b> record "who, what, and when" (customer, product, seller, date) and are joined to the fact table by ID, e.g., looking up a product's category by its product ID. The date dimension contains every day from 2016-09-04 to 2018-10-17 (774 days), including days without orders, so monthly summaries do not skip months.</p>
@@ -799,6 +866,15 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
   <text class="key" x="220" y="385">date_key</text>
 </svg>
 <p class="star-cap">Blue text = the ID used to join the fact table; all table names in Databricks carry a <code>gold_</code> prefix.</p>
+<p>All 5 gold tables are built from silver-layer tables, without going back to bronze or the raw files:</p>
+<table>
+  <tr><th>Gold table</th><th>Source (silver layer)</th><th>How it is built</th></tr>
+  <tr><td><code>gold_fact_sales</code></td><td><code>silver_order_items</code> + <code>silver_orders</code></td><td>Order items joined to orders by order ID, adding customer ID, purchase date, and order status</td></tr>
+  <tr><td><code>gold_dim_customer</code></td><td><code>silver_customers</code> + <code>silver_geolocation</code></td><td>Customer data joined to coordinates by zip code</td></tr>
+  <tr><td><code>gold_dim_product</code></td><td><code>silver_products</code></td><td>Used as-is (categories already translated into English)</td></tr>
+  <tr><td><code>gold_dim_seller</code></td><td><code>silver_sellers</code> + <code>silver_geolocation</code></td><td>Seller data joined to coordinates by zip code</td></tr>
+  <tr><td><code>gold_dim_date</code></td><td><code>silver_orders</code></td><td>One row for every day from the earliest to the latest purchase date</td></tr>
+</table>
 <p>One row in the fact table is one item (the smallest unit of the data, called the grain), so the delivery analysis on this page does <b>not</b> use this table. It goes back to the silver layer and works at the order level: an order with 3 items has 3 rows in the fact table, each carrying the same review score, so a direct average would count multi-item orders' scores several times.</p>
 <details><summary>SQL: use the star schema to answer "which categories had the highest 2018 revenue"</summary>
 <div class="sqltags"><span class="tag">Fact table JOIN dimension tables</span><span class="tag">COUNT(DISTINCT)</span></div>
@@ -858,28 +934,6 @@ WHEN MATCHED THEN UPDATE SET t.order_status = s.order_status
 WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
   VALUES (s.order_id, (SELECT MIN(customer_id) FROM workspace.olist.silver_customers), s.order_status);</code></pre>
 <p class="howto">The test order borrows an existing customer's ID to avoid violating the rule "every order's customer exists in the customer table"; it was deleted after testing, and the order table is back to 99,441 rows.</p>
-</details>
-</details>
-
-<details class="sec">
-<summary><h2>Version history</h2></summary>
-<p>Every write, update, or delete on a Delta table creates a new version. This lets an analyst see what the data looked like at a point in time and restore it after an accidental deletion.</p>
-<table>
-  <tr><th>Command</th><th>What it does</th><th>Tested in this project</th></tr>
-  <tr><td><code>DESCRIBE HISTORY</code></td><td>Lists what each version did and how many rows it affected</td><td>The order table <code>silver_orders</code> produced 13 versions (versions 0–12) during building and testing</td></tr>
-  <tr><td><code>VERSION AS OF</code></td><td>Queries a past version without changing the current table</td><td>Version 2 of <code>silver_orders</code> has 99,443 rows (including the 2 primary-key test orders); it now has 99,441</td></tr>
-  <tr class="hi"><td><code>RESTORE</code></td><td>Restores a table to a past version</td><td>On a practice copy, a DELETE without a deletion condition (no WHERE) was run on purpose, wiping the whole table; after restoring to version 0 it was back to 99,441 rows</td></tr>
-</table>
-<p>Restoring does not erase the record of the deletion; it adds another version (practice table: version 0 created → version 1 deleted by mistake → version 2 restored), like an accountant correcting with a reversing entry instead of tearing out the wrong page. Version history has a time limit: under Databricks' documented defaults, the record of what each version did is kept for 30 days, but old versions' data files are only guaranteed for 7 days; after that they may be removed, and the data at that time can no longer be queried, only the record. Data that must be kept long term (e.g., month-end figures) should be saved as a dated snapshot table; this project saved <code>snapshot_orders_20261013</code>.</p>
-<details><summary>SQL: restore after an accidental deletion</summary>
-<div class="sqltags"><span class="tag">DESCRIBE HISTORY</span><span class="tag">RESTORE TABLE</span></div>
-<pre><code>-- practice copy (version 0)
-CREATE OR REPLACE TABLE workspace.olist.sandbox_orders AS
-SELECT * FROM workspace.olist.silver_orders;
-
-DELETE FROM workspace.olist.sandbox_orders;                      -- mistake: forgot WHERE (version 1, 0 rows)
-RESTORE TABLE workspace.olist.sandbox_orders TO VERSION AS OF 0; -- restore (version 2, 99,441 rows)
-DESCRIBE HISTORY workspace.olist.sandbox_orders;                 -- all three versions are still recorded</code></pre>
 </details>
 </details>
 
