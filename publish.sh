@@ -9,6 +9,8 @@ mkdir -p ga4-funnel
 cp ../portfolio/ga4-funnel/index.html ga4-funnel/index.html
 mkdir -p olist-lakehouse
 cp ../portfolio/olist-lakehouse/index.html olist-lakehouse/index.html   # Databricks 湖倉作品頁（2026-10-14 新增）
+mkdir -p olist-ai-assistant
+cp ../portfolio/olist-ai-assistant/{index.html,shot-ask.jpg,shot-agent.jpg} olist-ai-assistant/   # AI 資料助理作品頁＋2 張截圖（2026-10-23 新增）
 git add -A
 git diff --cached --quiet && { echo "沒有變更"; exit 0; }
 git commit -m "${1:-更新作品頁}"

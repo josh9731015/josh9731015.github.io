@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 資料助理</title>
+<meta name="description" content="余家丞的自學專案：用 Gemini API 做一個中文資料助理（AI 寫 SQL、評論分類、RAG、agent 調查），每個功能都有可重跑的自動評分，其中 3 個另用沒練過的新題目測試，AI 輸出的數字與引用由程式核對。">
+<style>
+  /* 顏色一律用變數，深色模式換一組 */
+  :root {
+    color-scheme: light;
+    --bg: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+    --accent: #2a78d6; --accent-soft: #e8f1fc; --mute: #c9c8c2; --neg: #eb6834;
+    --warn-soft: #fdf3e2; --warn-ink: #7a5200;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+      --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+      --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926;
+    --warn-soft: #3a2f18; --warn-ink: #f0c56a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.75 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font-size: 30px; line-height: 1.3; margin: 8px 0 12px; }
+  h2 { font-size: 22px; margin: 60px 0 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 1.3em; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; font-size: 13px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; margin-right: 6px; }
+  .meta { color: var(--ink-2); font-size: 15px; }
+  /* 關鍵數字 */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 12px; }
+  .stat b { display: block; font-size: 28px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; margin-top: 6px; }
+  .tldr { background: var(--accent-soft); border-radius: 10px; padding: 16px 20px; }
+  .tldr p:last-child { margin: 0; }
+  .tldr.lead { margin: 0 0 24px; } .tldr.lead ul { margin: 4px 0 0; }
+  .ask { color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 8px 0 18px; }
+  .tree { font-size: 15px; }
+  .tree .node { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; display: inline-block; background: var(--card); }
+  .tree .node.hi { border-color: var(--accent); background: var(--accent-soft); }
+  .tree .kids { margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line); }
+  .tree .kids > div { margin: 10px 0; }
+  .tree .note { display: block; color: var(--ink-2); font-size: 14px; margin: 4px 0 0 4px; }
+  .bridge { color: var(--ink-2); font-size: 15px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 14px; margin: 18px 0 8px; }
+  .bridge b { color: var(--ink); }
+  .howto { font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--line); padding: 4px 12px; margin: 6px 0 14px; }
+  .caveat { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 12px 16px; font-size: 14.5px; }
+  .caveat p:last-child { margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin: 12px 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin-bottom: 10px; }
+  td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-3); font-weight: 600; font-size: 13px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.hi td { background: var(--accent-soft); }
+  tr.total td { font-weight: 600; border-bottom: none; }
+  .chart-title { font-size: 15.5px; font-weight: 600; margin: 4px 0 10px; }
+  .star { display: block; width: 100%; max-width: 560px; margin: 14px auto 4px; }
+  .star .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  .star .box.fact { fill: var(--accent-soft); stroke: var(--accent); }
+  .star .link { stroke: var(--mute); stroke-width: 2; }
+  .star text { fill: var(--ink); font-size: 14px; text-anchor: middle; }
+  .star .nm { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 13.5px; }
+  .star .sub { fill: var(--ink-2); font-size: 12.5px; }
+  .star .key { fill: var(--accent); font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  table.fields tr.file td { font-weight: 600; font-family: ui-monospace, Menlo, monospace; font-size: 14px; background: var(--accent-soft); padding-top: 9px; }
+  table.fields td:first-child { width: 48%; }
+  .star-cap { text-align: center; font-size: 13.5px; color: var(--ink-2); margin: 0 0 18px; }
+  .legend { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 12px; vertical-align: -1px; }
+  .legend i:first-child { margin-left: 0; }
+  /* 橫條圖 */
+  .row { display: grid; grid-template-columns: 170px 1fr 64px; align-items: center; gap: 10px; font-size: 14px; padding: 3px 0; }
+  .row .name { color: var(--ink-2); text-align: right; }
+  .row .track { height: 14px; }
+  .row .bar { display: block; height: 100%; background: var(--mute); border-radius: 0 4px 4px 0; }
+  .row.hi .bar { background: var(--accent); }
+  .row .bar.dec { background: var(--mute); }
+  .row.hi .bar.dec { background: var(--neg); }
+  .row.hi .name { color: var(--ink); font-weight: 600; }
+  .row .val { font-variant-numeric: tabular-nums; }
+  /* 成對長條：占去年銷量 vs 占減少 */
+  .pair { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
+  .pair .name { text-align: right; color: var(--ink-2); }
+  .pair.hi .name { color: var(--ink); font-weight: 600; }
+  .pair .bars { display: grid; gap: 3px; }
+  .pair .b { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); }
+  .pair .b span { display: block; height: 11px; border-radius: 0 3px 3px 0; }
+  .pair .base span { background: var(--mute); }
+  .pair .dec span { background: var(--neg); }
+  .ax-y { font-size: 12.5px; color: var(--ink-3); margin: 0 0 6px; }
+  .ax-x { font-size: 12.5px; color: var(--ink-3); text-align: center; margin: 4px 0 10px; }
+  .track.div { position: relative; }
+  .track.div .zero { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--ink-3); }
+  .track.div .dbar { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+  .dbar.dec { background: var(--mute); }
+  .dbar.dec-hi { background: var(--neg); }
+  .dbar.inc { background: var(--accent); }
+  details { margin-top: 10px; font-size: 15px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14.5px; }
+  /* 分頁 */
+  .tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; background: var(--bg); padding: 10px 0; margin: 4px 0 8px; border-bottom: 1px solid var(--line); }
+  .tabs a { text-decoration: none; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; font-size: 14.5px; background: var(--card); }
+  .tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .panel > h2:first-child { margin-top: 24px; border-top: none; }
+  .panel > p:first-child { margin-top: 16px; }
+  .toc li { margin-bottom: 10px; }
+  .toc a { text-decoration: none; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.55; overflow-x: auto; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .sqltags { margin: 4px 0 8px; } .sqltags .tag { font-size: 12.5px; }
+  /* 大標題可展開 */
+  details.sec { margin: 0; font-size: 16px; border-top: 1px solid var(--line); }
+  details.sec > summary { list-style: none; cursor: pointer; color: var(--ink); font-size: inherit; display: flex; align-items: center; gap: 10px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  details.sec[open] > summary::before { transform: rotate(45deg); }
+  details.sec > summary h2 { margin: 0; padding: 18px 0; border-top: none; }
+  details.sec > summary:hover h2 { color: var(--accent); }
+  details.sec[open] { padding-bottom: 24px; }
+  /* 三層架構流程圖 */
+  .flow { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr; align-items: stretch; gap: 6px; margin: 16px 0 20px; }
+  .flow .layer { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .flow .layer b { display: block; font-size: 15.5px; }
+  .flow .layer span { display: block; font-size: 14px; color: var(--ink-2); line-height: 1.6; margin-top: 4px; }
+  .flow .layer em { display: block; font-style: normal; font-size: 13px; color: var(--accent); margin-top: 6px; }
+  .flow .arrow { align-self: center; text-align: center; color: var(--ink-3); font-size: 20px; }
+  @media (max-width: 600px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); } }
+  /* i18n:start 語言切換 */
+  .lang-switch { position: absolute; top: 12px; right: 16px; z-index: 10; }
+  .lang-switch select { font: inherit; font-size: 16px; line-height: 1.3; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+  html.lang-pending main { visibility: hidden; }
+  /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
+  html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
+  html[lang="en"] th.num { white-space: normal; }
+  .sub { display: block; font-size: 12.5px; color: var(--ink-2); white-space: normal; }
+  table.eval td:last-child { width: 55%; }
+  table.issues th:nth-child(2), table.issues td:nth-child(2) { width: 8em; }
+  table { margin-bottom: 20px; }  /* 本頁：表格與下一段拉開（版面審查 10-23） */
+  td:first-child { min-width: 7em; }  /* 第一欄是項目名稱：右邊說明欄很長時會被擠成一字一行（2026-10-23 Josh 發現） */
+  html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
+  /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
+  /* i18n:end */
+  .shot { display: block; width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 4px 0 20px; }
+</style>
+
+</head>
+<body>
+<!-- i18n:start --><div class="lang-switch">
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div><!-- i18n:end -->
+<main>
+
+<header>
+  <span class="tag">自學專案</span><span class="tag">2026 年 10 月</span>
+  <h1>AI 資料助理：用評估驅動開發的 LLM 應用</h1>
+  <p class="meta">余家丞 ｜ Olist 巴西電商公開資料 ｜ Python、Gemini API、DuckDB、Streamlit、Claude Code</p>
+</header>
+
+<p>本專案示範如何讓大型語言模型（LLM，像 ChatGPT、Gemini 這類能讀寫文字的 AI）做成的資料助理<b>輸出可以被驗證</b>：AI 寫出的數字和引用由程式核對，對不上的地方會標出來；每個功能都有可重跑的自動評分。營運主管用中文提問，系統有 4 個功能：</p>
+<ul>
+  <li><b>問資料：</b>AI 自己寫 SQL（查資料庫用的語言）查資料並回答</li>
+  <li><b>評論分類：</b>把每則負評歸到固定的 10 個類別（例：送貨太慢、商品品質問題、跟描述不符）</li>
+  <li><b>找相關評論：</b>輸入一個問題，從評論中找出相關的幾則當證據並寫總結</li>
+  <li><b>調查：</b>依固定流程呼叫分析工具，調查「為什麼某些州的差評（1～2 星）比較多」</li>
+</ul>
+<p>重點不在資料分析的發現，而在 AI 工程：流程、評估、可靠性與成本。資料沿用 Olist 約 10 萬筆訂單（2016-09～2018-10，資料介紹見「<a href="../olist-lakehouse/">電商資料湖倉</a>」頁）。分工：需求、指標定義、驗收標準與驗收由本人決定；程式由 AI 寫程式工具 Claude Code 撰寫，本人審查並以使用者角度驗收。</p>
+
+<div class="caveat">
+  <p><b>先說明兩種題目：</b>「練習題」是開發時反覆拿來調整的題目，分數容易偏高；「新題目」是開發時沒拿來調整的題目，比較能代表真實水準。</p>
+  <p><b>限制：</b>每項只有 19～50 題（則），「調查」練習題、新題目各只有 1 題；題量小，誤差可達十幾個百分點以上（例：評論分類 22/25，真實準確率可能落在 70%～96%）；其他限制見「限制與下一步」。</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><b>19/19</b><span>「問資料」練習題通過題數（沒有新題目，成績可能偏高）</span></div>
+  <div class="stat"><b>20/20</b><span>「找相關評論」新題目盲測，AI 判斷相不相關與本人一致的則數</span></div>
+  <div class="stat"><b>22/25</b><span>「評論分類」新題目盲測，與本人完全一致的則數（88%，未達 90% 門檻）</span></div>
+  <div class="stat"><b>4/4</b><span>「調查」最終版跑 4 次，17 項檢查全過的次數（新題目 2 次也全過）</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>結論：</b>可靠性來自分工：AI 只負責理解問題和寫出文字，數字、日期、規則判定、評論原文由程式產生或核對，對不上就標示出來。4 項成績中只有「評論分類」未達門檻；「問資料」沒有新題目，成績可能偏高。</p>
+</div>
+
+<details class="sec" open>
+<summary><h2>工作流程</h2></summary>
+<ol>
+  <li><b>先定義成功標準：</b>每個功能動手前先寫需求與驗收門檻；營收、準時、差評等指標的算法寫成一份「資料表說明」文件，AI 與人都照它計算。</li>
+  <li><b>評估驅動開發（每次修改都自動重跑評分）：</b>每發現一種錯誤，就變成一條會自動重跑的檢查；修改後重跑，確認沒有退步。</li>
+  <li><b>換題盲測（防止只會背題目）：</b>開發時反覆使用的「練習題」分數會越調越高，因此另外保留開發時沒拿來調整的「新題目」量真實水準：評論分類、找相關評論的新題目由本人先判斷，判斷時看不到 AI 的答案（盲測）；「調查」的新題目是同一題型換一州，由程式評分，開發中也重跑過，只用來確認沒有退步，沒有依它的結果修改程式；「問資料」沒有新題目。標準答案不放進給 AI 的指示，並用程式自動掃描指示裡有沒有答案。</li>
+  <li><b>本人驗收：</b>評論分類的類別界線、評論相不相關由本人判斷（少數依本人定的規則自動套用），AI 的成績是跟本人的判斷比出來的；問資料、調查的標準答案是 Claude Code 寫的 SQL，由本人審查指標定義。</li>
+  <li><b>獨立審查：</b>另開沒看過專案的 AI 審查者，只找「數字算錯」與「會讓使用者做錯決定的結論」，每項附 SQL 與查詢結果，核對後才修改；「調查」共 6 輪，問題從數字錯誤收斂到結論措辭才停止。</li>
+  <li><b>以使用者角度試用：</b>本人以營運主管的角度實際操作網頁，找出「程式正確、但主管看不懂或會誤會」的問題，優先改成程式機制或固定測試題，不只靠提醒 AI 注意。</li>
+</ol>
+</details>
+
+<details class="sec">
+<summary><h2>系統架構</h2></summary>
+<p>4 個功能的原則相同：AI 負責理解文字與寫出文字，能用程式計算或檢查的交給程式。</p>
+<table>
+  <thead><tr><th>功能</th><th>AI 負責</th><th>程式負責</th></tr></thead>
+  <tbody>
+    <tr><td>問資料</td><td>把中文問題寫成 SQL；把查詢結果寫成白話回答</td><td>SQL 護欄（只允許讀取、逾時、列數上限）；核對回答裡的數字都出現在查詢結果中（排名用語、星等、門檻條件除外），對不上就標示 ⚠️。只保證數字有出處，SQL 是否寫對由評分檢查</td></tr>
+    <tr><td>評論分類</td><td>從固定類別清單中挑類別（輸出格式被規定，不能自創類別）</td><td>「送貨太慢」「沒收到貨」「訂單被取消或缺貨」改由程式依訂單日期與狀態判斷</td></tr>
+    <tr><td>找相關評論（RAG：先找資料、再根據資料回答）</td><td>改寫問題；逐則判斷評論是否相關並寫理由；只用相關評論寫總結，每個重點標出處</td><td>用本機向量模型（把文字轉成可比較意思的數字）找出意思相近的評論，不花 API 額度；附上每筆訂單的送達紀錄</td></tr>
+    <tr><td>調查（agent：AI 呼叫工具完成任務；為了穩定，大部分步驟由程式決定）</td><td>在程式限定的範圍內決定工具呼叫順序、讀工具結果、照固定格式寫報告</td><td>6 個工具（總覽、全州比較、單州深入、評論分類、找評論、SQL 查詢）算好數字與 4 個假說（配送延遲、時間、品類、賣家）的判定，要深入哪幾州由程式指定；評論原文、判定、「預期看到什麼」（假說成立時資料應該看到的結果）由程式填入；不是調查題就轉給「問資料」</td></tr>
+  </tbody>
+</table>
+<p>模型：網頁和評分用同一組 Gemini 免費模型；網頁額度用完時自動換備援模型，評分時鎖定單一模型、不換備援；問資料、調查、評論分類會記錄實際回答的模型版本（模型名稱見頁尾）。</p>
+<p class="chart-title">「問資料」：回答上方標出數字是否都有根據，展開可看 AI 執行的 SQL 與查詢結果</p>
+<p><a href="shot-ask.jpg" target="_blank" rel="noopener"><img class="shot" src="shot-ask.jpg" alt="問資料畫面：回答 2018 年營收最高的月份，上方顯示每個數字都能在查詢結果找到"></a></p>
+<p class="chart-title">設計上的防呆：「調查」的 AI 結論寫「物流因素皆能解釋大部分的差距」，下方「程式依工具判定附註」更正為只能解釋部分差距</p>
+<p><a href="shot-agent.jpg" target="_blank" rel="noopener"><img class="shot" src="shot-agent.jpg" alt="調查畫面：報告結論與程式附註，右側為 7 個調查步驟"></a></p>
+</details>
+
+<details class="sec">
+<summary><h2>評估方法與成績</h2></summary>
+<table class="eval">
+  <thead><tr><th>功能</th><th class="num">練習題</th><th class="num">新題目</th><th>評估什麼、怎麼評</th></tr></thead>
+  <tbody>
+    <tr><td>問資料</td><td class="num">19/19 題</td><td class="num">—</td><td>17 題的標準答案用另一段 SQL 現算（由 Claude Code 另外撰寫、本人審查定義），數字要一致且有根據；2 題要回答「資料裡沒有」。19 題在開發中也被用來調整，沒另外保留新題目；給 AI 的指示經程式掃描、不含標準答案</td></tr>
+    <tr><td>找相關評論</td><td class="num">45/50 則</td><td class="num">20/20 則</td><td>只評「判斷評論相不相關」這一步，不含搜尋有沒有漏找；相關、不相關分開算抓對比例</td></tr>
+    <tr><td>評論分類</td><td class="num">27/30 則<span class="sub">舊版</span></td><td class="num">22/25 則</td><td>新題目：一則評論可以有多個類別，AI 的類別組合跟本人完全一致才算對；由程式判定的 3 類（送貨太慢、沒收到貨、訂單被取消或缺貨）不列入比對，分母仍是 25 則；新題目原有 30 則，其中 5 則被拿來補定義，只用其餘 25 則計分。練習題：舊版定義與不同模型的成績（中間又改過 3 版），本人判對錯（27 則判對中有 7 則由 Claude Code 依本人定的規則套用），現行版沒有重新驗收</td></tr>
+    <tr><td>調查</td><td class="num">4/4 次全過</td><td class="num">2/2 次全過</td><td>練習題「為什麼某些州差評多」每次跑 17 項檢查；新題目「為什麼 CE 州（Ceará）差評多」跑其中 6 項通用檢查（數字、根據、引用、判定、格式、呼叫上限），其餘 11 項只適用練習題（例：有沒有點名差評率最高的州）。「全過」看的是最終報告：4 次中 1 次初稿格式不符，被程式退回重寫一次後通過</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><b>找相關評論：</b>練習題相關的 34 則抓到 32 則（94%）、不相關的 16 則排除 13 則（81%），只到及格；新題目 2 題共 20 則（每題取搜尋結果前 10 則、未挑選；相關 10、不相關 10）全部判斷正確，達標。新門檻在跑新題目之前就定好，但它是看到練習題分數後才訂的：原本的門檻「50 則對 47 則」是 Claude Code 自訂、沒有依據，練習題沒過後，改照驗證 AI 評分器的常見做法，相關、不相關分開算抓對比例，兩者都 &gt; 90% 達標、相關 &gt; 80% 為最低線；不相關的及格線 ≥ 75% 由本人另訂。因此練習題的「及格」只能參考，新題目的「達標」才算數。</li>
+  <li><b>評論分類：</b>新題目 25 則，定義和模型一起更換前後都是 22/25，錯的題目換了 1 則，沒有進步（兩者一起換，分不出各自的效果）。其中 1 則在看過 AI 答案後更正了本人答案（當時畫面沒顯示評論日期），用原答案算是 21/25。</li>
+  <li><b>調查的穩定度：</b>調查的主流程每次都重新呼叫 AI。修改過程中多次失敗（引用被改字、判定抄錯、撞到呼叫上限），每種都改成程式處理或加上檢查後，最終版跑 4 次全部通過。評分程式本身也出過錯：曾把句子裡後一州的差評率算到前一州（報告本身正確），改正後重評練習題全部 50 筆紀錄，只有這類誤判 2 筆改判，並補上刻意造錯的測試，確認真的錯誤仍會被抓到。</li>
+</ul>
+</details>
+
+<details class="sec">
+<summary><h2>可靠性：抓到的問題與解法</h2></summary>
+<p>每個問題都往根本原因修：能交給程式的就交給程式，而不是在給 AI 的指示裡多加一句「請注意」。</p>
+<table class="issues">
+  <thead><tr><th>問題</th><th>怎麼發現</th><th>解法</th></tr></thead>
+  <tbody>
+    <tr><td>AI 引用評論時改了日期（11/09 抄成 09/09）</td><td>程式逐字比對</td><td>AI 只寫評論代碼，原文由程式貼上</td></tr>
+    <tr><td>給 AI 的指示中，範例剛好是標準答案</td><td>流程檢討、獨立審查</td><td>「調查」和「問資料」都發生過（「資料表說明」的範例寫出了 19 題中 11 題的答案或答法）；範例裡的真實答案改成代稱，並加程式自動掃描給 AI 的指示與工具說明；頁面上的成績都是修正後重跑的</td></tr>
+    <tr><td>額度用完時模型被自動換掉，一輪分數混了兩個模型</td><td>事前檢討</td><td>評分時鎖定模型，並記錄實際回答的模型版本</td></tr>
+    <tr><td>報告把只能解釋一半差距的原因寫成主因</td><td>獨立審查</td><td>程式依工具判定，在結論補上附註</td></tr>
+    <tr><td>查 3 個州剛好用掉 20 次工具呼叫上限</td><td>工具呼叫紀錄</td><td>一州的 4 個假說合成 1 個工具，最終版每次 7～11 次</td></tr>
+    <tr><td>「預期看到什麼」與實際檢查方法對不上；每次報告段落結構不同</td><td>使用者驗收</td><td>預期說法由程式寫好照填；固定報告格式，不符就退回</td></tr>
+    <tr><td>使用者要自己判斷該到哪個功能提問</td><td>使用者驗收</td><td>調查功能遇到查詢題，自動轉給「問資料」回答</td></tr>
+    <tr><td>「問資料」和「調查」算出不同的聖保羅州（SP）差評數（含取消與缺貨訂單 5,242 則、不含 4,750 則）</td><td>使用者驗收</td><td>統一採用含取消與缺貨的算法（取消本身就是不滿的原因），寫進資料表說明並加成固定測試題</td></tr>
+  </tbody>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>成本與營運</h2></summary>
+<ul>
+  <li><b>呼叫次數就是成本：</b>免費版每個模型每天 20～500 次請求；「問資料」一題通常 2 次請求（寫 SQL、寫回答各 1 次）；調查練習題最終版每次用 7～11 次工具呼叫（上限 20 次，被退回重寫時最多再 6 次），一次約 12～18 秒；碰到每分鐘上限時會等待重試，第一次替某州評論分類也要多花幾十秒。</li>
+  <li><b>回應快取：</b>分類、相關判斷這類固定答案的步驟，輸入完全相同就不重問；調查把各州的評論分類結果存檔重用，分類定義或模型一改就重新分類。</li>
+  <li><b>用自己的題目選模型：</b>公開排行榜沒有「判斷葡萄牙文評論」這類任務，因此用「找相關評論」的 50 則練習題比較候選的免費模型（5 個中只有 2 個跑出分數：46/50、37/50，其餘當日額度用完或回傳格式不符），選分數較高的一個，評論分類也用同一個模型（沒有另外在分類上比較）；之後收窄「客服問題」類別的定義（相關判斷也引用同一份類別定義）重跑，成績表的 45/50 是現行版。</li>
+  <li><b>紀錄：</b>每次提問留下問題、SQL、模型版本、工具呼叫與失敗原因（每分鐘或每天的上限），網頁可逐步回放調查過程。</li>
+</ul>
+</details>
+
+<details class="sec">
+<summary><h2>限制與下一步</h2></summary>
+<ul>
+  <li><b>調查功能只支援一種題型：</b>目前只能調查「各州差評原因」；其他「為什麼」的問題轉給「問資料」回答，原因說明標明「AI 推論，未經假說檢驗」。下一步是通用調查：任何問題都走「假說 → 預期 → SQL 查 → 程式判定」。</li>
+  <li><b>評論分類未達標：</b>補定義沒有讓新題目進步，再加規則效益很低；下一步是精簡定義，再用另一批新題目量。</li>
+  <li><b>問資料沒有新題目：</b>問資料的 19 題在開發中也被用來調整，成績可能偏高。</li>
+  <li><b>標準答案和系統出自同一個 AI：</b>問資料的標準答案 SQL 與系統都由 Claude Code 撰寫，可能犯同類錯誤；本人審查了指標定義，但沒有逐行獨立重寫。獨立審查者也是同一系列模型，可能有同樣的盲點。</li>
+  <li><b>題量小、只有一位判斷者：</b>找相關評論的不相關評論練習題只有 16 則，評論相關與分類的判斷只有本人一位，沒有第二位判斷者比對一致程度。</li>
+  <li><b>找相關評論只評了判斷這一步：</b>沒有量向量搜尋是否漏找相關評論，也沒有評總結是否忠於原文。</li>
+  <li><b>使用免費預覽版模型：</b>Google 可能隨時調整；網頁額度用完時換上的備援模型沒有用現行版本評分過。正式上線要改用付費版並固定模型版本。</li>
+  <li><b>評分程式只有部分檢查有測試：</b>數字根據、引用比對、州與差評率這幾項有刻意造錯的測試，其餘檢查沒有；10-23 就曾發現一個誤判。</li>
+</ul>
+</details>
+
+<footer>
+  <p>工具：Python（google-genai、DuckDB、Streamlit、fastembed）、Gemini API 免費版、Claude Code。資料：Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a>（Kaggle）。成績日期：問資料、調查 2026-10-23；找相關評論、評論分類 2026-10-22。</p>
+  <p>模型：問資料與調查 gemini-3.5-flash-lite（備援 gemini-3.5-flash）；評論分類與相關判斷 gemini-3.1-flash-lite-preview（2 個跑出分數的模型中，50 則練習題分數較高；備援 gemini-3.5-flash-lite）；找相關評論的總結 gemini-3.5-flash-lite；向量模型 paraphrase-multilingual-MiniLM-L12-v2。</p>
+</footer>
+
+</main>
+
+<!-- i18n:start --><template id="main-en" data-title="AI Data Assistant" data-desc="Jia Cheng Yu's self-directed project: a Chinese-language data assistant built on the Gemini API (AI-written SQL, review classification, RAG, agent investigation). Every feature has re-runnable automated scoring, three of them are also tested on unseen questions, and the numbers and quotes the AI writes are checked by code.">
+<header>
+  <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
+  <h1>AI Data Assistant: An Eval-Driven LLM Application</h1>
+  <p class="meta">Jia Cheng Yu | Olist Brazilian e-commerce public data | Python, Gemini API, DuckDB, Streamlit, Claude Code</p>
+</header>
+
+<p>This project shows how to make a data assistant built on a large language model (LLM: an AI that reads and writes text, such as ChatGPT or Gemini) produce <b>output that can be verified</b>: code checks the numbers and quotes the AI writes and flags anything that does not match, and every feature has re-runnable automated scoring. An operations manager asks questions in Chinese, and the system has 4 features:</p>
+<ul>
+  <li><b>Ask the data:</b> the AI writes its own SQL (the language used to query databases), runs it and answers</li>
+  <li><b>Review classification:</b> assigns each negative review to a fixed set of 10 categories (e.g., slow delivery, product quality issue, not as described)</li>
+  <li><b>Find relevant reviews:</b> given a question, finds the relevant reviews as evidence and writes a summary</li>
+  <li><b>Investigation:</b> calls analysis tools in a fixed process to investigate "why do some states have more negative reviews (1–2 stars)?"</li>
+</ul>
+<p>The focus is not on analytical findings but on AI engineering: workflow, evaluation, reliability and cost. The data is the same Olist dataset of about 100,000 orders (2016-09 to 2018-10; see the "<a href="../olist-lakehouse/">E-commerce Lakehouse</a>" page for an introduction). Division of labor: I defined the requirements, metric definitions and acceptance criteria and did the acceptance testing; the code was written by the AI coding tool Claude Code, and I reviewed it and tested it as a user.</p>
+
+<div class="caveat">
+  <p><b>Two kinds of test questions:</b> "practice questions" were used repeatedly to tune the system during development, so their scores tend to be inflated; "unseen questions" were not used for tuning and better reflect real performance.</p>
+  <p><b>Limitations:</b> each feature has only 19–50 questions (or reviews), and the investigation has only 1 practice question and 1 unseen question; with samples this small, the margin of error can reach more than 10 percentage points (pp) (e.g., at 22/25, the true accuracy of review classification could plausibly be anywhere from 70% to 96%). Other limitations are under "Limitations and next steps".</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><b>19/19</b><span>"Ask the data" practice questions passed (no unseen set, may be inflated)</span></div>
+  <div class="stat"><b>20/20</b><span>"Find relevant reviews" blind test: relevance calls matching mine</span></div>
+  <div class="stat"><b>22/25</b><span>"Review classification" blind test: exact matches with mine (88%, below the 90% threshold)</span></div>
+  <div class="stat"><b>4/4</b><span>Final "investigation" runs passing all 17 checks (the unseen question also passed twice)</span></div>
+</div>
+
+<div class="tldr lead">
+  <p><b>Conclusion:</b> reliability comes from a division of labor: the AI is responsible only for understanding the question and writing the text, while numbers, dates, rule-based verdicts and review quotes are produced or checked by code, and mismatches are flagged. Of the 4 scores, only review classification missed its threshold; "ask the data" has no unseen questions, so its score may be inflated.</p>
+</div>
+
+<details class="sec" open>
+<summary><h2>Workflow</h2></summary>
+<ol>
+  <li><b>Define success first:</b> before building each feature, write the requirements and acceptance thresholds; how metrics such as revenue, on-time delivery and negative reviews are calculated is written in one "data dictionary" document that both the AI and people follow.</li>
+  <li><b>Eval-driven development (scoring re-runs automatically after every change):</b> every type of error found becomes a check that re-runs automatically; after each change, re-run to confirm nothing regressed.</li>
+  <li><b>Blind tests on unseen questions (to guard against overfitting to the practice set):</b> scores on the "practice questions" used repeatedly during development keep rising with tuning, so separate "unseen questions" not used for tuning measure real performance. For review classification and finding relevant reviews, I judged the unseen questions first without seeing the AI's answers (blind test). The investigation's unseen question is the same question type for a different state, scored by code; it was also re-run during development, but only to check for regressions, and no code was changed based on its results. "Ask the data" has no unseen questions. Reference answers are kept out of the AI's instructions, and code automatically scans the instructions for answers.</li>
+  <li><b>My acceptance testing:</b> I decided the category boundaries for review classification and whether each review is relevant (a few were applied automatically from rules I set), and the AI's scores are measured against my judgments; the reference answers for "ask the data" and the investigation are SQL written by Claude Code, and I reviewed the metric definitions.</li>
+  <li><b>Independent review:</b> separate AI reviewers who had not seen the project looked only for "miscalculated numbers" and "conclusions that would lead users to wrong decisions", each finding backed by SQL and query results, and changes were made only after checking them; the investigation went through 6 rounds and stopped once the issues had narrowed from numerical errors to wording of conclusions.</li>
+  <li><b>Testing as a user:</b> I used the web app as an operations manager would, to find issues where "the code is correct, but a manager would not understand or would misread it", and prioritized fixing them with code-level mechanisms or regression test questions rather than just reminding the AI to be careful.</li>
+</ol>
+</details>
+
+<details class="sec">
+<summary><h2>System architecture</h2></summary>
+<p>All 4 features follow the same principle: the AI understands and writes text, and anything that can be calculated or checked by code is left to code.</p>
+<table>
+  <thead><tr><th>Feature</th><th>AI does</th><th>Code does</th></tr></thead>
+  <tbody>
+    <tr><td>Ask the data</td><td>Turns the Chinese question into SQL; turns the query results into a plain-language answer</td><td>SQL guardrails (read-only, timeout, row limit); checks that every number in the answer appears in the query results (except ranking words, star ratings and threshold conditions) and flags mismatches with ⚠️. This only guarantees that numbers have a source; whether the SQL is correct is checked by the scoring</td></tr>
+    <tr><td>Review classification</td><td>Picks categories from a fixed list (the output format is enforced, so it cannot invent categories)</td><td>"Slow delivery", "not received" and "order canceled or out of stock" are decided by code from order dates and status instead</td></tr>
+    <tr><td>Find relevant reviews (RAG: retrieve data first, then answer from it)</td><td>Rewrites the question; judges whether each review is relevant and gives a reason; writes the summary from relevant reviews only, citing the source of each point</td><td>A local embedding model (converts text into vectors so that meanings can be compared) finds reviews with similar meaning without using API quota; attaches each order's delivery record</td></tr>
+    <tr><td>Investigation (agent: the AI calls tools to complete a task; for stability, most steps are decided by code)</td><td>Within limits set by code, decides the order of tool calls, reads tool results and writes the report in a fixed format</td><td>6 tools (overview, all-state comparison, single-state deep dive, review classification, review search, SQL query) compute the numbers and the verdicts for 4 hypotheses (delivery delay, timing, product category, seller); code specifies which states to dig into; review quotes, verdicts and "what we would expect to see" (what the data should show if a hypothesis holds) are filled in by code; non-investigation questions are handed to "ask the data"</td></tr>
+  </tbody>
+</table>
+<p>Models: the web app and the scoring use the same set of free Gemini models; when the web app runs out of quota it automatically switches to a fallback model, while scoring locks a single model with no fallback; "ask the data", the investigation and review classification log the model version that actually answered (model names are in the footer).</p>
+<p class="chart-title">"Ask the data": the top of the answer shows whether every number has a source; expand to see the SQL the AI ran and the query results (interface in Chinese)</p>
+<p><a href="shot-ask.jpg" target="_blank" rel="noopener"><img class="shot" src="shot-ask.jpg" alt="Ask-the-data screen: answering which month of 2018 had the highest revenue, with a note at the top that every number was found in the query results"></a></p>
+<p class="chart-title">A built-in safeguard: the investigation's AI conclusion says "logistics factors explain most of the gap", and the "note added by code based on tool verdicts" below corrects this to only part of the gap (interface in Chinese)</p>
+<p><a href="shot-agent.jpg" target="_blank" rel="noopener"><img class="shot" src="shot-agent.jpg" alt="Investigation screen: report conclusion with the code-added note, and 7 investigation steps on the right"></a></p>
+</details>
+
+<details class="sec">
+<summary><h2>Evaluation method and scores</h2></summary>
+<table class="eval">
+  <thead><tr><th>Feature</th><th class="num">Practice</th><th class="num">Unseen</th><th>What is evaluated and how</th></tr></thead>
+  <tbody>
+    <tr><td>Ask the data</td><td class="num">19/19 questions</td><td class="num">—</td><td>For 17 questions the reference answer is computed live by a separate SQL query (also written by Claude Code, definitions reviewed by me); numbers must match and have a source; 2 questions must answer "not in the data". The 19 questions were also used for tuning during development, with no separate unseen set; the AI's instructions were scanned by code and contain no reference answers</td></tr>
+    <tr><td>Find relevant reviews</td><td class="num">45/50 reviews</td><td class="num">20/20 reviews</td><td>Evaluates only the "is this review relevant" step, not whether the search missed anything; recall is calculated separately for relevant and not-relevant reviews (per-class recall)</td></tr>
+    <tr><td>Review classification</td><td class="num">27/30 reviews<span class="sub">older version</span></td><td class="num">22/25 reviews</td><td>Unseen: a review can have several categories, and it counts as correct only if the AI's set of categories exactly matches mine; the 3 categories decided by code (slow delivery, not received, order canceled or out of stock) are excluded from the comparison, and the denominator is still 25; the unseen set originally had 30 reviews, 5 of which were used to refine the definitions, so only the other 25 are scored. Practice: the score of an older definition with a different model (revised 3 more times since), judged right or wrong by me (of the 27 judged correct, 7 were judged by Claude Code applying rules I set); the current version was not re-tested</td></tr>
+    <tr><td>Investigation</td><td class="num">4/4 runs passed</td><td class="num">2/2 runs passed</td><td>Each run of the practice question "why do some states have more negative reviews" gets 17 checks; the unseen question "why does CE (Ceará) have more negative reviews" gets the 6 general checks among them (numbers, sources, quotes, verdicts, format, call limit), and the other 11 apply only to the practice question (e.g., whether the state with the highest negative-review rate is named). "Passed" refers to the final report: in 1 of the 4 runs the first draft had the wrong format and passed after code sent it back for one rewrite</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><b>Find relevant reviews:</b> on the practice set, 32 of the 34 relevant reviews were caught (94%) and 13 of the 16 not-relevant reviews were excluded (81%), which only reaches "pass"; on the unseen set, all 20 reviews across 2 questions (the top 10 search results for each, not hand-picked; 10 relevant, 10 not relevant) were judged correctly, meeting the target. The new thresholds were set before the unseen questions were run, but after seeing the practice scores: the original threshold "47 of 50 correct" was set by Claude Code with no basis; after the practice set failed it, the threshold was switched to a common practice for validating LLM judges, calculating recall separately for relevant and not-relevant reviews (per-class recall), with &gt; 90% on both as the target and &gt; 80% on relevant as the minimum; I separately set the pass line of ≥ 75% for not relevant. So the practice "pass" is for reference only; the unseen "target met" is what counts.</li>
+  <li><b>Review classification:</b> on the 25 unseen reviews, the score was 22/25 both before and after the definitions and model were changed together (one of the misclassified reviews changed), so there was no improvement (since both changed at once, their separate effects cannot be told apart). For 1 review I corrected my own answer after seeing the AI's answer (the review date was not shown on screen at the time); with my original answer it is 21/25.</li>
+  <li><b>Investigation stability:</b> the main investigation flow calls the AI fresh every time. It failed many times during development (quotes altered, verdicts copied wrong, hitting the call limit); after each failure type was moved to code or given a check, the final version passed all 4 runs. The scoring code itself also made a mistake: it attributed the negative-review rate of the later state in a sentence to the earlier state (the report itself was correct); after the fix, all 50 practice records were re-scored and only the 2 records affected by this misjudgment changed verdict, and tests with deliberately planted errors were added to confirm real errors are still caught.</li>
+</ul>
+</details>
+
+<details class="sec">
+<summary><h2>Reliability: problems found and fixes</h2></summary>
+<p>Each problem was fixed at the root cause: whatever can be handed to code goes to code, rather than adding another "please be careful" to the AI's instructions.</p>
+<table class="issues">
+  <thead><tr><th>Problem</th><th>How it was found</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>The AI changed a date when quoting a review (11/09 copied as 09/09)</td><td>Word-by-word comparison by code</td><td>The AI writes only the review ID, and code pastes the original text</td></tr>
+    <tr><td>Examples in the AI's instructions happened to be reference answers</td><td>Process review, independent review</td><td>Happened in both the investigation and "ask the data" (examples in the data dictionary gave away the answers or how to answer for 11 of the 19 questions); real answers in examples were replaced with placeholders, and code now automatically scans the AI's instructions and tool descriptions; all scores on this page were re-run after the fix</td></tr>
+    <tr><td>When quota ran out the model was switched automatically, so one scoring run mixed two models</td><td>Pre-mortem</td><td>Scoring locks the model and logs the model version that actually answered</td></tr>
+    <tr><td>A report presented a cause that explains only half of the gap as the main cause</td><td>Independent review</td><td>Code adds a note to the conclusion based on the tool verdicts</td></tr>
+    <tr><td>Investigating 3 states used up exactly the 20-call tool limit</td><td>Tool call logs</td><td>The 4 hypotheses for a state were merged into 1 tool; the final version uses 7–11 calls per run</td></tr>
+    <tr><td>"What we would expect to see" did not match the actual check; report sections were structured differently each time</td><td>User acceptance testing</td><td>Expectation wording is pre-written by code and filled in; the report format is fixed, and reports that do not follow it are sent back</td></tr>
+    <tr><td>Users had to decide for themselves which feature to ask</td><td>User acceptance testing</td><td>When the investigation gets a lookup question, it hands it to "ask the data" automatically</td></tr>
+    <tr><td>"Ask the data" and the investigation computed different negative-review counts for São Paulo (SP) (5,242 including canceled and out-of-stock orders, 4,750 excluding them)</td><td>User acceptance testing</td><td>Standardized on including canceled and out-of-stock orders (a cancellation is itself a reason for dissatisfaction), written into the data dictionary and added as a regression test question</td></tr>
+  </tbody>
+</table>
+</details>
+
+<details class="sec">
+<summary><h2>Cost and operations</h2></summary>
+<ul>
+  <li><b>Call count is cost:</b> the free tier allows 20–500 requests per model per day; an "ask the data" question usually takes 2 requests (1 to write the SQL, 1 to write the answer); the final investigation uses 7–11 tool calls per run on the practice question (limit 20, plus up to 6 more when sent back for a rewrite) and takes about 12–18 seconds; when it hits the per-minute limit it waits and retries, and classifying a state's reviews for the first time adds tens of seconds.</li>
+  <li><b>Response caching:</b> steps with fixed answers, such as classification and relevance judgments, are not re-asked when the input is identical; the investigation saves each state's review classification results for reuse and re-classifies whenever the category definitions or model change.</li>
+  <li><b>Choosing the model with my own questions:</b> public leaderboards have no task like "judging Portuguese reviews", so I compared candidate free models on the 50 practice reviews of "find relevant reviews" (only 2 of 5 produced scores: 46/50 and 37/50; the rest ran out of daily quota or returned an invalid format) and chose the higher-scoring one, which review classification also uses (not compared separately on classification); later the definition of the "customer service issue" category was narrowed (relevance judgments use the same category definitions) and re-run, and the 45/50 in the score table is the current version.</li>
+  <li><b>Logging:</b> each question logs the question, SQL, model version, tool calls and failure reasons (per-minute or per-day limits), and the web app can replay an investigation step by step.</li>
+</ul>
+</details>
+
+<details class="sec">
+<summary><h2>Limitations and next steps</h2></summary>
+<ul>
+  <li><b>The investigation supports only one question type:</b> it can currently only investigate "why states differ in negative reviews"; other "why" questions are handed to "ask the data", with the explanation labeled "AI inference, not verified by hypothesis testing". The next step is general investigation: any question goes through "hypothesis → expectation → SQL query → verdict by code".</li>
+  <li><b>Review classification missed its target:</b> refining the definitions did not improve the unseen score, and adding more rules has low payoff; the next step is to simplify the definitions and measure on a new batch of unseen reviews.</li>
+  <li><b>"Ask the data" has no unseen questions:</b> its 19 questions were also used for tuning during development, so the score may be inflated.</li>
+  <li><b>Reference answers and system come from the same AI:</b> the reference SQL for "ask the data" and the system were both written by Claude Code and may make the same kinds of errors; I reviewed the metric definitions but did not independently rewrite the SQL line by line. The independent reviewers are from the same model family and may share the same blind spots.</li>
+  <li><b>Small samples and a single judge:</b> the "find relevant reviews" practice set has only 16 not-relevant reviews, and relevance and classification were judged by me alone, with no second judge to measure agreement.</li>
+  <li><b>"Find relevant reviews" evaluates only the judgment step:</b> it does not measure whether the embedding search missed relevant reviews, nor whether the summary is faithful to the source.</li>
+  <li><b>Free preview models:</b> Google may change them at any time; the fallback models the web app switches to when quota runs out have not been scored on the current version. A production launch would need paid models with pinned versions.</li>
+  <li><b>Only some scoring checks are tested:</b> the number-source, quote-comparison and state/negative-review-rate checks have tests with deliberately planted errors, while the other checks do not; one misjudgment was found as recently as 2026-10-23.</li>
+</ul>
+</details>
+
+<footer>
+  <p>Tools: Python (google-genai, DuckDB, Streamlit, fastembed), Gemini API free tier, Claude Code. Data: Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a> (Kaggle). Score dates: "ask the data" and investigation 2026-10-23; find relevant reviews and review classification 2026-10-22.</p>
+  <p>Models: ask the data and investigation gemini-3.5-flash-lite (fallback gemini-3.5-flash); review classification and relevance judgment gemini-3.1-flash-lite-preview (the higher scorer on the 50 practice reviews among the 2 models that produced scores; fallback gemini-3.5-flash-lite); find relevant reviews summary gemini-3.5-flash-lite; embedding model paraphrase-multilingual-MiniLM-L12-v2.</p>
+</footer>
+</template>
+<!-- i18n:start --><script>
+// 語言切換：中文寫在 <main>，英文版放在 template#main-en，切換時整塊替換；選擇記在 localStorage 與網址 ?lang=en
+(function () {
+  const main = document.querySelector('main'), tpl = document.getElementById('main-en'), sel = document.getElementById('lang-select');
+  const meta = document.querySelector('meta[name="description"]');
+  const pages = {
+    zh: { html: main.innerHTML, title: document.title, desc: meta.content, lang: 'zh-Hant' },
+    en: { html: tpl.innerHTML, title: tpl.dataset.title, desc: tpl.dataset.desc, lang: 'en' }
+  };
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }  // 從帶參數的連結進來，也記住語言
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function apply(l, first) {
+    const p = pages[l];
+    if (!(first && l === 'zh')) main.innerHTML = p.html;  // 第一次載入且是中文就不用重建
+    document.documentElement.lang = p.lang; document.title = p.title; meta.content = p.desc;
+    sel.value = l;
+    // 站內連結帶上語言參數，瀏覽器擋 localStorage 時語言也能跟著換頁
+    document.querySelectorAll('a[href]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.href);
+      if (u.origin !== location.origin || a.getAttribute('href').startsWith('#')) return;
+      if (l === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+    document.documentElement.classList.remove('lang-pending');
+    if (!first) document.dispatchEvent(new Event('langchange'));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);  // 網址同步，分享出去的連結語言一致
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    apply(sel.value, false);
+  });
+  apply(initial(), true);
+})();
+</script><!-- i18n:end -->
+</body>
+</html>

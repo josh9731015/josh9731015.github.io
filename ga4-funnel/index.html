@@ -133,6 +133,7 @@
   /* 英文單字不能逐字斷行，窄螢幕要另外處理 */
   html[lang="en"] td, html[lang="en"] th { overflow-wrap: break-word; }
   html[lang="en"] th.num { white-space: normal; }
+  td:first-child { min-width: 5em; }  /* 第一欄是項目名稱：右邊說明欄很長時會被擠成一字一行（2026-10-23 check_layout 發現「30 分鐘」直排） */
   html[lang="en"] td:first-child { min-width: 7em; }  /* 英文欄名較長，允許換行；數字格本身仍不換行 */
   /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
