@@ -154,6 +154,7 @@
   html[lang="en"] th.num { white-space: normal; }
   .sub { display: block; font-size: 12.5px; color: var(--ink-2); white-space: normal; }
   table.eval td:last-child { width: 55%; }
+  table.arch th:nth-child(2), table.arch td:nth-child(2) { width: 22%; }  /* 技術欄（2026-10-23 Josh 要求加） */
   table.issues th:nth-child(2), table.issues td:nth-child(2) { width: 8em; }
   table { margin-bottom: 20px; }  /* 本頁：表格與下一段拉開（版面審查 10-23） */
   td:first-child { min-width: 7em; }  /* 第一欄是項目名稱：右邊說明欄很長時會被擠成一字一行（2026-10-23 Josh 發現） */
@@ -220,13 +221,13 @@
 <details class="sec">
 <summary><h2>系統架構</h2></summary>
 <p>4 個功能的原則相同：AI 負責理解文字與寫出文字，能用程式計算或檢查的交給程式。</p>
-<table>
-  <thead><tr><th>功能</th><th>AI 負責</th><th>程式負責</th></tr></thead>
+<table class="arch">
+  <thead><tr><th>功能</th><th>用到的技術</th><th>AI 負責</th><th>程式負責</th></tr></thead>
   <tbody>
-    <tr><td>問資料</td><td>把中文問題寫成 SQL；把查詢結果寫成白話回答</td><td>SQL 護欄（只允許讀取、逾時、列數上限）；核對回答裡的數字都出現在查詢結果中（排名用語、星等、門檻條件除外），對不上就標示 ⚠️。只保證數字有出處，SQL 是否寫對由評分檢查</td></tr>
-    <tr><td>評論分類</td><td>從固定類別清單中挑類別（輸出格式被規定，不能自創類別）</td><td>「送貨太慢」「沒收到貨」「訂單被取消或缺貨」改由程式依訂單日期與狀態判斷</td></tr>
-    <tr><td>找相關評論（RAG：先找資料、再根據資料回答）</td><td>改寫問題；逐則判斷評論是否相關並寫理由；只用相關評論寫總結，每個重點標出處</td><td>用本機向量模型（把文字轉成可比較意思的數字）找出意思相近的評論，不花 API 額度；附上每筆訂單的送達紀錄</td></tr>
-    <tr><td>調查（agent：AI 呼叫工具完成任務；為了穩定，大部分步驟由程式決定）</td><td>在程式限定的範圍內決定工具呼叫順序、讀工具結果、照固定格式寫報告</td><td>6 個工具（總覽、全州比較、單州深入、評論分類、找評論、SQL 查詢）算好數字與 4 個假說（配送延遲、時間、品類、賣家）的判定，要深入哪幾州由程式指定；評論原文、判定、「預期看到什麼」（假說成立時資料應該看到的結果）由程式填入；不是調查題就轉給「問資料」</td></tr>
+    <tr><td>問資料</td><td>LLM（Gemini）、Text-to-SQL、工具呼叫（function calling）、DuckDB 資料庫</td><td>把中文問題寫成 SQL；把查詢結果寫成白話回答</td><td>SQL 護欄（只允許讀取、逾時、列數上限）；核對回答裡的數字都出現在查詢結果中（排名用語、星等、門檻條件除外），對不上就標示 ⚠️。只保證數字有出處，SQL 是否寫對由評分檢查</td></tr>
+    <tr><td>評論分類</td><td>LLM、結構化輸出（JSON schema 限定格式與類別）</td><td>從固定類別清單中挑類別（輸出格式被規定，不能自創類別）</td><td>「送貨太慢」「沒收到貨」「訂單被取消或缺貨」改由程式依訂單日期與狀態判斷</td></tr>
+    <tr><td>找相關評論</td><td>RAG（先找資料、再根據資料回答）、向量檢索（本機 embedding 模型）、LLM 逐則判斷相關（結構化輸出）</td><td>改寫問題；逐則判斷評論是否相關並寫理由；只用相關評論寫總結，每個重點標出處</td><td>用本機向量模型（把文字轉成可比較意思的數字）找出意思相近的評論，不花 API 額度；附上每筆訂單的送達紀錄</td></tr>
+    <tr><td>調查</td><td>AI agent（AI 呼叫工具完成任務；為了穩定，大部分步驟由程式決定）、工具呼叫（6 個工具）、程式檢查不合格就退回重寫</td><td>在程式限定的範圍內決定工具呼叫順序、讀工具結果、照固定格式寫報告</td><td>6 個工具（總覽、全州比較、單州深入、評論分類、找評論、SQL 查詢）算好數字與 4 個假說（配送延遲、時間、品類、賣家）的判定，要深入哪幾州由程式指定；評論原文、判定、「預期看到什麼」（假說成立時資料應該看到的結果）由程式填入；不是調查題就轉給「問資料」</td></tr>
   </tbody>
 </table>
 <p>模型：網頁和評分用同一組 Gemini 免費模型；網頁額度用完時自動換備援模型，評分時鎖定單一模型、不換備援；問資料、調查、評論分類會記錄實際回答的模型版本（模型名稱見頁尾）。</p>
@@ -350,13 +351,13 @@
 <details class="sec">
 <summary><h2>System architecture</h2></summary>
 <p>All 4 features follow the same principle: the AI understands and writes text, and anything that can be calculated or checked by code is left to code.</p>
-<table>
-  <thead><tr><th>Feature</th><th>AI does</th><th>Code does</th></tr></thead>
+<table class="arch">
+  <thead><tr><th>Feature</th><th>Techniques</th><th>AI does</th><th>Code does</th></tr></thead>
   <tbody>
-    <tr><td>Ask the data</td><td>Turns the Chinese question into SQL; turns the query results into a plain-language answer</td><td>SQL guardrails (read-only, timeout, row limit); checks that every number in the answer appears in the query results (except ranking words, star ratings and threshold conditions) and flags mismatches with ⚠️. This only guarantees that numbers have a source; whether the SQL is correct is checked by the scoring</td></tr>
-    <tr><td>Review classification</td><td>Picks categories from a fixed list (the output format is enforced, so it cannot invent categories)</td><td>"Slow delivery", "not received" and "order canceled or out of stock" are decided by code from order dates and status instead</td></tr>
-    <tr><td>Find relevant reviews (RAG: retrieve data first, then answer from it)</td><td>Rewrites the question; judges whether each review is relevant and gives a reason; writes the summary from relevant reviews only, citing the source of each point</td><td>A local embedding model (converts text into vectors so that meanings can be compared) finds reviews with similar meaning without using API quota; attaches each order's delivery record</td></tr>
-    <tr><td>Investigation (agent: the AI calls tools to complete a task; for stability, most steps are decided by code)</td><td>Within limits set by code, decides the order of tool calls, reads tool results and writes the report in a fixed format</td><td>6 tools (overview, all-state comparison, single-state deep dive, review classification, review search, SQL query) compute the numbers and the verdicts for 4 hypotheses (delivery delay, timing, product category, seller); code specifies which states to dig into; review quotes, verdicts and "what we would expect to see" (what the data should show if a hypothesis holds) are filled in by code; non-investigation questions are handed to "ask the data"</td></tr>
+    <tr><td>Ask the data</td><td>LLM (Gemini), text-to-SQL, function calling, DuckDB database</td><td>Turns the Chinese question into SQL; turns the query results into a plain-language answer</td><td>SQL guardrails (read-only, timeout, row limit); checks that every number in the answer appears in the query results (except ranking words, star ratings and threshold conditions) and flags mismatches with ⚠️. This only guarantees that numbers have a source; whether the SQL is correct is checked by the scoring</td></tr>
+    <tr><td>Review classification</td><td>LLM, structured output (a JSON schema fixes the format and categories)</td><td>Picks categories from a fixed list (the output format is enforced, so it cannot invent categories)</td><td>"Slow delivery", "not received" and "order canceled or out of stock" are decided by code from order dates and status instead</td></tr>
+    <tr><td>Find relevant reviews</td><td>RAG (retrieve data first, then answer from it), vector search (local embedding model), LLM judges each review's relevance (structured output)</td><td>Rewrites the question; judges whether each review is relevant and gives a reason; writes the summary from relevant reviews only, citing the source of each point</td><td>A local embedding model (converts text into vectors so that meanings can be compared) finds reviews with similar meaning without using API quota; attaches each order's delivery record</td></tr>
+    <tr><td>Investigation</td><td>AI agent (the AI calls tools to complete a task; for stability, most steps are decided by code), function calling (6 tools), drafts that fail code checks are sent back for a rewrite</td><td>Within limits set by code, decides the order of tool calls, reads tool results and writes the report in a fixed format</td><td>6 tools (overview, all-state comparison, single-state deep dive, review classification, review search, SQL query) compute the numbers and the verdicts for 4 hypotheses (delivery delay, timing, product category, seller); code specifies which states to dig into; review quotes, verdicts and "what we would expect to see" (what the data should show if a hypothesis holds) are filled in by code; non-investigation questions are handed to "ask the data"</td></tr>
   </tbody>
 </table>
 <p>Models: the web app and the scoring use the same set of free Gemini models; when the web app runs out of quota it automatically switches to a fallback model, while scoring locks a single model with no fallback; "ask the data", the investigation and review classification log the model version that actually answered (model names are in the footer).</p>
