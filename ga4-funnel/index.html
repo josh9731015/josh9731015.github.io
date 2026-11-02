@@ -272,6 +272,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     #deck .stage { display: block; overflow-y: auto; padding: 60px 0 8px; }
     #deck .slide { width: 100%; aspect-ratio: auto; border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
     #deck .sl { font-size: 15px; padding: 22px 18px 26px; height: auto; }
+    html[lang="en"] #deck .sl { font-size: 15px; }  /* 英文的字級規則選擇器較具體，手機要再蓋一次，不然只剩 5～6px */
     #deck .cover { min-height: calc(100vh - 140px); }
     #deck .cover h1 { font-size: 2.3em; }
     #deck .roles, #deck .checks, #deck .shotrow, #deck .two, #deck .nexts { grid-template-columns: 1fr; }
