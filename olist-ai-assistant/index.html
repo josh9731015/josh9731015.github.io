@@ -163,16 +163,155 @@
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
   /* i18n:end */
   .shot { display: block; width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 4px 0 20px; }
+  /* ===== 報告／簡報 切換（2026-11-02 新增；簡報只有中文版） ===== */
+  .top-ctrls { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; gap: 8px; align-items: center; }
+  .top-ctrls .lang-switch { position: static; }
+  .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+  .view-switch button { font: inherit; font-size: 15px; line-height: 1.3; padding: 5px 12px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; min-height: 36px; }
+  .view-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+  html[lang="en"] .view-switch { display: none; }
+  @media (max-width: 600px) { main { padding-top: 64px; } }  /* 手機：右上兩個切換鈕下方留空，不貼到標籤 */
+  html.view-slides body { overflow: hidden; }
+  html.view-slides main { display: none; }
+  html.view-slides .top-ctrls { position: fixed; }
+  html.view-slides .lang-switch { display: none; }
+  #deck[hidden] { display: none; }
+  #deck .stage { position: fixed; inset: 0 0 56px 0; display: grid; place-items: center; padding-top: 52px; }
+  #deck .slide { display: none; width: min(94vw, calc((100vh - 128px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.06); overflow: hidden; }
+  #deck .slide.on { display: block; }
+  /* 投影片內尺寸一律用 em，跟著 .sl 的字級（＝投影片寬度的 1.6%）等比例縮放 */
+  #deck .sl { height: 100%; display: flex; flex-direction: column; padding: 2.4em 3em; font-size: 1.6cqw; line-height: 1.55; }
+  #deck h2 { font-size: 1.9em; line-height: 1.3; margin: 0 0 .2em; padding: 0; border: 0; }
+  #deck .sub { display: block; color: var(--ink-2); font-size: 1.05em; margin: 0 0 1em; white-space: normal; }
+  #deck .note { color: var(--ink-3); font-size: .82em; margin: .6em 0 0; }
+  /* 封面 */
+  #deck .cover { justify-content: center; }
+  #deck .kicker { color: var(--ink-2); font-size: .95em; margin: 0 0 .4em; }
+  #deck .cover h1 { font-size: 3.2em; line-height: 1.15; margin: 0 0 .35em; }
+  #deck .lead { font-size: 1.35em; margin: 0 0 1em; }
+  #deck .chips { display: flex; flex-wrap: wrap; gap: .5em; margin: 0 0 1.6em; }
+  #deck .chips span { border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: .15em .8em; font-size: .9em; font-weight: 600; }
+  #deck .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8em; margin: 0 0 1.4em; }
+  #deck .roles div { border: 1px solid var(--line); border-radius: .6em; padding: .6em .9em; }
+  #deck .roles b { display: block; }
+  #deck .roles span { color: var(--ink-2); font-size: .92em; }
+  #deck .foot { color: var(--ink-2); font-size: .9em; margin: 0; }
+  /* 截圖＋直式流程：藍底＝AI，灰框＝程式 */
+  #deck .fnline { margin: 0 0 .9em; font-size: .95em; color: var(--ink-2); }
+  #deck .fnline b { color: var(--ink); }
+  #deck .shotrow { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.6em; align-items: center; flex: 1; min-height: 0; }
+  #deck .imgbox { min-height: 0; height: 100%; display: flex; align-items: center; }
+  #deck .imgbox img { width: 100%; max-height: 100%; object-fit: contain; object-position: top; border: 1px solid var(--line); border-radius: .5em; display: block; }
+  #deck .vpipe { display: flex; flex-direction: column; gap: .6em; }
+  #deck .vpipe .st { position: relative; border-radius: .5em; padding: .35em .8em; font-size: .92em; }
+  #deck .vpipe .st + .st::before { content: "↓"; position: absolute; top: -1.15em; left: 1.2em; color: var(--ink-3); font-size: .8em; }
+  #deck .vpipe .st small { display: block; color: var(--ink-2); font-size: .85em; line-height: 1.4; }
+  #deck .st.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .st.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .st.io { background: var(--bg); border: 1px dashed var(--ink-3); }
+  #deck .lg { font-size: .85em; color: var(--ink-2); margin: 0 0 .7em; }
+  #deck .lg i { display: inline-block; width: 1em; height: .8em; border-radius: .2em; vertical-align: -.05em; margin: 0 .3em 0 .9em; }
+  #deck .lg i:first-child { margin-left: 0; }
+  #deck .lg i.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .lg i.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .lg i.v { background: var(--mute); }
+  #deck .lg i.t { background: var(--accent); }
+  #deck .callout { margin: .9em 0 0; font-size: .88em; background: var(--warn-soft); color: var(--warn-ink); border-radius: .5em; padding: .5em .8em; }
+  /* 發現頁：左圖右文 */
+  #deck .two { display: grid; grid-template-columns: 1.25fr 1fr; gap: 2em; align-items: center; flex: 1; min-height: 0; }
+  #deck .ct { font-size: .85em; color: var(--ink-2); font-weight: 600; margin: 0 0 .6em; }
+  #deck .side p { margin: 0 0 .8em; font-size: .95em; }
+  #deck .side blockquote { margin: 0 0 .8em; border-left: .2em solid var(--accent); padding: .2em 0 .2em .8em; font-style: italic; color: var(--ink-2); font-size: .9em; }
+  #deck .side blockquote span { display: block; font-style: normal; color: var(--ink); margin-top: .2em; }
+  #deck .hb .r { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; align-items: center; font-size: .88em; padding: .12em 0; }
+  #deck .hb .r span { text-align: right; color: var(--ink-2); }
+  #deck .hb .r i { display: block; height: .9em; background: var(--mute); border-radius: 0 .2em .2em 0; }
+  #deck .hb .r b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  #deck .hb .r.hi span, #deck .hb .r.hi b { color: var(--ink); font-weight: 700; }
+  #deck .hb .r.hi i { background: var(--accent); }
+  #deck .vb .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
+  #deck .vb .cols > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
+  #deck .vb .area b { font-variant-numeric: tabular-nums; margin-bottom: .2em; }
+  #deck .vb .area i { display: block; width: 65%; background: var(--mute); border-radius: .25em .25em 0 0; }
+  #deck .vb .hi .area i { background: var(--neg); }
+  #deck .vb .cols > div > span { font-size: .88em; margin-top: .4em; }
+  #deck .vb .cols small { display: block; color: var(--ink-3); font-size: .9em; }
+  /* 6 道檢查 */
+  #deck .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9em; flex: 1; align-content: center; }
+  #deck .checks > div { border-top: .22em solid var(--accent); background: var(--bg); border-radius: .4em; padding: .7em .9em; display: flex; flex-direction: column; }
+  #deck .checks b { font-size: 1.08em; margin-bottom: .2em; }
+  #deck .checks span { color: var(--ink-2); font-size: .9em; flex: 1; }
+  #deck .checks em { font-style: normal; font-size: .85em; margin-top: .5em; padding: .3em .55em; border-radius: .35em; background: var(--warn-soft); color: var(--warn-ink); }
+  #deck .checks em.lim { background: transparent; color: var(--ink-3); padding-left: 0; }
+  /* 成績長條圖 */
+  #deck .bars { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .bars .r { display: grid; grid-template-columns: 15em 1fr; gap: 1.2em; align-items: center; padding: .5em 0; border-bottom: 1px solid var(--line); }
+  #deck .bars .r:last-child { border-bottom: 0; }
+  #deck .bars .nm { text-align: right; font-weight: 600; }
+  #deck .bars .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: .78em; line-height: 1.35; }
+  #deck .bars .b { display: flex; align-items: center; gap: .6em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.6em; }
+  #deck .bars .b i { display: block; height: .95em; border-radius: 0 .25em .25em 0; flex: none; }
+  #deck .bars .b.v i { background: var(--mute); }
+  #deck .bars .b.t i { background: var(--accent); }
+  #deck .bars .b.t.miss i { background: var(--neg); }
+  #deck .bars .b.none { color: var(--ink-3); font-style: italic; }
+  /* 信賴區間圖：刻度 60%～100%，left 換算＝(值 − 60) ÷ 40 */
+  #deck .ci { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .ci .r { display: grid; grid-template-columns: 13em 1fr; gap: 1.2em; align-items: center; margin: .8em 0; }
+  #deck .ci .nm b { display: block; }
+  #deck .ci .nm span { color: var(--ink-2); font-size: .88em; }
+  #deck .ci .tr { position: relative; height: 3.2em; }
+  #deck .ci .line { position: absolute; top: 1.1em; height: .5em; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: .25em; }
+  #deck .ci .pt { position: absolute; top: .85em; width: 1em; height: 1em; margin-left: -.5em; border-radius: 50%; background: var(--accent); }
+  #deck .ci .lab { position: absolute; top: .95em; font-size: .82em; color: var(--ink-2); white-space: nowrap; }
+  #deck .ci .lab.lo { transform: translateX(calc(-100% - .5em)); }
+  #deck .ci .lab.hi { transform: translateX(.5em); }
+  #deck .ci .th { position: absolute; top: -.3em; bottom: -.3em; width: 0; border-left: 2px dashed var(--neg); }
+  #deck .ci .axis { position: relative; height: 1.6em; margin-left: 14.2em; border-top: 1px solid var(--ink-3); color: var(--ink-3); }
+  #deck .ci .axis span { position: absolute; top: .2em; transform: translateX(-50%); font-size: .8em; }
+  #deck .take { margin: 1.4em 0 0; background: var(--accent-soft); border-radius: .5em; padding: .6em 1em; }
+  /* 下一步 */
+  #deck .nexts { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; flex: 1; align-content: center; }
+  #deck .nexts > div { border: 1px solid var(--line); border-radius: .6em; padding: .8em 1em; }
+  #deck .nexts b { display: block; font-size: 1.1em; color: var(--accent); margin-bottom: .2em; }
+  #deck .nexts span { color: var(--ink-2); font-size: .93em; }
+  /* 下方導覽列 */
+  #deck .deck-nav { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; justify-content: center; align-items: center; gap: 18px; background: var(--bg); }
+  #deck .deck-nav button { font: inherit; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  #deck .deck-nav button:disabled { opacity: .35; cursor: default; }
+  #deck .deck-nav .count { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; min-width: 4.5em; text-align: center; }
+  /* 手機直向：16:9 縮到手機寬會看不清，改成整頁寬、可上下捲的卡片，多欄改單欄 */
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .stage { display: block; overflow-y: auto; padding: 60px 0 8px; }
+    #deck .slide { width: 100%; aspect-ratio: auto; border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
+    #deck .sl { font-size: 15px; padding: 22px 18px 26px; height: auto; }
+    #deck .cover { min-height: calc(100vh - 140px); }
+    #deck .cover h1 { font-size: 2.3em; }
+    #deck .roles, #deck .checks, #deck .shotrow, #deck .two, #deck .nexts { grid-template-columns: 1fr; }
+    #deck .imgbox { height: auto; }
+    #deck .hb .r { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .vb .area { height: 10em; }
+    #deck .bars .r { grid-template-columns: 1fr; gap: .2em; }
+    #deck .bars .nm { text-align: left; }
+    #deck .ci .r { grid-template-columns: 1fr; gap: .3em; }
+    #deck .ci .axis { margin-left: 0; }
+    #deck .ci .tr, #deck .ci .axis { margin-right: 2.8em; margin-left: 2.8em; }  /* 區間兩端的數字標籤放在線段外，左右要留位置 */
+  }
 </style>
 
 </head>
 <body>
+<div class="top-ctrls">
+<div class="view-switch" role="group" aria-label="檢視模式"><button type="button" data-view="report" aria-pressed="true">報告</button><button type="button" data-view="slides" aria-pressed="false">簡報</button></div>
 <!-- i18n:start --><div class="lang-switch">
   <select id="lang-select" aria-label="語言 Language">
     <option value="zh">繁體中文 Traditional Chinese</option>
     <option value="en">英文 English</option>
   </select>
 </div><!-- i18n:end -->
+</div>
 <main>
 
 <header>
@@ -303,6 +442,169 @@
 </footer>
 
 </main>
+
+<!-- 簡報模式（2026-11-02）：只有中文；內容大綱經 Josh 逐頁確認。第 4、5 頁的數字都是實際問 AI 助理得到的（logs/agent.jsonl 11-02 17:42、問資料與找相關評論 11-02 實跑） -->
+<div id="deck" hidden>
+<div class="stage">
+
+<section class="slide" aria-label="第 1 頁"><div class="sl cover">
+  <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
+  <h1>AI 資料助理</h1>
+  <p class="lead">用中文問電商資料，<b>AI 回答的每個數字都由程式核對</b></p>
+  <div class="chips"><span>LLM（Gemini API）</span><span>Text-to-SQL</span><span>RAG</span><span>AI Agent</span></div>
+  <div class="roles">
+    <div><b>本人</b><span>需求、指標定義、驗收</span></div>
+    <div><b>Claude Code</b><span>寫程式（本人審查）</span></div>
+    <div><b>Gemini</b><span>系統裡回答問題的 AI</span></div>
+  </div>
+  <p class="foot">資料：Olist 巴西電商公開資料，約 10 萬筆訂單（2016-09～2018-10）</p>
+</div></section>
+
+<section class="slide" aria-label="第 2 頁"><div class="sl">
+  <h2>系統架構</h2>
+  <span class="sub">AI 負責理解問題、寫 SQL 和文字；數字核對交給程式</span>
+  <p class="fnline"><b>4 個功能：</b>問資料（Text-to-SQL）｜評論分類（結構化輸出）｜找相關評論（RAG）｜調查（AI Agent）</p>
+  <div class="shotrow">
+    <div class="imgbox"><img src="slide-ask.jpg" alt="問資料畫面：回答上方顯示每個數字都能在查詢結果找到"></div>
+    <div>
+      <p class="lg"><i class="ai"></i>AI <i class="code"></i>程式　以「問資料」為例</p>
+      <div class="vpipe">
+        <div class="st io">中文問題：2018 年哪個月營收最高？</div>
+        <div class="st ai">AI 寫 SQL</div>
+        <div class="st code">SQL 護欄<small>只能讀取、逾時、列數上限</small></div>
+        <div class="st code">DuckDB 查詢</div>
+        <div class="st ai">AI 寫白話回答</div>
+        <div class="st code">核對每個數字<small>都在查詢結果裡 ✅，對不上 ⚠️</small></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 3 頁"><div class="sl">
+  <h2>Agent 調查流程</h2>
+  <span class="sub">問「為什麼某些州差評比較多」：假說由程式判定，報告由 AI 撰寫</span>
+  <div class="shotrow">
+    <div class="imgbox"><img src="slide-agent.jpg" alt="調查畫面：AI 寫的結論，下方有程式依工具判定加的附註"></div>
+    <div>
+      <p class="lg"><i class="ai"></i>AI <i class="code"></i>程式</p>
+      <div class="vpipe">
+        <div class="st code">各州總覽，挑出要深入的州</div>
+        <div class="st code">每州檢驗 4 個假說<small>配送延遲、時間、品類、賣家</small></div>
+        <div class="st code">依事先寫好的規則判定<small>成立／部分成立／不成立</small></div>
+        <div class="st ai">AI 決定工具呼叫順序、寫報告</div>
+        <div class="st code">核對數字和引用、補判定附註<small>不合格就退回重寫</small></div>
+      </div>
+      <p class="callout">截圖：AI 寫「物流因素皆能解釋大部分的差距」，程式附註更正為「物流只能解釋部分差距」</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 4 頁"><div class="sl">
+  <h2>差評最常抱怨什麼</h2>
+  <span class="sub">最多的是「缺件或寄錯」28.2%，比「送貨太慢」18.8% 還多</span>
+  <div class="two">
+    <div class="hb" aria-label="各抱怨類別占差評的比例">
+      <p class="ct">隨機 500 則有留言的 1～2 星評論，各抱怨類別占比（可複選）</p>
+      <div class="r hi"><span>缺件或寄錯</span><i style="width:94%"></i><b>28.2%</b></div>
+      <div class="r"><span>客服問題</span><i style="width:68.7%"></i><b>20.6%</b></div>
+      <div class="r"><span>商品品質問題</span><i style="width:64%"></i><b>19.2%</b></div>
+      <div class="r"><span>送貨太慢</span><i style="width:62.7%"></i><b>18.8%</b></div>
+      <div class="r"><span>沒收到貨</span><i style="width:59.3%"></i><b>17.8%</b></div>
+      <div class="r"><span>退款或退換貨處理</span><i style="width:32.7%"></i><b>9.8%</b></div>
+      <div class="r"><span>其他</span><i style="width:28%"></i><b>8.4%</b></div>
+      <div class="r"><span>訂單被取消或缺貨</span><i style="width:24.7%"></i><b>7.4%</b></div>
+      <div class="r"><span>跟描述不符</span><i style="width:21.3%"></i><b>6.4%</b></div>
+      <div class="r"><span>評分與留言矛盾</span><i style="width:5.3%"></i><b>1.6%</b></div>
+    </div>
+    <div class="side">
+      <p><b>怎麼問到的：</b>問 Agent「為什麼 RJ 州的差評比較多？顧客都在抱怨什麼？」，它的分類工具同時列出全國 500 則的對照</p>
+      <p><b>彩蛋：</b>1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會誤判</p>
+      <p class="note">「送貨太慢」「沒收到貨」由程式比對實際送達日判定；評論分類測試集準確率 88%，占比是估計值</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 5 頁"><div class="sl">
+  <h2>多件訂單差評較多</h2>
+  <span class="sub">同一筆訂單買多件，差評率是只買 1 件的 2～4 倍</span>
+  <div class="two">
+    <div class="vb" aria-label="三種訂單的差評率">
+      <p class="ct">差評率（1～2 星占評論的比例），全部約 9.8 萬則評論</p>
+      <div class="cols">
+        <div><em class="area"><b>12.71%</b><i style="height:26.9%"></i></em><span>只買 1 件<small>88,227 則</small></span></div>
+        <div><em class="area"><b>24.72%</b><i style="height:52.3%"></i></em><span>多件、同一賣家<small>8,426 則</small></span></div>
+        <div class="hi"><em class="area"><b>47.31%</b><i style="height:100%"></i></em><span>多件、多個賣家<small>1,264 則</small></span></div>
+      </div>
+    </div>
+    <div class="side">
+      <p><b>追問「問資料」</b>：AI 自己寫 SQL 算出這 3 組，數字根據檢查通過</p>
+      <p><b>追問「找相關評論」</b>：「顧客買了好幾件商品，卻只收到其中一部分？」→ 找到 10 則，例：</p>
+      <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞，我需要收到另一盞。</span></blockquote>
+      <p class="note">這是關聯，不是因果：是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 6 頁"><div class="sl">
+  <h2>如何確認 AI 沒答錯</h2>
+  <span class="sub">6 道檢查，以及每道實際抓到的錯誤</span>
+  <div class="checks">
+    <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>抓到：評論日期 11/09 被抄成 09/09 → 改由程式貼原文</em></div>
+    <div><b>SQL 有沒有寫對</b><span>17 題用另一段 SQL 算標準答案比對（另 2 題要答「資料裡沒有」）</span><em class="lim">限制：兩段 SQL 都由 Claude Code 寫，本人審查定義</em></div>
+    <div><b>驗證集／測試集分開</b><span>開發時只用驗證集調整，測試集留到最後評分</span><em class="lim">避免只是背熟題目</em></div>
+    <div><b>防答案外洩</b><span>標準答案不放進 prompt，程式自動掃描</span><em>抓到：範例洩漏 19 題中 11 題的答案 → 改代稱，重跑仍 19/19</em></div>
+    <div><b>人工盲標</b><span>本人先標答案，標的時候看不到 AI 的答案</span><em class="lim">避免被 AI 的答案帶著走</em></div>
+    <div><b>程式更正誇大</b><span>依工具判定，在 AI 結論下自動加附註</span><em>抓到：AI 把只能解釋部分差距的原因寫成主因</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 7 頁"><div class="sl">
+  <h2>各功能測試成績</h2>
+  <span class="sub">AI 的答案跟標準答案一致的比例：驗證集（開發時調整用）vs 測試集（沒練過）</span>
+  <div class="bars">
+    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集</p>
+    <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
+      <div><div class="b v"><i style="width:60%"></i>19/19 題</div><div class="b none">沒有測試集，成績可能偏高</div></div></div>
+    <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
+      <div><div class="b v"><i style="width:54%"></i>45/50 則（90%）</div><div class="b t"><i style="width:60%"></i>20/20 則</div></div></div>
+    <div class="r"><div class="nm">評論分類<small>選的類別跟本人標的完全一致</small></div>
+      <div><div class="b v"><i style="width:54%"></i>27/30 則（90%，舊版定義）</div><div class="b t miss"><i style="width:52.8%"></i>22/25 則（88%，未達 90% 門檻）</div></div></div>
+    <div class="r"><div class="nm">調查（Agent）<small>報告通過全部程式檢查的次數</small></div>
+      <div><div class="b v"><i style="width:60%"></i>4/4 次（17 項檢查）</div><div class="b t"><i style="width:60%"></i>2/2 次（6 項通用檢查）</div></div></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 8 頁"><div class="sl">
+  <h2>評論分類樣本數夠嗎</h2>
+  <span class="sub">只測了 25 則評論，真實準確率可能落在 70%～96%；要宣稱 90%，需要約 140 則</span>
+  <div class="ci">
+    <p class="ct">真實準確率的可能範圍（Wilson 95% 信賴區間）；紅色虛線＝90% 門檻</p>
+    <div class="r"><div class="nm"><b>現在</b><span>25 則對 22 則（88%）</span></div>
+      <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:25%;width:64.5%"></i><i class="pt" style="left:70%"></i>
+        <span class="lab lo" style="left:25%">70.0%</span><span class="lab hi" style="left:89.5%">95.8%</span></div></div>
+    <div class="r"><div class="nm"><b>若測到 95%</b><span>約 140 則（133 則對）</span></div>
+      <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
+        <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
+    <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
+    <p class="take">所以不能說評論分類有 90%：下一步先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 9 頁"><div class="sl">
+  <h2>下一步</h2>
+  <span class="sub">從自學專案到團隊實際使用</span>
+  <div class="nexts">
+    <div><b>讓團隊用起來</b><span>每週自動跑「各州差評」調查，結果做成監控報表</span></div>
+    <div><b>發現交給負責團隊</b><span>多件訂單缺件 → 請物流／賣家營運確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
+    <div><b>程式檢查再擴大</b><span>「最多」「主因」這類比較說法也交給程式核對（實測：Agent 把差距在誤差內的 29% 對 25% 寫成「抱怨最多」）</span></div>
+    <div><b>擴充功能與測試</b><span>調查改成通用流程：假說 → 預期 → SQL → 程式判定；補問資料測試集；評論分類另標約 140 則測試集</span></div>
+  </div>
+</div></section>
+
+</div>
+<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 9</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
+</div>
+
 
 <!-- i18n:start --><template id="main-en" data-title="AI Data Assistant" data-desc="Jia Cheng Yu's self-directed project: a Chinese-language data assistant built on the Gemini API (AI-written SQL, review classification, RAG, agent investigation). Every feature has re-runnable automated scoring, three of them are also tested on unseen questions, and the numbers and quotes the AI writes are checked by code.">
 <header>
@@ -472,5 +774,57 @@
   apply(initial(), true);
 })();
 </script><!-- i18n:end -->
+<script>
+// 報告／簡報切換：網址 ?view=slides 直接開簡報、#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
+(function () {
+  const html = document.documentElement, deck = document.getElementById('deck');
+  const slides = [...deck.querySelectorAll('.slide')], stage = deck.querySelector('.stage');
+  const prev = deck.querySelector('.prev'), next = deck.querySelector('.next'), count = deck.querySelector('.count');
+  const btns = document.querySelectorAll('.view-switch button');
+  let i = 0;
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    count.textContent = `${i + 1} / ${slides.length}`;
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
+    stage.scrollTop = 0;
+    history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+  }
+  function setView(v, init) {
+    const on = v === 'slides' && html.lang !== 'en';   // 簡報只有中文版
+    html.classList.toggle('view-slides', on); deck.hidden = !on;
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === (on ? 'slides' : 'report'))));
+    if (init && !on) return;
+    const u = new URL(location.href);
+    if (on) u.searchParams.set('view', 'slides'); else { u.searchParams.delete('view'); u.hash = ''; }
+    history.replaceState(null, '', u);
+    if (on) go(parseInt(location.hash.slice(1), 10) - 1 || 0);
+  }
+  btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  document.addEventListener('keydown', e => {
+    if (deck.hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'Escape') setView('report');
+  });
+  // 手機左右滑：橫向位移明顯大於直向才換頁，避免跟上下捲動衝突
+  let x0 = null, y0 = null;
+  stage.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  });
+  // 網址的 #頁碼被改（手動輸入、貼上指定頁的連結）也要跟著換頁
+  window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (!deck.hidden && n) go(n - 1); });
+  document.addEventListener('langchange', () => { if (html.lang === 'en') setView('report'); });
+  setView(new URLSearchParams(location.search).get('view') === 'slides' ? 'slides' : 'report', true);
+})();
+</script>
 </body>
 </html>
