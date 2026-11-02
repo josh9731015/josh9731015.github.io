@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>電商轉換漏斗分析</title>
 <meta name="description" content="余家丞的自學專案：以 BigQuery SQL 分析 Google GA4 電商範例資料的購買漏斗，並檢查事件追蹤的資料品質。">
+<script>/* 預設顯示簡報（Josh 2026-11-02）；網址 ?view=report 才顯示報告。在這裡先加 class，避免載入時先閃一下報告 */
+if (new URLSearchParams(location.search).get('view') !== 'report') document.documentElement.classList.add('view-slides');</script>
 <style>
   /* 顏色一律用變數，深色模式換一組 */
   :root {
@@ -138,6 +140,198 @@
   /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
   /* i18n:end */
+  /* ===== 報告／簡報 切換（2026-11-02 新增；中英文都有，英文投影片在 template#deck-en） ===== */
+  .top-ctrls { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; gap: 8px; align-items: center; }
+  .top-ctrls .lang-switch { position: static; }
+  .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+  .view-switch button { font: inherit; font-size: 15px; line-height: 1.3; padding: 5px 12px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; min-height: 36px; }
+  .view-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+  @media (max-width: 600px) { main { padding-top: 64px; } }  /* 手機：右上兩個切換鈕下方留空，不貼到標籤 */
+  html.view-slides body { overflow: hidden; }
+  html.view-slides main { display: none; }
+  html.view-slides .top-ctrls { position: fixed; }
+  #deck[hidden] { display: none; }
+  #deck .stage { position: fixed; inset: 0 0 56px 0; display: grid; place-items: center; padding-top: 52px; }
+  #deck .slide { display: none; width: min(94vw, calc((100vh - 128px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.06); overflow: hidden; }
+  #deck .slide.on { display: block; }
+  html[lang="en"] #deck .sl { font-size: 1.45cqw; line-height: 1.5; }  /* 英文句子較長，字級小一點才放得下 */
+  /* 投影片內尺寸一律用 em，跟著 .sl 的字級（＝投影片寬度的 1.6%）等比例縮放 */
+  #deck .sl { height: 100%; display: flex; flex-direction: column; padding: 2.4em 3em; font-size: 1.6cqw; line-height: 1.55; }
+  #deck h2 { font-size: 1.9em; line-height: 1.3; margin: 0 0 .2em; padding: 0; border: 0; }
+  #deck .sub { display: block; color: var(--ink-2); font-size: 1.05em; margin: 0 0 1em; white-space: normal; }
+  #deck .note { color: var(--ink-3); font-size: .82em; margin: .6em 0 0; }
+  /* 封面 */
+  #deck .cover { justify-content: center; }
+  #deck .kicker { color: var(--ink-2); font-size: .95em; margin: 0 0 .4em; }
+  #deck .cover h1 { font-size: 3.2em; line-height: 1.15; margin: 0 0 .35em; }
+  #deck .lead { font-size: 1.35em; margin: 0 0 1em; }
+  #deck .chips { display: flex; flex-wrap: wrap; gap: .5em; margin: 0 0 1.6em; }
+  #deck .chips span { border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: .15em .8em; font-size: .9em; font-weight: 600; }
+  #deck .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8em; margin: 0 0 1.4em; }
+  #deck .roles div { border: 1px solid var(--line); border-radius: .6em; padding: .6em .9em; }
+  #deck .roles b { display: block; }
+  #deck .roles span { color: var(--ink-2); font-size: .92em; }
+  #deck .foot { color: var(--ink-2); font-size: .9em; margin: 0; }
+  /* 截圖＋直式流程：藍底＝AI，灰框＝程式 */
+  #deck .fnline { margin: 0 0 .9em; font-size: .95em; color: var(--ink-2); }
+  #deck .fnline b { color: var(--ink); }
+  #deck .shotrow { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.6em; align-items: center; flex: 1; min-height: 0; }
+  #deck .imgbox { min-height: 0; height: 100%; display: flex; align-items: center; }
+  #deck .imgbox img { width: 100%; max-height: 100%; object-fit: contain; object-position: top; border: 1px solid var(--line); border-radius: .5em; display: block; }
+  #deck .vpipe { display: flex; flex-direction: column; gap: .6em; }
+  #deck .vpipe .st { position: relative; border-radius: .5em; padding: .35em .8em; font-size: .92em; }
+  #deck .vpipe .st + .st::before { content: "↓"; position: absolute; top: -1.15em; left: 1.2em; color: var(--ink-3); font-size: .8em; }
+  #deck .vpipe .st small { display: block; color: var(--ink-2); font-size: .85em; line-height: 1.4; }
+  #deck .st.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .st.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .st.io { background: var(--bg); border: 1px dashed var(--ink-3); }
+  #deck .lg { font-size: .85em; color: var(--ink-2); margin: 0 0 .7em; }
+  #deck .lg i { display: inline-block; width: 1em; height: .8em; border-radius: .2em; vertical-align: -.05em; margin: 0 .3em 0 .9em; }
+  #deck .lg i:first-child { margin-left: 0; }
+  #deck .lg i.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .lg i.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .lg i.t { background: var(--accent); }
+  #deck .callout { margin: .9em 0 0; font-size: .88em; background: var(--warn-soft); color: var(--warn-ink); border-radius: .5em; padding: .5em .8em; }
+  /* 發現頁：左圖右文 */
+  #deck .two { display: grid; grid-template-columns: 1.25fr 1fr; gap: 2em; align-items: center; flex: 1; min-height: 0; }
+  #deck .ct { font-size: .85em; color: var(--ink-2); font-weight: 600; margin: 0 0 .6em; }
+  #deck .side p { margin: 0 0 .8em; font-size: .95em; }
+  #deck .side blockquote { margin: 0 0 .8em; border-left: .2em solid var(--accent); padding: .2em 0 .2em .8em; font-style: italic; color: var(--ink-2); font-size: .9em; }
+  #deck .side blockquote span { display: block; font-style: normal; color: var(--ink); margin-top: .2em; }
+  #deck .hb .r { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; align-items: center; font-size: .88em; padding: .12em 0; }
+  #deck .hb .r span { text-align: right; color: var(--ink-2); }
+  #deck .hb .r i { display: block; height: .9em; background: var(--mute); border-radius: 0 .2em .2em 0; }
+  #deck .hb .r b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  #deck .hb .r.hi span, #deck .hb .r.hi b { color: var(--ink); font-weight: 700; }
+  #deck .hb .r.hi i { background: var(--accent); }
+  #deck .hb .ax { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; font-size: .88em; }
+  #deck .hb .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
+  #deck .hb .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); }
+  #deck .hb .axt { text-align: center; font-size: .78em; color: var(--ink-3); margin: 0; padding-left: 8.5em; }
+  html[lang="en"] #deck .hb .r, html[lang="en"] #deck .hb .ax { grid-template-columns: 12.5em 1fr 3.4em; }  /* 英文類別名稱較長，不要擠成兩行 */
+  html[lang="en"] #deck .hb .axt { padding-left: 12.5em; }
+  #deck .vb .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
+  #deck .vb .cols > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
+  #deck .vb .area b { font-variant-numeric: tabular-nums; margin-bottom: .2em; }
+  #deck .vb .area i { display: block; width: 65%; background: var(--mute); border-radius: .25em .25em 0 0; }
+  #deck .vb .hi .area i { background: var(--accent); }  /* 重點用藍色，跟第 4 頁一致 */
+  #deck .vb .cols > div > span { font-size: .88em; margin-top: .4em; }
+  #deck .vb .cols small { display: block; color: var(--ink-3); font-size: .9em; }
+  /* 6 道檢查 */
+  #deck .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9em; flex: 1; align-content: center; }
+  #deck .checks > div { border-top: .22em solid var(--accent); background: var(--bg); border-radius: .4em; padding: .7em .9em; display: flex; flex-direction: column; }
+  #deck .checks b { font-size: 1.08em; margin-bottom: .2em; }
+  #deck .checks span { color: var(--ink-2); font-size: .9em; flex: 1; }
+  #deck .checks em { font-style: normal; font-size: .85em; margin-top: .5em; padding: .3em .55em; border-radius: .35em; background: var(--warn-soft); color: var(--warn-ink); }
+  #deck .checks em.lim { background: transparent; color: var(--ink-3); padding-left: 0; }
+  /* 成績：進度條（灰色底條＝100%，填滿＝比例，紅虛線＝90% 門檻）；調查是「跑幾次全過」不是比例，只寫文字 */
+  #deck .bars { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .bars .r { display: grid; grid-template-columns: 15em 1fr; gap: 1.2em; align-items: center; padding: .5em 0; border-bottom: 1px solid var(--line); }
+  #deck .bars .nm { text-align: right; font-weight: 600; }
+  #deck .bars .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: .78em; line-height: 1.35; }
+  #deck .bars .b { display: flex; align-items: center; gap: .7em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.7em; }
+  #deck .bars .trk { position: relative; flex: none; width: 45%; height: 1em; background: var(--card); border: 1px solid var(--ink-3); border-radius: .25em; }  /* 空心外框＝100%，不用淺灰底（會跟驗證集的灰色混淆） */
+  #deck .bars .trk i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .25em; }
+  #deck .bars .trk u { position: absolute; left: 90%; top: -.3em; bottom: -.3em; border-left: 2px dashed var(--neg); }
+  #deck .bars .b.v i { background: var(--ink-3); }
+  #deck .bars .b.t i { background: var(--accent); }
+  #deck .bars .b.t.miss em { font-style: normal; color: var(--neg); font-weight: 600; }  /* 未達門檻：長條維持測試集的藍色，只把說明文字標紅（顏色只代表一件事） */
+  #deck .bars .b.none { color: var(--ink-2); }  /* 沒有數據：同樣字體，只用灰色區分（不用斜體，格式跟其他行一致） */
+  #deck .bars .txt { font-size: .88em; line-height: 1.7; }
+  #deck .bars .note { margin-top: .8em; }
+  #deck .lg i.v { background: var(--ink-3); }
+  /* 信賴區間圖：刻度 60%～100%，left 換算＝(值 − 60) ÷ 40 */
+  #deck .ci { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .ci .r { display: grid; grid-template-columns: 13em 1fr; gap: 1.2em; align-items: center; margin: .8em 0; }
+  #deck .ci .nm b { display: block; }
+  #deck .ci .nm span { color: var(--ink-2); font-size: .88em; }
+  #deck .ci .tr { position: relative; height: 3.2em; }
+  #deck .ci .line { position: absolute; top: 1.1em; height: .5em; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: .25em; }
+  #deck .ci .pt { position: absolute; top: .85em; width: 1em; height: 1em; margin-left: -.5em; border-radius: 50%; background: var(--accent); }
+  #deck .ci .lab { position: absolute; top: .95em; font-size: .82em; color: var(--ink-2); white-space: nowrap; }
+  #deck .ci .lab.lo { transform: translateX(calc(-100% - .5em)); }
+  #deck .ci .lab.hi { transform: translateX(.5em); }
+  #deck .ci .th { position: absolute; top: -.3em; bottom: -.3em; width: 0; border-left: 2px dashed var(--neg); }
+  #deck .ci .axis { position: relative; height: 1.6em; margin-left: 14.2em; border-top: 1px solid var(--ink-3); color: var(--ink-3); }
+  #deck .ci .axis span { position: absolute; top: .2em; transform: translateX(-50%); font-size: .8em; }
+  #deck .take { margin: 1.4em 0 0; background: var(--accent-soft); border-radius: .5em; padding: .6em 1em; }
+  /* 下一步 */
+  #deck .nexts { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; flex: 1; align-content: center; }
+  #deck .nexts > div { border: 1px solid var(--line); border-radius: .6em; padding: .8em 1em; }
+  #deck .nexts b { display: block; font-size: 1.1em; color: var(--accent); margin-bottom: .2em; }
+  #deck .nexts span { color: var(--ink-2); font-size: .93em; }
+  /* 下方導覽列 */
+  #deck .deck-nav { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; justify-content: center; align-items: center; gap: 18px; background: var(--bg); }
+  #deck .deck-nav button { font: inherit; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  #deck .deck-nav button:disabled { opacity: .35; cursor: default; }
+  #deck .deck-nav .count { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; min-width: 4.5em; text-align: center; }
+  /* 手機直向：16:9 縮到手機寬會看不清，改成整頁寬、可上下捲的卡片，多欄改單欄 */
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .stage { display: block; overflow-y: auto; padding: 60px 0 8px; }
+    #deck .slide { width: 100%; aspect-ratio: auto; border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
+    #deck .sl { font-size: 15px; padding: 22px 18px 26px; height: auto; }
+    #deck .cover { min-height: calc(100vh - 140px); }
+    #deck .cover h1 { font-size: 2.3em; }
+    #deck .roles, #deck .checks, #deck .shotrow, #deck .two, #deck .nexts { grid-template-columns: 1fr; }
+    #deck .imgbox { height: auto; }
+    #deck .hb .r { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .ax { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .axt { padding-left: 8.6em; }
+    #deck .vb .area { height: 10em; }
+    #deck .bars .r { grid-template-columns: 1fr; gap: .2em; }
+    #deck .bars .nm { text-align: left; }
+    #deck .ci .r { grid-template-columns: 1fr; gap: .3em; }
+    #deck .ci .axis { margin-left: 0; }
+    #deck .ci .tr, #deck .ci .axis { margin-right: 2.8em; margin-left: 2.8em; }  /* 區間兩端的數字標籤放在線段外，左右要留位置 */
+  }
+  /* ===== GA4 簡報專用元件（2026-11-02） ===== */
+  #deck .fun .fr { display: grid; grid-template-columns: 7em 1fr 4.2em; gap: .7em; align-items: center; }
+  #deck .fun .fr > span:first-child { text-align: right; font-weight: 600; }
+  #deck .fun .bar { display: block; height: 1.5em; }
+  #deck .fun .bar i { display: block; height: 100%; background: var(--mute); border-radius: 0 .25em .25em 0; }
+  #deck .fun .fr b { font-variant-numeric: tabular-nums; }
+  #deck .fun .fc { padding: .25em 0 .25em 7.7em; font-size: .9em; color: var(--ink-2); }
+  #deck .fun .fc.hi { color: var(--accent); font-weight: 700; }
+  #deck .checks.c3 > div { padding: .9em 1em; }
+  #deck .lc { width: 100%; height: auto; display: block; }
+  #deck .lc .grid line { stroke: var(--line); stroke-width: 1; }
+  #deck .lc text { font-size: 16px; fill: var(--ink-3); }
+  #deck .lc .ylab text { text-anchor: end; }
+  #deck .lc .xlab text, #deck .lc .xt, #deck .lc .val text { text-anchor: middle; }
+  #deck .lc .val text { fill: var(--ink); font-weight: 600; }
+  #deck .lc .val text.v2 { fill: var(--ink-3); }
+  #deck .lc .ln { fill: none; stroke: var(--accent); stroke-width: 3; }
+  #deck .lc .ln2 { fill: none; stroke: var(--ink-3); stroke-width: 3; }
+  #deck .lc .pt circle { fill: var(--accent); }
+  #deck .lc .avg { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  #deck .lc .avgt { text-anchor: end; font-size: 15px; }
+  #deck table.seg { width: 100%; border-collapse: collapse; font-size: .9em; margin: 0 0 .8em; }
+  #deck table.seg th { text-align: left; white-space: nowrap; color: var(--ink-2); font-weight: 600; padding: .4em .8em .4em 0; vertical-align: top; border-bottom: 1px solid var(--line); font-size: 1em; }
+  #deck table.seg td { padding: .4em 0; border-bottom: 1px solid var(--line); }
+  #deck table.seg tr.hi td b { color: var(--accent); }
+  #deck .cost .r { display: grid; grid-template-columns: 11em 1fr; gap: 1em; align-items: center; padding: .5em 0; border-bottom: 1px solid var(--line); }
+  #deck .cost .r > span { text-align: right; font-weight: 600; font-size: .92em; }
+  #deck .cost .r small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
+  #deck .cost .b { display: flex; align-items: center; gap: .6em; font-size: .88em; min-height: 1.6em; font-variant-numeric: tabular-nums; }
+  #deck .cost .b .trk { flex: none; width: 72%; }
+  #deck .cost .b i { display: block; height: .95em; border-radius: 0 .25em .25em 0; }
+  #deck .cost .b { white-space: nowrap; }
+  #deck .cost .b.v i { background: var(--ink-3); }
+  #deck .cost .b.t i { background: var(--accent); }
+  #deck .cost .ax { display: grid; grid-template-columns: 11em 1fr; gap: 1em; font-size: .88em; }
+  #deck .cost .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); width: 72%; }
+  #deck .cost .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); white-space: nowrap; }
+  #deck .cost .r > div { margin-right: 0; }
+  html[lang="en"] #deck .fun .fr { grid-template-columns: 8.5em 1fr 4.2em; }
+  html[lang="en"] #deck .fun .fc { padding-left: 9.2em; }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .cost .r, #deck .cost .ax { grid-template-columns: 1fr; }
+    #deck .cost .r > span { text-align: left; }
+    #deck .fun .fr { grid-template-columns: 6.5em 1fr 3.8em; }
+    #deck .fun .fc { padding-left: 7.2em; }
+  }
 </style>
 <!-- i18n:start --><script>
 // 預設中文；若上次選英文，先把內容藏起來，避免中文閃一下才換成英文
@@ -145,12 +339,15 @@
 </script><!-- i18n:end -->
 </head>
 <body>
+<div class="top-ctrls">
+<div class="view-switch" role="group" aria-label="檢視模式"><button type="button" data-view="report" aria-pressed="false">報告</button><button type="button" data-view="slides" aria-pressed="true">簡報</button></div>
 <!-- i18n:start --><div class="lang-switch">
   <select id="lang-select" aria-label="語言 Language">
     <option value="zh">繁體中文 Traditional Chinese</option>
     <option value="en">英文 English</option>
   </select>
 </div><!-- i18n:end -->
+</div>
 <main>
 
 <header>
@@ -500,6 +697,304 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </footer>
 
 </main>
+
+<!-- 簡報模式（2026-11-02）：照面試大方向題排，一頁一題。第 4、5 頁是新跑的查詢（ecommerce-data-science/bigquery/sql/120～126，結果在 results/），報告正文沒有 -->
+<div id="deck" hidden>
+<div class="stage">
+
+<section class="slide" aria-label="第 1 頁"><div class="sl cover">
+  <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
+  <h1>電商轉換漏斗分析</h1>
+  <p class="lead">網站訪客在購買流程的哪一步流失最多？<b>用 BigQuery SQL 找答案，並先檢查資料可不可信</b></p>
+  <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>非等值 JOIN</span><span>分區／叢集</span></div>
+  <div class="roles">
+    <div><b>45,107 人</b><span>看過商品</span></div>
+    <div><b>2,755 人</b><span>依序完成看商品→加購→結帳→購買</span></div>
+    <div><b>6.11%</b><span>整體轉換率（2,755 ÷ 45,107）</span></div>
+  </div>
+  <p class="foot">資料：Google 官方 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-26～2021-01-31）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
+</div></section>
+
+<section class="slide" aria-label="第 2 頁"><div class="sl">
+  <h2>哪一步流失最多</h2>
+  <span class="sub">「看商品→加入購物車」轉換率 26.6%，是三個轉換中最低的</span>
+  <div class="two">
+    <div class="fun" aria-label="四步漏斗人數">
+      <p class="ct">每一步的人數（長條長度＝人數）</p>
+      <div class="fr"><span>看商品</span><span class="bar"><i style="width:100%"></i></span><b>45,107</b></div>
+      <div class="fc hi">↓ 26.6%（流失 33,091 人）</div>
+      <div class="fr"><span>加入購物車</span><span class="bar"><i style="width:26.6%"></i></span><b>12,016</b></div>
+      <div class="fc">↓ 40.0%（流失 7,214 人）</div>
+      <div class="fr"><span>開始結帳</span><span class="bar"><i style="width:10.6%"></i></span><b>4,802</b></div>
+      <div class="fc">↓ 57.4%（流失 2,047 人）</div>
+      <div class="fr"><span>購買</span><span class="bar"><i style="width:6.1%"></i></span><b>2,755</b></div>
+    </div>
+    <div class="side">
+      <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
+      <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數本來就最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
+      <p><b>換算法也不變：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 3 頁"><div class="sl">
+  <h2>數字可信嗎</h2>
+  <span class="sub">算漏斗之前先檢查資料，3 個發現改變了算法</span>
+  <div class="checks c3">
+    <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不可能是沒人加購</span><em>做法：分析期間改從 11-26 開始（共 67 天）</em></div>
+    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，高低倒過來</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，所以後兩步誰高誰低只當初步結果</em></div>
+    <div><b>同一時間的兩個事件</b><span>6,569 人的「看商品」和「加購」時間完全相同：GA4 把同一批送出的事件記成同一個時間，分不出先後</span><em>做法：同時發生也算有照順序；否則會少算 481 位加購者</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 4 頁"><div class="sl">
+  <h2>26.6% 算低嗎</h2>
+  <span class="sub">沒有同業基準，無法單看 26.6% 說高低；跟自己比：年底購物季每週約 34%～37%，1 月下旬只剩約 18%；裝置、進站來源之間幾乎沒差</span>
+  <div class="two">
+    <div>
+      <p class="ct">每週「看商品→加購」比例（當週看過商品的人中，1 天內加購的比例；10 週合計 26.5%，跟 26.6% 幾乎相同；第一週只有 11/26～11/29 四天）</p>
+      <svg class="lc" viewBox="0 0 600 250" role="img" aria-label="每週看商品後加購的比例，從 36.8% 降到 17.7%">
+        <g class="grid"><line x1="50" x2="590" y1="210" y2="210"/><line x1="50" x2="590" y1="160" y2="160"/><line x1="50" x2="590" y1="110" y2="110"/><line x1="50" x2="590" y1="60" y2="60"/><line x1="50" x2="590" y1="10" y2="10"/></g>
+        <g class="ylab"><text x="42" y="214">0%</text><text x="42" y="164">10%</text><text x="42" y="114">20%</text><text x="42" y="64">30%</text><text x="42" y="14">40%</text></g>
+        <line class="avg" x1="50" x2="590" y1="77.5" y2="77.5"/><text class="avgt" x="588" y="72">合計 26.5%</text>
+        <polyline class="ln" points="75,26 130,37 185,41 240,61 295,89.5 350,104 405,100 460,96.5 515,119.5 570,121.5"/>
+        <g class="pt"><circle cx="75" cy="26" r="4"/><circle cx="130" cy="37" r="4"/><circle cx="185" cy="41" r="4"/><circle cx="240" cy="61" r="4"/><circle cx="295" cy="89.5" r="4"/><circle cx="350" cy="104" r="4"/><circle cx="405" cy="100" r="4"/><circle cx="460" cy="96.5" r="4"/><circle cx="515" cy="119.5" r="4"/><circle cx="570" cy="121.5" r="4"/></g>
+        <g class="val"><text x="75" y="18">36.8</text><text x="130" y="29">34.6</text><text x="185" y="33">33.8</text><text x="240" y="53">29.8</text><text x="295" y="108">24.1</text><text x="350" y="122">21.2</text><text x="405" y="118">22.0</text><text x="460" y="88">22.7</text><text x="515" y="137">18.1</text><text x="570" y="139">17.7</text></g>
+        <g class="xlab"><text x="75" y="232">11/26</text><text x="130" y="232">11/30</text><text x="185" y="232">12/7</text><text x="240" y="232">12/14</text><text x="295" y="232">12/21</text><text x="350" y="232">12/28</text><text x="405" y="232">1/4</text><text x="460" y="232">1/11</text><text x="515" y="232">1/18</text><text x="570" y="232">1/25</text></g>
+        <text class="xt" x="320" y="248">每週第一天（2020/11/26～2021/1/31）</text>
+      </svg>
+    </div>
+    <div class="side">
+      <p class="ct">分群比較（整段期間，算法同 26.6%）</p>
+      <table class="seg">
+        <tr><th>裝置</th><td>電腦 26.4%｜手機 27.0%｜平板 25.7%</td></tr>
+        <tr><th>進站來源</th><td>自然搜尋 25.3%｜直接進站 26.9%｜其他網站連結 27.9%｜付費廣告 25.1%</td></tr>
+        <tr class="hi"><th>新舊訪客</th><td>新訪客 25.8%｜<b>舊訪客 38.2%</b></td></tr>
+      </table>
+      <p>差異最大的是<b>時間</b>和<b>新舊訪客</b>；舊訪客（資料裡沒有「第一次造訪」紀錄，代表 11/1 資料開始前就來過網站）加購比例高很多，但只佔看商品者的 7.1%</p>
+      <p class="note">進站來源另有兩類是匿名化後的替代值，不列入</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 5 頁"><div class="sl">
+  <h2>1 月為什麼下滑</h2>
+  <span class="sub">後兩步在 1 月下旬都回到年底水準，只有「看商品→加購」沒有回來；也沒有加購漏記變多的跡象，比較像來逛的人購買意願變低</span>
+  <div class="two">
+    <div>
+      <p class="ct">每週後兩步的轉換率（當週人數相除）</p>
+      <p class="lg"><i class="t"></i>加購→結帳 <i class="v"></i>結帳→購買</p>
+      <svg class="lc" viewBox="0 0 600 236" role="img" aria-label="每週加購到結帳、結帳到購買的轉換率，沒有一路下滑">
+        <g class="grid"><line x1="50" x2="590" y1="200" y2="200"/><line x1="50" x2="590" y1="152" y2="152"/><line x1="50" x2="590" y1="104" y2="104"/><line x1="50" x2="590" y1="56" y2="56"/></g>
+        <g class="ylab"><text x="42" y="204">0%</text><text x="42" y="156">20%</text><text x="42" y="108">40%</text><text x="42" y="60">60%</text></g>
+        <polyline class="ln" points="75,58.3 130,66.3 185,54.6 240,79.8 295,94.0 350,101.8 405,111.4 460,96.3 515,58.1 570,68.7"/>
+        <polyline class="ln2" points="75,108.7 130,99.4 185,82.6 240,65.8 295,64.6 350,73.2 405,86.7 460,84.5 515,67.7"/>
+        <g class="val"><text x="75" y="48">59.0</text><text x="405" y="130">36.9</text><text x="515" y="48">59.1</text><text class="v2" x="75" y="128">38.0</text><text class="v2" x="295" y="56">56.4</text><text class="v2" x="515" y="86">55.1</text></g>
+        <g class="xlab"><text x="75" y="222">11/26</text><text x="185" y="222">12/7</text><text x="295" y="222">12/21</text><text x="405" y="222">1/4</text><text x="515" y="222">1/18</text></g>
+      </svg>
+      <p class="note">橫軸是每週第一天；最後一週（1/25 起）購買紀錄異常少（99 人），原因不明，「結帳→購買」未畫入</p>
+    </div>
+    <div class="side">
+      <p><b>後兩步：</b>「加購→結帳」從年底約 60% 降到 1 月初 37%，1 月下旬回到 55%～59%；「結帳→購買」每週都在 38%～56%</p>
+      <p><b>加購漏記沒有變多：</b>「開始結帳、但之前沒有加購紀錄」的人，1 月下旬佔 23%～26%，沒有比年底的 26%～34% 高</p>
+      <p><b>逛得比較少：</b>每人每天看的商品頁從 12 月初約 6 頁，降到 1 月下旬約 3.5～4 頁；1 月下旬看商品的人比上旬多約 35%，加購的人只多約 8%，新增的訪客比較少加購</p>
+      <p><b>裝置、進站來源的組成沒變</b>（自然搜尋每週都佔 34%～36%），各裝置、各來源都一起下滑；新增的訪客從哪來，這份資料看不出</p>
+      <p><b>推測：</b>年底送禮需求結束。資料只有一個年底，無法跟去年同期比，未證實</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 6 頁"><div class="sl">
+  <h2>建議做什麼</h2>
+  <span class="sub">先改哪裡 → 先從誰開始 → 怎麼驗證 → 怎麼避免資料出錯</span>
+  <div class="nexts">
+    <div><b>① 先改善「看商品→加購」</b><span>轉換率最低的一步；每提升 1 個百分點，約多 450 人加購（45,107 × 1%），若後兩步轉換率不變，約多 100 筆購買</span></div>
+    <div><b>② 先從新訪客下手</b><span>新訪客佔看商品者 93%，加購比例 25.8%，比舊訪客的 38.2% 低很多，改善空間最大；但舊訪客本來就比較想買，改版對新訪客有沒有效要靠 ③ 驗證</span></div>
+    <div><b>③ 改版前先做 A/B 測試</b><span>要看出加購比例從 26.6% 升到 28.6%（多 2 個百分點），每組約需 7,800 人；以這個網站的流量約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
+    <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件掉到 0 就發警示；11 月加購有 18 天沒紀錄，有監控的話當天就能發現</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 7 頁"><div class="sl">
+  <h2>查詢成本控制</h2>
+  <span class="sub">BigQuery 依處理量計費：篩選條件用哪個欄位，就用那個欄位分區或叢集，處理量可減少約 90%；資料到 TB 級時，少讀 90% 就等於費用少 90%</span>
+  <div class="two">
+    <div class="cost" aria-label="一般表與分區、叢集表的處理量比較">
+      <p class="ct">同一份資料（4,295,584 列）建成三種表，比較處理量</p>
+      <p class="lg"><i class="v"></i>一般表 <i class="t"></i>依篩選欄位整理後的表（查詢 A 用分區表、查詢 B 用叢集表）</p>
+      <div class="r"><span>查詢 A：只查 7 天<small>依日期分區</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
+      <div class="r"><span>查詢 B：只查購買事件<small>依事件名稱叢集</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:33.3%">50</s><s style="left:66.7%">100</s><s style="left:100%">150 MB</s></div></div>
+    </div>
+    <div class="side">
+      <p><b>原始資料一天一張表，本身就等於按日期分好：</b>用表名（_TABLE_SUFFIX）篩日期只處理 8.75 MB（自建分區表的 12.13 MB 是多讀了日期欄）；用表內的日期欄位篩則處理 125.66 MB（推測 92 張表全部讀取）</p>
+      <p><b>叢集要執行後才看得到：</b>查詢 B 執行前報價仍是 138.05 MB，實際只處理 13.76 MB</p>
+      <p><b>習慣：</b>每次先報價（dry run）再執行，並設定單次處理上限 2 GB，避免一次掃描整個資料集</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 8 頁"><div class="sl">
+  <h2>下一步</h2>
+  <span class="sub">要再往下追，需要的資料</span>
+  <div class="nexts">
+    <div><b>1 月下滑是季節還是網站問題</b><span>第 5 頁：拿去年同期資料比較（這份資料只有 3 個月）；同時對照 1 月有沒有改版或行銷活動</span></div>
+    <div><b>33,091 人卡在商品頁哪裡</b><span>第 2 頁：需要商品頁的互動事件（選尺寸、查庫存、看評價），找出看了沒加購的人停在哪個環節</span></div>
+    <div><b>哪類商品最需要改善</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
+    <div><b>舊訪客為什麼加購比較多</b><span>第 4 頁：比較新舊訪客看的商品和進站來源，找出新訪客可以學的地方</span></div>
+  </div>
+</div></section>
+
+</div>
+<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 8</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
+</div>
+
+<!-- 簡報英文版（2026-11-02）：對應上方中文 8 頁，術語照 TRANSLATION_REVIEW_SPEC（view item → add to cart → begin checkout → purchase）；改中文要同步改這裡 -->
+<template id="deck-en">
+<section class="slide" aria-label="Slide 1"><div class="sl cover">
+  <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
+  <h1>E-commerce Conversion Funnel</h1>
+  <p class="lead">At which step of the purchase flow do site visitors drop off most? <b>Answered with BigQuery SQL, after first checking whether the data can be trusted</b></p>
+  <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>Non-equi JOIN</span><span>Partitioning / clustering</span></div>
+  <div class="roles">
+    <div><b>45,107 users</b><span>viewed an item</span></div>
+    <div><b>2,755 users</b><span>went view item → add to cart → begin checkout → purchase in order</span></div>
+    <div><b>6.11%</b><span>overall conversion rate (2,755 ÷ 45,107)</span></div>
+  </div>
+  <p class="foot">Data: Google's official GA4 e-commerce sample dataset (Google Merchandise Store, 2020-11-26 to 2021-01-31); partly obfuscated, so the numbers are not real business results. SQL written with help from Claude Code; scope and presentation decided by me, every query reviewed step by step</p>
+</div></section>
+
+<section class="slide" aria-label="Slide 2"><div class="sl">
+  <h2>Where users drop off most</h2>
+  <span class="sub">"View item → add to cart" converts at 26.6%, the lowest of the three conversions</span>
+  <div class="two">
+    <div class="fun" aria-label="Users at each funnel step">
+      <p class="ct">Users at each step (bar length = number of users)</p>
+      <div class="fr"><span>View item</span><span class="bar"><i style="width:100%"></i></span><b>45,107</b></div>
+      <div class="fc hi">↓ 26.6% (33,091 users lost)</div>
+      <div class="fr"><span>Add to cart</span><span class="bar"><i style="width:26.6%"></i></span><b>12,016</b></div>
+      <div class="fc">↓ 40.0% (7,214 users lost)</div>
+      <div class="fr"><span>Begin checkout</span><span class="bar"><i style="width:10.6%"></i></span><b>4,802</b></div>
+      <div class="fc">↓ 57.4% (2,047 users lost)</div>
+      <div class="fr"><span>Purchase</span><span class="bar"><i style="width:6.1%"></i></span><b>2,755</b></div>
+    </div>
+    <div class="side">
+      <p><b>Conversion rate</b> = users reaching this step ÷ users reaching the previous step; each step must happen after the previous one</p>
+      <p><b>Judged by conversion rate, not users lost:</b> the first step has the most users, so it naturally loses the most; but its 26.6% rate is also far below the next two steps' 40.0% and 57.4%</p>
+      <p><b>Holds under other definitions:</b> limiting each step to 30 minutes, 1 day or 7 days, or adding back users who checked out with no add-to-cart record as untracked (max 29.2%), it stays the lowest</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 3"><div class="sl">
+  <h2>Can the numbers be trusted?</h2>
+  <span class="sub">I checked the data before building the funnel; 3 findings changed how it is calculated</span>
+  <div class="checks c3">
+    <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the analysis period starts Nov 26 (67 days)</em></div>
+    <div><b>Steps must be in order</b><span>Counting anyone who did a step at some point, "add to cart → begin checkout" (54.1%) beats "begin checkout → purchase" (51.5%); requiring each step to follow the previous one gives 40.0% vs. 57.4%, flipping the ranking</span><em>Action: always count in order (SQL: CTEs chained step by step + non-equi JOIN); but 1,639 users checked out with no add-to-cart record, possibly untracked, so the ranking of the last two steps is only preliminary</em></div>
+    <div><b>Two events at the same time</b><span>For 6,569 users, "view item" and "add to cart" have identical timestamps: GA4 gives events sent in one batch the same timestamp, so their order is unknown</span><em>Action: same-time events count as in order; otherwise 481 add-to-cart users would be missed</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 4"><div class="sl">
+  <h2>Is 26.6% low?</h2>
+  <span class="sub">With no industry benchmark, 26.6% alone can't be called high or low; compared over time: about 34%–37% weekly in the holiday season, only about 18% in late January; little difference across devices or sources</span>
+  <div class="two">
+    <div>
+      <p class="ct">Weekly "view item → add to cart" rate (share of the week's item viewers who added to cart within 1 day; 26.5% over all 10 weeks, almost the same as 26.6%; the first week has only 4 days, 11/26–11/29)</p>
+      <svg class="lc" viewBox="0 0 600 250" role="img" aria-label="Weekly view-to-cart rate falling from 36.8% to 17.7%">
+        <g class="grid"><line x1="50" x2="590" y1="210" y2="210"/><line x1="50" x2="590" y1="160" y2="160"/><line x1="50" x2="590" y1="110" y2="110"/><line x1="50" x2="590" y1="60" y2="60"/><line x1="50" x2="590" y1="10" y2="10"/></g>
+        <g class="ylab"><text x="42" y="214">0%</text><text x="42" y="164">10%</text><text x="42" y="114">20%</text><text x="42" y="64">30%</text><text x="42" y="14">40%</text></g>
+        <line class="avg" x1="50" x2="590" y1="77.5" y2="77.5"/><text class="avgt" x="588" y="72">All weeks 26.5%</text>
+        <polyline class="ln" points="75,26 130,37 185,41 240,61 295,89.5 350,104 405,100 460,96.5 515,119.5 570,121.5"/>
+        <g class="pt"><circle cx="75" cy="26" r="4"/><circle cx="130" cy="37" r="4"/><circle cx="185" cy="41" r="4"/><circle cx="240" cy="61" r="4"/><circle cx="295" cy="89.5" r="4"/><circle cx="350" cy="104" r="4"/><circle cx="405" cy="100" r="4"/><circle cx="460" cy="96.5" r="4"/><circle cx="515" cy="119.5" r="4"/><circle cx="570" cy="121.5" r="4"/></g>
+        <g class="val"><text x="75" y="18">36.8</text><text x="130" y="29">34.6</text><text x="185" y="33">33.8</text><text x="240" y="53">29.8</text><text x="295" y="108">24.1</text><text x="350" y="122">21.2</text><text x="405" y="118">22.0</text><text x="460" y="88">22.7</text><text x="515" y="137">18.1</text><text x="570" y="139">17.7</text></g>
+        <g class="xlab"><text x="75" y="232">11/26</text><text x="130" y="232">11/30</text><text x="185" y="232">12/7</text><text x="240" y="232">12/14</text><text x="295" y="232">12/21</text><text x="350" y="232">12/28</text><text x="405" y="232">1/4</text><text x="460" y="232">1/11</text><text x="515" y="232">1/18</text><text x="570" y="232">1/25</text></g>
+        <text class="xt" x="320" y="248">First day of each week (2020/11/26 – 2021/1/31)</text>
+      </svg>
+    </div>
+    <div class="side">
+      <p class="ct">By segment (whole period, same definition as 26.6%)</p>
+      <table class="seg">
+        <tr><th>Device</th><td>Desktop 26.4% ｜ Mobile 27.0% ｜ Tablet 25.7%</td></tr>
+        <tr><th>Traffic source</th><td>Organic search 25.3% ｜ Direct 26.9% ｜ Referral 27.9% ｜ Paid ads 25.1%</td></tr>
+        <tr class="hi"><th>New vs. returning</th><td>New 25.8% ｜ <b>Returning 38.2%</b></td></tr>
+      </table>
+      <p>The biggest differences are by <b>time</b> and <b>new vs. returning</b>; returning visitors (no "first visit" record in the data, so they visited before the data starts on 11/1) add to cart far more, but are only 7.1% of item viewers</p>
+      <p class="note">Two other traffic-source values are obfuscated placeholders and are left out</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 5"><div class="sl">
+  <h2>Why January dropped</h2>
+  <span class="sub">By late January the two later steps were back to holiday levels, but "view item → add to cart" was not; with no sign of more untracked add-to-carts, visitors seem less inclined to buy</span>
+  <div class="two">
+    <div>
+      <p class="ct">Weekly conversion of the last two steps (weekly user counts divided)</p>
+      <p class="lg"><i class="t"></i>Add to cart → begin checkout <i class="v"></i>Begin checkout → purchase</p>
+      <svg class="lc" viewBox="0 0 600 236" role="img" aria-label="Weekly add-to-cart-to-checkout and checkout-to-purchase rates, which did not keep falling">
+        <g class="grid"><line x1="50" x2="590" y1="200" y2="200"/><line x1="50" x2="590" y1="152" y2="152"/><line x1="50" x2="590" y1="104" y2="104"/><line x1="50" x2="590" y1="56" y2="56"/></g>
+        <g class="ylab"><text x="42" y="204">0%</text><text x="42" y="156">20%</text><text x="42" y="108">40%</text><text x="42" y="60">60%</text></g>
+        <polyline class="ln" points="75,58.3 130,66.3 185,54.6 240,79.8 295,94.0 350,101.8 405,111.4 460,96.3 515,58.1 570,68.7"/>
+        <polyline class="ln2" points="75,108.7 130,99.4 185,82.6 240,65.8 295,64.6 350,73.2 405,86.7 460,84.5 515,67.7"/>
+        <g class="val"><text x="75" y="48">59.0</text><text x="405" y="130">36.9</text><text x="515" y="48">59.1</text><text class="v2" x="75" y="128">38.0</text><text class="v2" x="295" y="56">56.4</text><text class="v2" x="515" y="86">55.1</text></g>
+        <g class="xlab"><text x="75" y="222">11/26</text><text x="185" y="222">12/7</text><text x="295" y="222">12/21</text><text x="405" y="222">1/4</text><text x="515" y="222">1/18</text></g>
+      </svg>
+      <p class="note">X-axis: first day of each week; the last week (from 1/25) has unusually few purchases (99 users), cause unknown, so checkout → purchase is not plotted</p>
+    </div>
+    <div class="side">
+      <p><b>Later steps:</b> "add to cart → begin checkout" fell from about 60% to 37% by early January, then returned to 55%–59%; "begin checkout → purchase" stays at 38%–56% every week</p>
+      <p><b>No rise in untracked add-to-carts:</b> checkout users with no prior add-to-cart were 23%–26% in late January, no higher than the 26%–34% around the holidays</p>
+      <p><b>Less browsing:</b> item pages per person per day fell from about 6 (early Dec.) to about 3.5–4 (late Jan.); late January had about 35% more item viewers than early January but only about 8% more add-to-cart users</p>
+      <p><b>Device and traffic-source mix didn't change</b> (organic search is 34%–36% every week), and every device and source fell together; where the extra visitors came from can't be seen in this data</p>
+      <p><b>Hypothesis:</b> holiday gift demand ended. The data covers only one holiday season, so it can't be compared with the prior year; unproven</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 6"><div class="sl">
+  <h2>Recommendations</h2>
+  <span class="sub">Where to fix → whom to start with → how to verify → how to prevent data errors</span>
+  <div class="nexts">
+    <div><b>① Improve "view item → add to cart" first</b><span>The lowest-converting step; each 1 percentage point gained means about 450 more add-to-cart users (45,107 × 1%), or about 100 more purchases if the later steps hold</span></div>
+    <div><b>② Start with new visitors</b><span>New visitors are 93% of item viewers and add to cart at 25.8%, far below returning visitors' 38.2%, so the room to improve is largest; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
+    <div><b>③ A/B test before rolling out</b><span>To detect a rise from 26.6% to 28.6% (+2 percentage points), each group needs about 7,800 users, roughly 3–4 weeks of this site's traffic (5% significance level, 80% power)</span></div>
+    <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 7"><div class="sl">
+  <h2>Controlling query cost</h2>
+  <span class="sub">BigQuery bills by data processed: partitioning or clustering on the filter column can cut processing by about 90%; at terabyte scale, reading 90% less means paying 90% less</span>
+  <div class="two">
+    <div class="cost" aria-label="Data processed: regular table vs. partitioned or clustered table">
+      <p class="ct">Same data (4,295,584 rows) stored as three tables; data processed per query</p>
+      <p class="lg"><i class="v"></i>Regular table <i class="t"></i>Table organized by the filter column (A: partitioned, B: clustered)</p>
+      <div class="r"><span>Query A: 7 days only<small>partitioned by date</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
+      <div class="r"><span>Query B: purchase events only<small>clustered by event name</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:33.3%">50</s><s style="left:66.7%">100</s><s style="left:100%">150 MB</s></div></div>
+    </div>
+    <div class="side">
+      <p><b>The raw data is one table per day, which already splits it by date:</b> filtering dates by table name (_TABLE_SUFFIX) processes only 8.75 MB (the self-built partitioned table's 12.13 MB includes reading its date column); filtering by the date column inside the tables processes 125.66 MB (likely reading all 92 tables)</p>
+      <p><b>Clustering savings show only after running:</b> query B's dry-run estimate is still 138.05 MB, but only 13.76 MB is actually processed</p>
+      <p><b>Habit:</b> estimate every query with a dry run first, and cap each query at 2 GB to avoid accidentally scanning the whole dataset</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 8"><div class="sl">
+  <h2>Next steps</h2>
+  <span class="sub">Data needed to dig further</span>
+  <div class="nexts">
+    <div><b>Is January's drop seasonal or a site issue?</b><span>Slide 5: compare with the same period last year (this data covers only 3 months), and check for site changes or campaigns in January</span></div>
+    <div><b>Where on the product page do 33,091 users stall?</b><span>Slide 2: product-page interaction events (choosing a size, checking stock, reading reviews) would show where viewers who didn't add to cart stopped</span></div>
+    <div><b>Which product categories need work?</b><span>Category labels are inconsistent (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
+    <div><b>Why do returning visitors add to cart more?</b><span>Slide 4: compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
+  </div>
+</div></section>
+</template>
+
 <!-- i18n:start --><template id="main-en" data-title="E-commerce Conversion Funnel Analysis" data-desc="Jia Cheng Yu's self-directed project: analyzing the purchase funnel in Google's GA4 e-commerce sample data with BigQuery SQL and checking event-tracking data quality.">
 <header>
   <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
@@ -887,5 +1382,72 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   apply(initial(), true);
 })();
 </script><!-- i18n:end -->
+<script>
+// 報告／簡報切換：預設簡報，?view=report 開報告，#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
+(function () {
+  const html = document.documentElement, deck = document.getElementById('deck');
+  const stage = deck.querySelector('.stage');
+  let slides = [];
+  const prev = deck.querySelector('.prev'), next = deck.querySelector('.next'), count = deck.querySelector('.count');
+  const btns = document.querySelectorAll('.view-switch button');
+  let i = 0;
+  // 中英文兩組投影片：中文寫在 .stage 裡，英文在 template#deck-en；切換語言時整組替換，停在同一頁
+  const zhSlides = stage.innerHTML, enSlides = document.getElementById('deck-en').innerHTML;
+  const T = { zh: { report: '報告', slides: '簡報', group: '檢視模式', prev: '上一頁', next: '下一頁', nav: '簡報導覽' },
+              en: { report: 'Report', slides: 'Slides', group: 'View', prev: 'Previous slide', next: 'Next slide', nav: 'Slide navigation' } };
+  function render() {
+    const en = html.lang === 'en', w = T[en ? 'en' : 'zh'];
+    stage.innerHTML = en ? enSlides : zhSlides;
+    slides = [...stage.querySelectorAll('.slide')];
+    btns.forEach(b => { b.textContent = w[b.dataset.view]; });
+    document.querySelector('.view-switch').setAttribute('aria-label', w.group);
+    prev.setAttribute('aria-label', w.prev); next.setAttribute('aria-label', w.next);
+    deck.querySelector('.deck-nav').setAttribute('aria-label', w.nav);
+  }
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    count.textContent = `${i + 1} / ${slides.length}`;
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
+    stage.scrollTop = 0;
+    history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+  }
+  function setView(v, init) {
+    const on = v === 'slides';
+    html.classList.toggle('view-slides', on); deck.hidden = !on;
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === (on ? 'slides' : 'report'))));
+    if (init && !on) return;
+    const u = new URL(location.href);
+    if (on) u.searchParams.delete('view'); else { u.searchParams.set('view', 'report'); u.hash = ''; }   // 簡報是預設，網址不用帶參數；報告要帶 ?view=report，重新整理才會停在報告
+    history.replaceState(null, '', u);
+    if (on) go(parseInt(location.hash.slice(1), 10) - 1 || 0);
+  }
+  btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  document.addEventListener('keydown', e => {
+    if (deck.hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'Escape') setView('report');
+  });
+  // 手機左右滑：橫向位移明顯大於直向才換頁，避免跟上下捲動衝突
+  let x0 = null, y0 = null;
+  stage.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  });
+  // 網址的 #頁碼被改（手動輸入、貼上指定頁的連結）也要跟著換頁
+  window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (!deck.hidden && n) go(n - 1); });
+  document.addEventListener('langchange', () => { render(); if (!deck.hidden) go(i); });
+  render();
+  setView(new URLSearchParams(location.search).get('view') === 'report' ? 'report' : 'slides', true);
+})();
+</script>
 </body>
 </html>
