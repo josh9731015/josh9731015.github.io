@@ -856,7 +856,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">改善重點 → 優先族群 → 驗證方式 → 資料監控</span>
   <div class="nexts">
     <div><b>① 先改善「看商品→加購」</b><span>轉換率最低的一步；每提升 1 個百分點，約多 450 人加購（45,107 × 1%），若後兩步轉換率不變，約多 100 筆購買</span></div>
-    <div><b>② 先從新訪客下手</b><span>新訪客佔看商品者 93%，跟同一時期第一次出現的舊訪客比，加購比例低 7～12 個百分點，改善空間最大；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
+    <div><b>② 先從新訪客下手</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，比同一時期第一次出現的舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
     <div><b>③ 改版前先做 A/B 測試</b><span>要偵測加購比例從 26.6% 升到 28.6%（多 2 個百分點），每組約需 7,800 人；以這個網站的流量約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
     <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
@@ -1020,7 +1020,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p class="note">X-axis: first day of each week; the last week (from 1/25) has unusually few purchases (99 users), cause unknown, so checkout → purchase is not plotted</p>
     </div>
     <div class="side">
-      <p><b>Steps after add to cart:</b> "add to cart → begin checkout" fell from about 60% to 37% by early January, then returned to 55%–59%; "begin checkout → purchase" stays at 38%–56% every week</p>
+      <p><b>Steps after add to cart:</b> "add to cart → begin checkout" fell from about 60% to 37% by early January, then back to 55%–59%; "begin checkout → purchase" stays at 38%–56%</p>
       <p><b>No rise in untracked add-to-carts:</b> checkout users with no prior add-to-cart were 23%–26% in late January, no higher than the 26%–34% around the holidays</p>
       <p><b>Less browsing:</b> item pages per person per day fell from about 6 (early Dec.) to about 3.5–4 (late Jan.); late January had about 35% more item viewers than early January but only about 8% more add-to-cart users</p>
       <p><b>Device and traffic-source mix didn't change</b> (organic search is 34%–36% every week), and every device and source fell together; this data can't show where the extra visitors came from</p>
@@ -1034,7 +1034,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">Focus → priority segment → validation → data monitoring</span>
   <div class="nexts">
     <div><b>① Improve "view item → add to cart" first</b><span>The lowest-converting step; each 1 percentage point gained means about 450 more add-to-cart users (45,107 × 1%), or about 100 more purchases if the later steps hold</span></div>
-    <div><b>② Start with new visitors</b><span>New visitors are 93% of item viewers and, versus returning visitors first seen in the same period, add to cart 7–12 points less, so the room to improve is largest; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
+    <div><b>② Start with new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is 7–12 points below returning visitors first seen in the same period; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
     <div><b>③ A/B test before rolling out</b><span>To detect a rise from 26.6% to 28.6% (+2 percentage points), each group needs about 7,800 users, roughly 3–4 weeks of this site's traffic (5% significance level, 80% power)</span></div>
     <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
