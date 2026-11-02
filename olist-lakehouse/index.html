@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>電商資料湖倉分析</title>
 <meta name="description" content="余家丞的自學專案：在 Databricks 把 Olist 巴西電商原始檔整理成 bronze／silver／gold 三層資料表，建立品質檢查，並分析配送延遲與評論分數的關係。">
+<script>/* 預設顯示簡報（Josh 2026-11-02）；網址 ?view=report 才顯示報告。在這裡先加 class，避免載入時先閃一下報告 */
+if (new URLSearchParams(location.search).get('view') !== 'report') document.documentElement.classList.add('view-slides');</script>
 <style>
   /* 顏色一律用變數，深色模式換一組 */
   :root {
@@ -156,6 +158,198 @@
   /* 手機寬度：數字卡改 2 欄、表格可左右滑（中英文都適用，避免整頁被撐寬） */
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
   /* i18n:end */
+  /* ===== 報告／簡報 切換（2026-11-02 新增；中英文都有，英文投影片在 template#deck-en） ===== */
+  .top-ctrls { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; gap: 8px; align-items: center; }
+  .top-ctrls .lang-switch { position: static; }
+  .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+  .view-switch button { font: inherit; font-size: 15px; line-height: 1.3; padding: 5px 12px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; min-height: 36px; }
+  .view-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+  @media (max-width: 600px) { main { padding-top: 64px; } }  /* 手機：右上兩個切換鈕下方留空，不貼到標籤 */
+  html.view-slides body { overflow: hidden; }
+  html.view-slides main { display: none; }
+  html.view-slides .top-ctrls { position: fixed; }
+  #deck[hidden] { display: none; }
+  #deck .stage { position: fixed; inset: 0 0 56px 0; display: grid; place-items: center; padding-top: 52px; }
+  #deck .slide { display: none; width: min(94vw, calc((100vh - 128px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.06); overflow: hidden; }
+  #deck .slide.on { display: block; }
+  html[lang="en"] #deck .sl { font-size: 1.45cqw; line-height: 1.5; }  /* 英文句子較長，字級小一點才放得下 */
+  /* 投影片內尺寸一律用 em，跟著 .sl 的字級（＝投影片寬度的 1.6%）等比例縮放 */
+  #deck .sl { height: 100%; display: flex; flex-direction: column; padding: 2.4em 3em; font-size: 1.6cqw; line-height: 1.55; }
+  #deck h2 { font-size: 1.9em; line-height: 1.3; margin: 0 0 .2em; padding: 0; border: 0; }
+  #deck .sub { display: block; color: var(--ink-2); font-size: 1.05em; margin: 0 0 1em; white-space: normal; }
+  #deck .note { color: var(--ink-3); font-size: .82em; margin: .6em 0 0; }
+  /* 封面 */
+  #deck .cover { justify-content: center; }
+  #deck .kicker { color: var(--ink-2); font-size: .95em; margin: 0 0 .4em; }
+  #deck .cover h1 { font-size: 3.2em; line-height: 1.15; margin: 0 0 .35em; }
+  #deck .lead { font-size: 1.35em; margin: 0 0 1em; }
+  #deck .chips { display: flex; flex-wrap: wrap; gap: .5em; margin: 0 0 1.6em; }
+  #deck .chips span { border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: .15em .8em; font-size: .9em; font-weight: 600; }
+  #deck .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8em; margin: 0 0 1.4em; }
+  #deck .roles div { border: 1px solid var(--line); border-radius: .6em; padding: .6em .9em; }
+  #deck .roles b { display: block; }
+  #deck .roles span { color: var(--ink-2); font-size: .92em; }
+  #deck .foot { color: var(--ink-2); font-size: .9em; margin: 0; }
+  /* 截圖＋直式流程：藍底＝AI，灰框＝程式 */
+  #deck .fnline { margin: 0 0 .9em; font-size: .95em; color: var(--ink-2); }
+  #deck .fnline b { color: var(--ink); }
+  #deck .shotrow { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.6em; align-items: center; flex: 1; min-height: 0; }
+  #deck .imgbox { min-height: 0; height: 100%; display: flex; align-items: center; }
+  #deck .imgbox img { width: 100%; max-height: 100%; object-fit: contain; object-position: top; border: 1px solid var(--line); border-radius: .5em; display: block; }
+  #deck .vpipe { display: flex; flex-direction: column; gap: .6em; }
+  #deck .vpipe .st { position: relative; border-radius: .5em; padding: .35em .8em; font-size: .92em; }
+  #deck .vpipe .st + .st::before { content: "↓"; position: absolute; top: -1.15em; left: 1.2em; color: var(--ink-3); font-size: .8em; }
+  #deck .vpipe .st small { display: block; color: var(--ink-2); font-size: .85em; line-height: 1.4; }
+  #deck .st.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .st.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .st.io { background: var(--bg); border: 1px dashed var(--ink-3); }
+  #deck .lg { font-size: .85em; color: var(--ink-2); margin: 0 0 .7em; }
+  #deck .lg i { display: inline-block; width: 1em; height: .8em; border-radius: .2em; vertical-align: -.05em; margin: 0 .3em 0 .9em; }
+  #deck .lg i:first-child { margin-left: 0; }
+  #deck .lg i.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
+  #deck .lg i.code { background: var(--card); border: 2px solid var(--ink-3); }
+  #deck .lg i.t { background: var(--accent); }
+  #deck .callout { margin: .9em 0 0; font-size: .88em; background: var(--warn-soft); color: var(--warn-ink); border-radius: .5em; padding: .5em .8em; }
+  /* 發現頁：左圖右文 */
+  #deck .two { display: grid; grid-template-columns: 1.25fr 1fr; gap: 2em; align-items: center; flex: 1; min-height: 0; }
+  #deck .ct { font-size: .85em; color: var(--ink-2); font-weight: 600; margin: 0 0 .6em; }
+  #deck .side p { margin: 0 0 .8em; font-size: .95em; }
+  #deck .side blockquote { margin: 0 0 .8em; border-left: .2em solid var(--accent); padding: .2em 0 .2em .8em; font-style: italic; color: var(--ink-2); font-size: .9em; }
+  #deck .side blockquote span { display: block; font-style: normal; color: var(--ink); margin-top: .2em; }
+  #deck .hb .r { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; align-items: center; font-size: .88em; padding: .12em 0; }
+  #deck .hb .r span { text-align: right; color: var(--ink-2); }
+  #deck .hb .r i { display: block; height: .9em; background: var(--mute); border-radius: 0 .2em .2em 0; }
+  #deck .hb .r b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  #deck .hb .r.hi span, #deck .hb .r.hi b { color: var(--ink); font-weight: 700; }
+  #deck .hb .r.hi i { background: var(--accent); }
+  #deck .hb .ax { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; font-size: .88em; }
+  #deck .hb .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
+  #deck .hb .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); }
+  #deck .hb .axt { text-align: center; font-size: .78em; color: var(--ink-3); margin: 0; padding-left: 8.5em; }
+  html[lang="en"] #deck .hb .r, html[lang="en"] #deck .hb .ax { grid-template-columns: 12.5em 1fr 3.4em; }  /* 英文類別名稱較長，不要擠成兩行 */
+  html[lang="en"] #deck .hb .axt { padding-left: 12.5em; }
+  #deck .vb .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
+  #deck .vb .cols > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
+  #deck .vb .area b { font-variant-numeric: tabular-nums; margin-bottom: .2em; }
+  #deck .vb .area i { display: block; width: 65%; background: var(--mute); border-radius: .25em .25em 0 0; }
+  #deck .vb .hi .area i { background: var(--accent); }  /* 重點用藍色，跟第 4 頁一致 */
+  #deck .vb .cols > div > span { font-size: .88em; margin-top: .4em; }
+  #deck .vb .cols small { display: block; color: var(--ink-3); font-size: .9em; }
+  /* 6 道檢查 */
+  #deck .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9em; flex: 1; align-content: center; }
+  #deck .checks > div { border-top: .22em solid var(--accent); background: var(--bg); border-radius: .4em; padding: .7em .9em; display: flex; flex-direction: column; }
+  #deck .checks b { font-size: 1.08em; margin-bottom: .2em; }
+  #deck .checks span { color: var(--ink-2); font-size: .9em; flex: 1; }
+  #deck .checks em { font-style: normal; font-size: .85em; margin-top: .5em; padding: .3em .55em; border-radius: .35em; background: var(--warn-soft); color: var(--warn-ink); }
+  #deck .checks em.lim { background: transparent; color: var(--ink-3); padding-left: 0; }
+  /* 成績：進度條（灰色底條＝100%，填滿＝比例，紅虛線＝90% 門檻）；調查是「跑幾次全過」不是比例，只寫文字 */
+  #deck .bars { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .bars .r { display: grid; grid-template-columns: 15em 1fr; gap: 1.2em; align-items: center; padding: .5em 0; border-bottom: 1px solid var(--line); }
+  #deck .bars .nm { text-align: right; font-weight: 600; }
+  #deck .bars .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: .78em; line-height: 1.35; }
+  #deck .bars .b { display: flex; align-items: center; gap: .7em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.7em; }
+  #deck .bars .trk { position: relative; flex: none; width: 45%; height: 1em; background: var(--card); border: 1px solid var(--ink-3); border-radius: .25em; }  /* 空心外框＝100%，不用淺灰底（會跟驗證集的灰色混淆） */
+  #deck .bars .trk i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .25em; }
+  #deck .bars .trk u { position: absolute; left: 90%; top: -.3em; bottom: -.3em; border-left: 2px dashed var(--neg); }
+  #deck .bars .b.v i { background: var(--ink-3); }
+  #deck .bars .b.t i { background: var(--accent); }
+  #deck .bars .b.t.miss em { font-style: normal; color: var(--neg); font-weight: 600; }  /* 未達門檻：長條維持測試集的藍色，只把說明文字標紅（顏色只代表一件事） */
+  #deck .bars .b.none { color: var(--ink-2); }  /* 沒有數據：同樣字體，只用灰色區分（不用斜體，格式跟其他行一致） */
+  #deck .bars .txt { font-size: .88em; line-height: 1.7; }
+  #deck .bars .note { margin-top: .8em; }
+  #deck .lg i.v { background: var(--ink-3); }
+  /* 信賴區間圖：刻度 60%～100%，left 換算＝(值 − 60) ÷ 40 */
+  #deck .ci { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #deck .ci .r { display: grid; grid-template-columns: 13em 1fr; gap: 1.2em; align-items: center; margin: .8em 0; }
+  #deck .ci .nm b { display: block; }
+  #deck .ci .nm span { color: var(--ink-2); font-size: .88em; }
+  #deck .ci .tr { position: relative; height: 3.2em; }
+  #deck .ci .line { position: absolute; top: 1.1em; height: .5em; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: .25em; }
+  #deck .ci .pt { position: absolute; top: .85em; width: 1em; height: 1em; margin-left: -.5em; border-radius: 50%; background: var(--accent); }
+  #deck .ci .lab { position: absolute; top: .95em; font-size: .82em; color: var(--ink-2); white-space: nowrap; }
+  #deck .ci .lab.lo { transform: translateX(calc(-100% - .5em)); }
+  #deck .ci .lab.hi { transform: translateX(.5em); }
+  #deck .ci .th { position: absolute; top: -.3em; bottom: -.3em; width: 0; border-left: 2px dashed var(--neg); }
+  #deck .ci .axis { position: relative; height: 1.6em; margin-left: 14.2em; border-top: 1px solid var(--ink-3); color: var(--ink-3); }
+  #deck .ci .axis span { position: absolute; top: .2em; transform: translateX(-50%); font-size: .8em; }
+  #deck .take { margin: 1.4em 0 0; background: var(--accent-soft); border-radius: .5em; padding: .6em 1em; }
+  /* 下一步 */
+  #deck .nexts { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; flex: 1; align-content: center; }
+  #deck .nexts > div { border: 1px solid var(--line); border-radius: .6em; padding: .8em 1em; }
+  #deck .nexts b { display: block; font-size: 1.1em; color: var(--accent); margin-bottom: .2em; }
+  #deck .nexts span { color: var(--ink-2); font-size: .93em; }
+  /* 下方導覽列 */
+  #deck .deck-nav { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; justify-content: center; align-items: center; gap: 18px; background: var(--bg); }
+  #deck .deck-nav button { font: inherit; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  #deck .deck-nav button:disabled { opacity: .35; cursor: default; }
+  #deck .deck-nav .count { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; min-width: 4.5em; text-align: center; }
+  /* 手機直向：16:9 縮到手機寬會看不清，改成整頁寬、可上下捲的卡片，多欄改單欄 */
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .stage { display: block; overflow-y: auto; padding: 60px 0 8px; }
+    #deck .slide { width: 100%; aspect-ratio: auto; border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
+    #deck .sl { font-size: 15px; padding: 22px 18px 26px; height: auto; }
+    #deck .cover { min-height: calc(100vh - 140px); }
+    #deck .cover h1 { font-size: 2.3em; }
+    #deck .roles, #deck .checks, #deck .shotrow, #deck .two, #deck .nexts { grid-template-columns: 1fr; }
+    #deck .imgbox { height: auto; }
+    #deck .hb .r { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .ax { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .axt { padding-left: 8.6em; }
+    #deck .vb .area { height: 10em; }
+    #deck .bars .r { grid-template-columns: 1fr; gap: .2em; }
+    #deck .bars .nm { text-align: left; }
+    #deck .ci .r { grid-template-columns: 1fr; gap: .3em; }
+    #deck .ci .axis { margin-left: 0; }
+    #deck .ci .tr, #deck .ci .axis { margin-right: 2.8em; margin-left: 2.8em; }  /* 區間兩端的數字標籤放在線段外，左右要留位置 */
+  }
+  /* ===== 湖倉簡報專用元件（2026-11-02） ===== */
+  #deck .two.top { align-items: start; }
+  #deck .flow3 { display: grid; grid-template-columns: 1fr 1.6em 1fr 1.6em 1fr; gap: .4em; align-items: stretch; margin: 0 0 1.1em; }
+  #deck .flow3 > div:not(.ar) { border: 1px solid var(--line); border-top: .22em solid var(--accent); border-radius: .5em; padding: .6em .8em; background: var(--bg); }
+  #deck .flow3 b { display: block; }
+  #deck .flow3 span { display: block; color: var(--ink-2); font-size: .9em; }
+  #deck .flow3 em { display: block; font-style: normal; color: var(--accent); font-size: .85em; margin-top: .3em; font-weight: 600; }
+  #deck .flow3 .ar { align-self: center; text-align: center; color: var(--ink-3); font-size: 1.3em; }
+  #deck .checks.c2 { grid-template-columns: 1fr 1fr; flex: none; }
+  #deck table.seg { width: 100%; border-collapse: collapse; font-size: .9em; margin: 0 0 .8em; }
+  #deck table.seg th { text-align: left; white-space: nowrap; color: var(--ink-2); font-weight: 600; padding: .4em .8em .4em 0; border-bottom: 1px solid var(--line); font-size: 1em; }
+  #deck table.seg td { padding: .4em .4em; border-bottom: 1px solid var(--line); }
+  #deck table.seg td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #deck table.seg.wt td { text-align: center; font-variant-numeric: tabular-nums; }
+  #deck table.seg tr.hi td { background: var(--accent-soft); }
+  #deck table.seg tr.hi td b { color: var(--accent); }
+  #deck .roles.r2 { grid-template-columns: 1fr 1fr; margin-bottom: .9em; }
+  #deck .roles.r2 b { font-size: 1.5em; }
+  #deck .sc .r { display: grid; grid-template-columns: 8em 1fr 2.6em 5.2em; gap: .6em; align-items: center; padding: .3em 0; }
+  #deck .sc .r > span:first-child { text-align: right; font-weight: 600; font-size: .92em; }
+  #deck .sc .r small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
+  #deck .sc .trk { display: block; height: 1.1em; }
+  #deck .sc .trk i { display: block; height: 100%; background: var(--accent); border-radius: 0 .25em .25em 0; }  /* 藍＝晚到（全份一致） */
+  #deck .sc .r.ok .trk i { background: var(--ink-3); }  /* 灰＝準時 */
+  #deck .sc .r b { font-variant-numeric: tabular-nums; }
+  #deck .sc .r em { font-style: normal; color: var(--ink-2); font-size: .88em; font-variant-numeric: tabular-nums; }
+  #deck .sc .ax { display: grid; grid-template-columns: 8em 1fr 2.6em 5.2em; gap: .6em; font-size: .88em; }
+  #deck .sc .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
+  #deck .sc .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); white-space: nowrap; }
+  #deck .sc .ax .h { font-size: .8em; color: var(--ink-3); line-height: 1.2; }
+  #deck .sc.dual .r { grid-template-columns: 7.5em 1fr; }
+  #deck .sc.dual .ax { grid-template-columns: 7.5em 1fr; }
+  #deck .sc.dual .ax div { width: 70%; }
+  #deck .sc.dual .b { display: flex; align-items: center; gap: .6em; font-size: .88em; min-height: 1.5em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #deck .sc.dual .b .trk { flex: none; width: 70%; height: .95em; }
+  #deck .sc.dual .b.v i { background: var(--ink-3); }
+  #deck .sc.dual .b.t i { background: var(--accent); }
+  html[lang="en"] #deck .sc .r, html[lang="en"] #deck .sc .ax { grid-template-columns: 9.5em 1fr 2.6em 5.6em; }
+  html[lang="en"] #deck .sc.dual .r, html[lang="en"] #deck .sc.dual .ax { grid-template-columns: 9em 1fr; }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .flow3 { grid-template-columns: 1fr; }
+    #deck .flow3 .ar { transform: rotate(90deg); }
+    #deck .checks.c2, #deck .roles.r2 { grid-template-columns: 1fr; }
+    #deck .sc .r, #deck .sc .ax { grid-template-columns: 6.5em 1fr 2.4em 3.8em; gap: .4em; }
+    #deck .sc.dual .r, #deck .sc.dual .ax { grid-template-columns: 6.5em 1fr; }
+  }
 </style>
 
 <!-- i18n:start --><script>
@@ -164,12 +358,15 @@
 </script><!-- i18n:end -->
 </head>
 <body>
+<div class="top-ctrls">
+<div class="view-switch" role="group" aria-label="檢視模式"><button type="button" data-view="report" aria-pressed="false">報告</button><button type="button" data-view="slides" aria-pressed="true">簡報</button></div>
 <!-- i18n:start --><div class="lang-switch">
   <select id="lang-select" aria-label="語言 Language">
     <option value="zh">繁體中文 Traditional Chinese</option>
     <option value="en">英文 English</option>
   </select>
 </div><!-- i18n:end -->
+</div>
 <main>
 
 <header>
@@ -702,6 +899,312 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </footer>
 
 </main>
+
+<!-- 簡報模式（2026-11-02）：照面試大方向題排，一頁一題；數字全部來自本頁報告正文，第 7 頁的實驗樣本數是新算的（晚到訂單 1～2 星比例 62.4%＝分析一各組加權） -->
+<div id="deck" hidden>
+<div class="stage">
+
+<section class="slide" aria-label="第 1 頁"><div class="sl cover">
+  <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
+  <h1>電商資料湖倉分析</h1>
+  <p class="lead">把 9 個原始檔整理成可分析的表，再回答：<b>配送延遲會不會拉低顧客的評論分數？</b></p>
+  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構</span><span>資料品質規則</span></div>
+  <div class="roles">
+    <div><b>6.66%</b><span>已送達且有評價的訂單中，晚於預計送達日的比例</span></div>
+    <div><b>−1.00 分</b><span>只晚 1～3 天，平均評分就比準時低 1 分（滿分 5 分）</span></div>
+    <div><b>15 條</b><span>資料更新後一次重跑的品質規則；目前沒有一條失敗（含 4 條只要求已知問題不惡化的警告級規則）</span></div>
+  </div>
+  <p class="foot">資料：巴西電商平台 Olist 公開資料，約 10 萬筆訂單（2016-09～2018-10）。SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對</p>
+</div></section>
+
+<section class="slide" aria-label="第 2 頁"><div class="sl">
+  <h2>三層架構</h2>
+  <span class="sub">原始檔永遠留著、每一層都能各自檢查：清洗出錯可以從上一層重來</span>
+  <div class="flow3">
+    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表（9 個檔＋1 張用預設設定讀評價檔、留著跟修正版比對列數的對照表）</em></div>
+    <div class="ar">→</div>
+    <div><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
+    <div class="ar">→</div>
+    <div><b>gold 分析層</b><span>星狀結構：1 張事實表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張維度表</span><em>5 張表</em></div>
+  </div>
+  <p class="ct">bronze 讀進來就跟原始檔核對列數，抓到 2 個讀取錯誤</p>
+  <div class="checks c2">
+    <div><b>評價留言含換行，一則被切成好幾列</b><span>評價表變成 104,162 列，比原始檔 99,224 則多出 4,938 列</span><em>做法：加上「一筆資料可跨行」的讀取設定，列數與原始檔一致</em></div>
+    <div><b>郵遞區號開頭的 0 不見了</b><span>系統把郵遞區號當成數字，23,995 筆被改掉（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 3 頁"><div class="sl">
+  <h2>資料品質把關</h2>
+  <span class="sub">寫入後用 15 條規則檢查；寫入時再用「門禁」擋下不合規的資料</span>
+  <div class="two top">
+    <div>
+      <p class="ct">15 條規則寫成一個 VIEW，每次資料更新後一行查詢全部重跑</p>
+      <table class="seg">
+        <tr><th>唯一性</th><td>例：訂單編號不重複</td><td class="n">4 條</td></tr>
+        <tr><th>完整性</th><td>例：每張訂單都有顧客代號</td><td class="n">3 條</td></tr>
+        <tr><th>有效性</th><td>例：評分介於 1～5、價格大於 0</td><td class="n">3 條</td></tr>
+        <tr><th>一致性</th><td>例：訂單明細的商品都存在商品表</td><td class="n">5 條</td></tr>
+      </table>
+      <p>分兩級：<b>11 條 ERROR</b> 一列都不能違反；<b>4 條 WARN</b> 對應已知、目前不修的問題（例：23 張「送達早於交給物流」），筆數沒有變多就算通過</p>
+    </div>
+    <div class="side">
+      <p class="ct">寫入時的門禁：實際測試三種寫法</p>
+      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 被擋下</p>
+      <p><b>CHECK（評分至少 3）：</b>測試加規則時會不會檢查舊資料 → 會：14,575 列違反，規則加不上去</p>
+      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → <b>沒被擋</b>，Databricks 的主鍵只是標示、不會強制</p>
+      <p><b>所以：</b>「不准重複」要在寫入時處理：先在新資料裡去重，再用 MERGE 寫入（已存在就更新、不存在才新增）</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 4 頁"><div class="sl">
+  <h2>晚到就掉分</h2>
+  <span class="sub">只晚 1～3 天，平均評分就從 4.29 掉到 3.29；晚一週以上，約八成給 1～2 星</span>
+  <div class="two">
+    <div class="sc" aria-label="晚到天數與平均評分">
+      <p class="ct">已送達且有評價的 95,824 張訂單，依晚到天數分組的平均評分（晚到＝實際送達日晚於預計送達日）</p>
+      <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到　右欄＝給 1～2 星的比例</p>
+      <div class="r ok"><span>準時或提早<small>89,443 張</small></span><span class="trk"><i style="width:85.8%"></i></span><b>4.29</b><em>9.27%</em></div>
+      <div class="r"><span>晚 1～3 天<small>1,852 張</small></span><span class="trk"><i style="width:65.8%"></i></span><b>3.29</b><em>32.13%</em></div>
+      <div class="r"><span>晚 4～7 天<small>1,748 張</small></span><span class="trk"><i style="width:42%"></i></span><b>2.10</b><em>67.68%</em></div>
+      <div class="r"><span>晚 8～14 天<small>1,446 張</small></span><span class="trk"><i style="width:33.4%"></i></span><b>1.67</b><em>80.15%</em></div>
+      <div class="r"><span>晚 15 天以上<small>1,335 張</small></span><span class="trk"><i style="width:34.4%"></i></span><b>1.72</b><em>78.35%</em></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div><span></span><span></span></div>
+    </div>
+    <div class="side">
+      <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但約 62% 給 1～2 星，準時的只有 9.27%</p>
+      <p><b>掉分很快：</b>晚 1～3 天就掉 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
+      <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最後回覆的一則</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 5 頁"><div class="sl">
+  <h2>排除其他解釋</h2>
+  <span class="sub">換成同一州比、等待天數相同時比，晚到還是比準時低很多</span>
+  <div class="two">
+    <div class="sc dual" aria-label="等待天數相同時，準時與晚到的平均評分">
+      <p class="ct">「晚到的訂單本來就等比較久？」→ 等待天數（下單到實際送達的天數）相同時比較平均評分</p>
+      <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到</p>
+      <div class="r"><span>等 0～7 天</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97（只有 74 張）</div></div></div>
+      <div class="r"><span>等 8～14 天</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
+      <div class="r"><span>等 15～21 天</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
+      <div class="r"><span>等 22～30 天</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
+      <div class="r"><span>等 31 天以上</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div></div>
+    </div>
+    <div class="side">
+      <p><b>「偏遠州本來就常晚到、評分也低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
+      <p><b>「只是等太久？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時那一列，等越久分數也越低（下一頁）</p>
+      <p><b>還不是因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 6 頁"><div class="sl">
+  <h2>準時率高就夠嗎</h2>
+  <span class="sub">準時率 93.2%（96,470 張已送達訂單，含沒有評價的），但準時的訂單等越久分數也越低：預計送達日抓得太寬，「準時」很容易達成</span>
+  <div class="two">
+    <div>
+      <div class="roles r2">
+        <div><b>24 天</b><span>預計送達天數中位數（下單日到預計送達日）</span></div>
+        <div><b>10 天</b><span>實際送達天數中位數，預計是實際的 2.4 倍</span></div>
+      </div>
+      <p class="ct">只看準時送達的訂單：等越久，分數越低、抱怨慢的留言越多</p>
+      <table class="seg wt">
+        <tr><th>等待天數</th><td>0～7</td><td>8～14</td><td>15～21</td><td>22～30</td><td>31 以上</td></tr>
+        <tr><th>平均分數</th><td>4.41</td><td>4.31</td><td>4.16</td><td>3.94</td><td>3.62</td></tr>
+        <tr><th>留言抱怨慢的比例</th><td>0.3%</td><td>1.0%</td><td>3.6%</td><td>7.3%</td><td>10.9%</td></tr>
+      </table>
+      <p class="note">抱怨慢＝有留言的訂單中，留言含葡萄牙文 demor（拖很久）的比例；只抓一種寫法，屬粗略計算</p>
+    </div>
+    <div class="side">
+      <p class="ct">另外 3 種解釋都不成立：只看下面這些訂單，從等 0～7 天到等 31 天以上，分數一樣下降</p>
+      <p><b>只看總重 500 克以下：</b>4.44 → 3.79（排除「大件易損壞」）</p>
+      <p><b>只看單件訂單：</b>4.48 → 3.68（排除「分批送達」）</p>
+      <p><b>只看賣家 2 天內出貨：</b>4.43 → 3.76（排除「出貨慢的賣家服務差」）</p>
+      <p><b>最可能的解釋：</b>顧客的期待是「平常幾天會到」，比預計送達日短；資料看不到下單時的期待，未直接證實</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 7 頁"><div class="sl">
+  <h2>建議做什麼</h2>
+  <span class="sub">先處理晚到、再改指標、最後確保資料不出錯</span>
+  <div class="nexts">
+    <div><b>① 快晚到的訂單主動通知</b><span>每天列出「即將到預計送達日、仍未送達」的訂單，提前處理（例：請物流加急）或主動告知顧客新的到貨日；晚到訂單只占 6.66%，但約 62% 給 1～2 星</span></div>
+    <div><b>② 用實驗證明通知有效</b><span>隨機一半通知、一半不通知，比較 1～2 星比例：假設能從 62.4% 降到 52.4%（實際效果要實驗才知道），每組約需 380 張晚到訂單，以平均每月約 270 張晚到訂單估算約 3 個月（顯著水準 5%、檢定力 80%）</span></div>
+    <div><b>③ 物流指標加上「實際配送天數」</b><span>準時率 93.2% 看起來很好，但準時的訂單等越久分數越低；只看準時率會漏掉這個問題</span></div>
+    <div><b>④ 品質規則每天自動跑</b><span>資料更新後執行 15 條規則，任何 ERROR 失敗就暫停更新 gold 層，避免分析用到錯的資料</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 8 頁"><div class="sl">
+  <h2>下一步</h2>
+  <span class="sub">要再往下追，需要的資料</span>
+  <div class="nexts">
+    <div><b>延遲是否「造成」低分</b><span>第 5 頁：對晚到訂單做隨機分組的通知或補償實驗（第 7 頁 ②）</span></div>
+    <div><b>顧客實際期待幾天到</b><span>第 6 頁：需要顧客下單時看到的預計送達日與其他物流選項，才能判斷該不該縮短預計送達日</span></div>
+    <div><b>多賣家訂單為什麼分數低</b><span>商品來自 2 個以上賣家的訂單，就算準時、7 天內送達，平均也只有 2.91 分（597 張）；需要每件商品各自的出貨與送達紀錄，確認是不是分批送達</span></div>
+    <div><b>沒評價的訂單滿不滿意</b><span>646 張已送達訂單沒有評價；需要評價邀請與填寫時間的紀錄，判斷它們是否和有評價的訂單一樣</span></div>
+  </div>
+</div></section>
+
+</div>
+<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 8</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
+</div>
+
+<!-- 簡報英文版（2026-11-02）：對應上方中文 8 頁；改中文要同步改這裡 -->
+<template id="deck-en">
+<section class="slide" aria-label="Slide 1"><div class="sl cover">
+  <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
+  <h1>E-commerce Data Lakehouse</h1>
+  <p class="lead">Turn 9 raw files into analysis-ready tables, then answer: <b>do delivery delays lower customer review scores?</b></p>
+  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture</span><span>Data quality rules</span></div>
+  <div class="roles">
+    <div><b>6.66%</b><span>of delivered, reviewed orders arrived after the estimated delivery date</span></div>
+    <div><b>−1.00 pt</b><span>orders just 1–3 days late average 1 point lower than on-time (out of 5)</span></div>
+    <div><b>15 rules</b><span>quality checks rerun after every update; none currently fail (incl. 4 warning-level rules that only require known issues not to grow)</span></div>
+  </div>
+  <p class="foot">Data: public dataset from Brazilian e-commerce platform Olist, about 100,000 orders (2016-09 to 2018-10). SQL written with help from Claude Code; I ran each step in Databricks and checked results against answers computed locally from the raw files</p>
+</div></section>
+
+<section class="slide" aria-label="Slide 2"><div class="sl">
+  <h2>Three-layer architecture</h2>
+  <span class="sub">Raw files are always kept and every layer can be checked on its own, so a cleaning mistake can be redone from the previous layer</span>
+  <div class="flow3">
+    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables (9 files + 1 table of reviews read with default settings, kept to compare row counts with the fixed version)</em></div>
+    <div class="ar">→</div>
+    <div><b>silver (cleaned)</b><span>Fix load errors, deduplicate, flag suspicious data (flag, never delete)</span><em>Cleaned tables + 15 quality rules</em></div>
+    <div class="ar">→</div>
+    <div><b>gold (analysis)</b><span>Star schema: 1 fact table (one row = one item sold) + 4 dimension tables: customer, product, seller, date</span><em>5 tables</em></div>
+  </div>
+  <p class="ct">Row counts in bronze were checked against the raw files on load, catching 2 load errors</p>
+  <div class="checks c2">
+    <div><b>Line breaks in review comments split reviews into several rows</b><span>The review table had 104,162 rows, 4,938 more than the 99,224 reviews in the raw file</span><em>Fix: a "records can span lines" load setting; row count now matches the raw file</em></div>
+    <div><b>Leading zeros dropped from postal codes</b><span>Postal codes were read as numbers, changing 23,995 of them (e.g. 01310 became 1310) so they no longer matched the coordinates table</span><em>Fix: read postal codes as text and rebuild 3 tables; all codes are 5 digits again</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 3"><div class="sl">
+  <h2>Data quality controls</h2>
+  <span class="sub">15 rules check data after it is written; write-time "gates" block bad data before it gets in</span>
+  <div class="two top">
+    <div>
+      <p class="ct">The 15 rules live in one VIEW; one query reruns them all after every data update</p>
+      <table class="seg">
+        <tr><th>Uniqueness</th><td>e.g. no duplicate order IDs</td><td class="n">4</td></tr>
+        <tr><th>Completeness</th><td>e.g. every order has a customer ID</td><td class="n">3</td></tr>
+        <tr><th>Validity</th><td>e.g. score between 1 and 5; price above 0</td><td class="n">3</td></tr>
+        <tr><th>Consistency</th><td>e.g. every item in order lines exists in the product table</td><td class="n">5</td></tr>
+      </table>
+      <p>Two levels: <b>11 ERROR rules</b> allow no violating row; <b>4 WARN rules</b> track known issues left unfixed for now (e.g. 23 orders "delivered before handed to the carrier") and pass as long as the count doesn't grow</p>
+    </div>
+    <div class="side">
+      <p class="ct">Write-time gates: three approaches tested</p>
+      <p><b>CHECK (score 1–5):</b> inserting a review scored 6 → blocked</p>
+      <p><b>CHECK (score at least 3):</b> tests whether adding a rule checks existing data → it does: 14,575 rows violate it, so it can't be added</p>
+      <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID → <b>not blocked</b>; Databricks primary keys are informational and not enforced</p>
+      <p><b>So:</b> "no duplicates" has to be handled at write time: deduplicate the new data first, then write with MERGE (update if it exists, insert if not)</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 4"><div class="sl">
+  <h2>Late orders score lower</h2>
+  <span class="sub">Just 1–3 days late drops the average score from 4.29 to 3.29; at a week or more late, about 80% give 1–2 stars</span>
+  <div class="two">
+    <div class="sc" aria-label="Days late and average review score">
+      <p class="ct">Average score of 95,824 delivered, reviewed orders by days late (late = delivered after the estimated delivery date)</p>
+      <p class="lg"><i class="v"></i>On time or early <i class="t"></i>Late　Right column = share giving 1–2 stars</p>
+      <div class="r ok"><span>On time or early<small>89,443 orders</small></span><span class="trk"><i style="width:85.8%"></i></span><b>4.29</b><em>9.27%</em></div>
+      <div class="r"><span>1–3 days late<small>1,852 orders</small></span><span class="trk"><i style="width:65.8%"></i></span><b>3.29</b><em>32.13%</em></div>
+      <div class="r"><span>4–7 days late<small>1,748 orders</small></span><span class="trk"><i style="width:42%"></i></span><b>2.10</b><em>67.68%</em></div>
+      <div class="r"><span>8–14 days late<small>1,446 orders</small></span><span class="trk"><i style="width:33.4%"></i></span><b>1.67</b><em>80.15%</em></div>
+      <div class="r"><span>15+ days late<small>1,335 orders</small></span><span class="trk"><i style="width:34.4%"></i></span><b>1.72</b><em>78.35%</em></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 pts</s></div><span></span><span></span></div>
+    </div>
+    <div class="side">
+      <p><b>Late orders are only 6.66%</b> (6,381 orders), but about 62% give 1–2 stars vs. 9.27% of on-time orders</p>
+      <p><b>Scores drop fast:</b> 1–3 days late already scores 1 point lower; beyond a week late, scores stop falling much further (1.67 and 1.72)</p>
+      <p class="note">Average score = sum of scores ÷ orders in the group; for orders with several reviews, only the most recently answered review is used</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 5"><div class="sl">
+  <h2>Ruling out other explanations</h2>
+  <span class="sub">Comparing within the same state, or at the same waiting time, late orders still score much lower than on-time ones</span>
+  <div class="two">
+    <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
+      <p class="ct">"Do late orders just take longer?" → average score at the same waiting time (days from order to delivery)</p>
+      <p class="lg"><i class="v"></i>On time or early <i class="t"></i>Late</p>
+      <div class="r"><span>Waited 0–7 days</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97 (only 74 orders)</div></div></div>
+      <div class="r"><span>Waited 8–14 days</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
+      <div class="r"><span>Waited 15–21 days</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
+      <div class="r"><span>Waited 22–30 days</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
+      <div class="r"><span>Waited 31+ days</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
+      <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 pts</s></div></div>
+    </div>
+    <div class="side">
+      <p><b>"Do remote states just have more delays and lower scores?"</b> In each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
+      <p><b>"Is it just waiting too long?"</b> At the same waiting time, late orders still score 0.44–1.78 points lower; and among on-time orders alone, longer waits also score lower (next slide)</p>
+      <p><b>Not yet causal:</b> only region and waiting time are ruled out; proving delays "cause" low scores needs a randomized experiment (slide 7)</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 6"><div class="sl">
+  <h2>Is a high on-time rate enough?</h2>
+  <span class="sub">The on-time rate is 93.2% (96,470 delivered orders, incl. unreviewed), yet on-time orders score lower the longer they take: estimates are so generous that "on time" is easy to hit</span>
+  <div class="two">
+    <div>
+      <div class="roles r2">
+        <div><b>24 days</b><span>median estimated delivery time (order date to estimated date)</span></div>
+        <div><b>10 days</b><span>median actual delivery time; the estimate is 2.4× the actual</span></div>
+      </div>
+      <p class="ct">On-time orders only: the longer the wait, the lower the score and the more comments about slowness</p>
+      <table class="seg wt">
+        <tr><th>Days waited</th><td>0–7</td><td>8–14</td><td>15–21</td><td>22–30</td><td>31+</td></tr>
+        <tr><th>Average score</th><td>4.41</td><td>4.31</td><td>4.16</td><td>3.94</td><td>3.62</td></tr>
+        <tr><th>Comments about slowness</th><td>0.3%</td><td>1.0%</td><td>3.6%</td><td>7.3%</td><td>10.9%</td></tr>
+      </table>
+      <p class="note">Slowness comments = share of commented orders containing the Portuguese "demor" (took long); one spelling only, so a rough measure</p>
+    </div>
+    <div class="side">
+      <p class="ct">3 other explanations don't hold: within each subset below, scores still fall from a 0–7 day wait to 31+ days</p>
+      <p><b>Total weight 500 g or less:</b> 4.44 → 3.79 (rules out "bulky items get damaged")</p>
+      <p><b>Single-item orders:</b> 4.48 → 3.68 (rules out "split deliveries")</p>
+      <p><b>Seller shipped within 2 days:</b> 4.43 → 3.76 (rules out "slow sellers give poor service")</p>
+      <p><b>Most likely:</b> customers expect "the usual few days," shorter than the estimate; the data can't show what they expected at purchase, so this is not directly proven</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 7"><div class="sl">
+  <h2>Recommendations</h2>
+  <span class="sub">Tackle late orders first, then fix the metric, then keep the data reliable</span>
+  <div class="nexts">
+    <div><b>① Notify customers before orders run late</b><span>Each day, list orders nearing the estimated date but not yet delivered, and act early (e.g. ask the carrier to expedite) or tell the customer the new date; late orders are only 6.66%, but about 62% get 1–2 stars</span></div>
+    <div><b>② Prove it works with an experiment</b><span>Notify a random half and compare 1–2 star shares: assuming a drop from 62.4% to 52.4% (the real effect is what the test measures), about 380 late orders per group are needed, roughly 3 months at about 270 late orders a month (5% significance level, 80% power)</span></div>
+    <div><b>③ Add "actual delivery days" to logistics KPIs</b><span>A 93.2% on-time rate looks good, but on-time orders score lower the longer they take; the on-time rate alone misses this</span></div>
+    <div><b>④ Run the quality rules daily</b><span>Run the 15 rules after each data update and pause refreshing the gold layer if any ERROR rule fails, so analysis doesn't use bad data</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 8"><div class="sl">
+  <h2>Next steps</h2>
+  <span class="sub">Data needed to dig further</span>
+  <div class="nexts">
+    <div><b>Do delays "cause" low scores?</b><span>Slide 5: a randomized notification or compensation experiment on late orders (slide 7 ②)</span></div>
+    <div><b>How many days do customers actually expect?</b><span>Slide 6: the estimate and other shipping options customers saw at purchase, to decide whether to shorten the estimate</span></div>
+    <div><b>Why do multi-seller orders score low?</b><span>Orders with items from 2+ sellers average only 2.91 (597 orders) even when on time and delivered within 7 days; per-item shipping and delivery records would show whether split deliveries are the cause</span></div>
+    <div><b>Are orders without reviews satisfied?</b><span>646 delivered orders have no review; records of review invitations and timing would show whether they resemble reviewed orders</span></div>
+  </div>
+</div></section>
+</template>
+
 
 <!-- i18n:start --><template id="main-en" data-title="E-commerce Lakehouse Analysis" data-desc="Jia Cheng Yu's self-directed project: building bronze/silver/gold tables from Olist Brazilian e-commerce raw files in Databricks, with data quality checks, and analyzing how delivery delays relate to review scores.">
 <header>
@@ -1273,5 +1776,72 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   apply(initial(), true);
 })();
 </script><!-- i18n:end -->
+<script>
+// 報告／簡報切換：預設簡報，?view=report 開報告，#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
+(function () {
+  const html = document.documentElement, deck = document.getElementById('deck');
+  const stage = deck.querySelector('.stage');
+  let slides = [];
+  const prev = deck.querySelector('.prev'), next = deck.querySelector('.next'), count = deck.querySelector('.count');
+  const btns = document.querySelectorAll('.view-switch button');
+  let i = 0;
+  // 中英文兩組投影片：中文寫在 .stage 裡，英文在 template#deck-en；切換語言時整組替換，停在同一頁
+  const zhSlides = stage.innerHTML, enSlides = document.getElementById('deck-en').innerHTML;
+  const T = { zh: { report: '報告', slides: '簡報', group: '檢視模式', prev: '上一頁', next: '下一頁', nav: '簡報導覽' },
+              en: { report: 'Report', slides: 'Slides', group: 'View', prev: 'Previous slide', next: 'Next slide', nav: 'Slide navigation' } };
+  function render() {
+    const en = html.lang === 'en', w = T[en ? 'en' : 'zh'];
+    stage.innerHTML = en ? enSlides : zhSlides;
+    slides = [...stage.querySelectorAll('.slide')];
+    btns.forEach(b => { b.textContent = w[b.dataset.view]; });
+    document.querySelector('.view-switch').setAttribute('aria-label', w.group);
+    prev.setAttribute('aria-label', w.prev); next.setAttribute('aria-label', w.next);
+    deck.querySelector('.deck-nav').setAttribute('aria-label', w.nav);
+  }
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    count.textContent = `${i + 1} / ${slides.length}`;
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
+    stage.scrollTop = 0;
+    history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+  }
+  function setView(v, init) {
+    const on = v === 'slides';
+    html.classList.toggle('view-slides', on); deck.hidden = !on;
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === (on ? 'slides' : 'report'))));
+    if (init && !on) return;
+    const u = new URL(location.href);
+    if (on) u.searchParams.delete('view'); else { u.searchParams.set('view', 'report'); u.hash = ''; }   // 簡報是預設，網址不用帶參數；報告要帶 ?view=report，重新整理才會停在報告
+    history.replaceState(null, '', u);
+    if (on) go(parseInt(location.hash.slice(1), 10) - 1 || 0);
+  }
+  btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  document.addEventListener('keydown', e => {
+    if (deck.hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'Escape') setView('report');
+  });
+  // 手機左右滑：橫向位移明顯大於直向才換頁，避免跟上下捲動衝突
+  let x0 = null, y0 = null;
+  stage.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  });
+  // 網址的 #頁碼被改（手動輸入、貼上指定頁的連結）也要跟著換頁
+  window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (!deck.hidden && n) go(n - 1); });
+  document.addEventListener('langchange', () => { render(); if (!deck.hidden) go(i); });
+  render();
+  setView(new URLSearchParams(location.search).get('view') === 'report' ? 'report' : 'slides', true);
+})();
+</script>
 </body>
 </html>
