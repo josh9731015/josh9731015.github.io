@@ -827,12 +827,12 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>下一步</h2>
-  <span class="sub">要再往下追，需要的資料</span>
+  <span class="sub">後續分析與需要的資料</span>
   <div class="nexts">
-    <div><b>跟歷史比較 26.6%</b><span>第 2 頁：取得上一季與去年同期資料，用同樣算法（照順序、同樣長度的期間）算「看商品→加購」轉換率比較；這份範例資料只有 2020/11/26～2021/1/31</span></div>
-    <div><b>33,091 人的流失環節</b><span>第 2 頁：需要商品頁的互動事件（選尺寸、查庫存、看評價），找出看了沒加購的人停在哪個環節</span></div>
-    <div><b>哪類商品最需要改善</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
-    <div><b>舊訪客為什麼加購比較多</b><span>第 4 頁：同一時期比較仍高 7～12 個百分點；比較新舊訪客看的商品和進站來源，找出新訪客可以學的地方</span></div>
+    <div><b>取得歷史資料，比較當期轉換率</b><span>第 2 頁：取得上一季與去年同期資料，用同樣算法（照順序、同樣長度的期間）算「看商品→加購」轉換率比較；這份範例資料只有 2020/11/26～2021/1/31</span></div>
+    <div><b>記錄商品頁互動，找出加購前的流失點</b><span>第 2 頁：看過商品卻沒加入購物車的有 33,091 人；需要商品頁的互動事件（選尺寸、查庫存、看評價），找出他們停在哪個環節</span></div>
+    <div><b>整理商品類別，找出最需改善的類別</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
+    <div><b>比較新舊訪客，找出提升新訪客加購的做法</b><span>第 4 頁：同一時期比較，舊訪客看過商品後加入購物車的比例仍比新訪客高 7～12 個百分點；比較兩者看的商品和進站來源，找出可以用在新訪客的做法</span></div>
   </div>
 </div></section>
 
@@ -948,12 +948,12 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Next steps</h2>
-  <span class="sub">Data needed to dig further</span>
+  <span class="sub">Follow-up analyses and the data they need</span>
   <div class="nexts">
-    <div><b>Compare 26.6% with history</b><span>Slide 2: get the previous quarter and the same period last year, and compute the view-to-cart rate the same way (in order, same-length period); this sample covers only 2020/11/26–2021/1/31</span></div>
-    <div><b>Where on the product page do 33,091 users stall?</b><span>Slide 2: product-page interaction events (choosing a size, checking stock, reading reviews) would show where viewers who didn't add to cart stopped</span></div>
-    <div><b>Which product categories need work?</b><span>Category labels are inconsistent (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
-    <div><b>Why do returning visitors add to cart more?</b><span>Slide 4: still 7–12 points higher in the same period; compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
+    <div><b>Get historical data to benchmark the current rate</b><span>Slide 2: get the previous quarter and the same period last year, and compute the view-to-cart rate the same way (in order, same-length period); this sample covers only 2020/11/26–2021/1/31</span></div>
+    <div><b>Track product-page interactions to find where users drop off</b><span>Slide 2: 33,091 users viewed items but did not add to cart; product-page interaction events (choosing a size, checking stock, reading reviews) would show where they stopped</span></div>
+    <div><b>Rebuild product categories to find which need work</b><span>Category labels are inconsistent (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
+    <div><b>Compare new and returning visitors to lift new visitors' add-to-cart rate</b><span>Slide 4: in the same period, returning visitors' view-to-cart rate is still 7–12 points higher than new visitors'; compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
   </div>
 </div></section>
 </template>
