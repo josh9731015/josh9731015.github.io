@@ -852,7 +852,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <div class="nexts">
     <div><b>① 先改善「看商品→加購」</b><span>三步中只有這一步在 1 月下滑後沒有回升（年底每週約 37%，1 月下旬約 18%）；加購之後的兩步都已回到年底水準</span></div>
     <div><b>② 先從新訪客下手</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，比同一時期第一次出現的舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
-    <div><b>③ 改版前先做 A/B 測試</b><span>網站同時保留兩個版本，依新訪客的瀏覽器代號隨機分組（同一瀏覽器每次看到同一版）：對照組看現在的商品頁，實驗組看改版後的，比較兩組「看過商品後加入購物車的比例」。要偵測從 25.8% 升到 27.8%，每組約需 7,700 人，約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
+    <div><b>③ 改版前先做 A/B 測試</b><span>網站同時保留兩個版本，依新訪客的瀏覽器代號隨機分組（同一瀏覽器每次看到同一版）：對照組看現在的商品頁，實驗組看改版後的，比較兩組的「看商品→加購」轉換率。要偵測新訪客的轉換率從 25.8% 升到 27.8%，每組約需 7,700 人（顯著水準 5%、檢定力 80%）；兩組合計約 15,400 人，以資料期間平均每天約 630 位新訪客計，實驗約需跑 25 天，淡季流量較少時會更久</span></div>
     <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
 </div></section>
@@ -1024,7 +1024,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <div class="nexts">
     <div><b>① Improve "view item → add to cart" first</b><span>The only step that fell in January and didn't recover (about 37% a week in the holidays vs. about 18% in late January); both steps after add to cart are back to holiday levels</span></div>
     <div><b>② Start with new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is 7–12 points below returning visitors first seen in the same period; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
-    <div><b>③ A/B test before rolling out</b><span>The site serves both versions, assigning new visitors at random by browser ID (the same browser always sees the same version): control sees the current product page, treatment the redesign; compare each group's view-to-cart rate. Detecting 25.8% → 27.8% needs about 7,700 users per group, about 3–4 weeks (5% significance, 80% power)</span></div>
+    <div><b>③ A/B test before rolling out</b><span>The site serves both versions, assigning new visitors at random by browser ID (same browser, same version): control sees the current product page, treatment the redesign; compare their view-to-cart rates. Detecting new visitors' rate rising from 25.8% to 27.8% needs about 7,700 users per group (5% significance, 80% power); about 15,400 in total at the period's average of ~630 new visitors a day means about 25 days, longer in slow seasons</span></div>
     <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
 </div></section>
