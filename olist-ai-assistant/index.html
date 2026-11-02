@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 資料助理</title>
 <meta name="description" content="余家丞的自學專案：用 Gemini API 做一個中文資料助理（AI 寫 SQL、評論分類、RAG、agent 調查），每個功能都有可重跑的自動評分，其中 3 個另用沒練過的新題目測試，AI 輸出的數字與引用由程式核對。">
+<script>/* 預設顯示簡報（Josh 2026-11-02）；網址 ?view=report 才顯示報告。在這裡先加 class，避免載入時先閃一下報告 */
+if (new URLSearchParams(location.search).get('view') !== 'report') document.documentElement.classList.add('view-slides');</script>
 <style>
   /* 顏色一律用變數，深色模式換一組 */
   :root {
@@ -949,7 +951,7 @@
 })();
 </script><!-- i18n:end -->
 <script>
-// 報告／簡報切換：網址 ?view=slides 直接開簡報、#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
+// 報告／簡報切換：預設簡報，?view=report 開報告，#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
 (function () {
   const html = document.documentElement, deck = document.getElementById('deck');
   const stage = deck.querySelector('.stage');
@@ -984,7 +986,7 @@
     btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === (on ? 'slides' : 'report'))));
     if (init && !on) return;
     const u = new URL(location.href);
-    if (on) u.searchParams.set('view', 'slides'); else { u.searchParams.delete('view'); u.hash = ''; }
+    if (on) u.searchParams.delete('view'); else { u.searchParams.set('view', 'report'); u.hash = ''; }   // 簡報是預設，網址不用帶參數；報告要帶 ?view=report，重新整理才會停在報告
     history.replaceState(null, '', u);
     if (on) go(parseInt(location.hash.slice(1), 10) - 1 || 0);
   }
@@ -1012,7 +1014,7 @@
   window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (!deck.hidden && n) go(n - 1); });
   document.addEventListener('langchange', () => { render(); if (!deck.hidden) go(i); });
   render();
-  setView(new URLSearchParams(location.search).get('view') === 'slides' ? 'slides' : 'report', true);
+  setView(new URLSearchParams(location.search).get('view') === 'report' ? 'report' : 'slides', true);
 })();
 </script>
 </body>
