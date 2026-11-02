@@ -353,28 +353,38 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     #deck .sc.dual .r, #deck .sc.dual .ax { grid-template-columns: 6.5em 1fr; }
   }
   /* ===== 2026-11-02 第 4、6、7、8 頁改版 ===== */
-  #deck .twin .tr2 { display: grid; grid-template-columns: 7.2em 1fr 1fr; gap: .9em; align-items: center; padding: .28em 0; }
-  #deck .twin .tr2 > span:first-child { text-align: right; font-weight: 600; font-size: .92em; }
-  #deck .twin .tr2 small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
-  #deck .twin .tr2.hd .ct { margin: 0; font-size: .82em; }
-  #deck .twin .cell { display: flex; align-items: center; gap: .4em; font-size: .88em; font-variant-numeric: tabular-nums; }
-  #deck .twin .cell .trk { flex: none; width: 70%; height: 1.05em; position: relative; }
-  #deck .twin .cell .trk.out { border: 1px solid var(--ink-3); border-radius: .2em; }
-  #deck .twin .cell .trk i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 0 .2em .2em 0; }
-  #deck .twin .tr2.ok .cell .trk i { background: var(--ink-3); }
-  #deck .twin .tr2.ax > div { position: relative; width: 70%; height: 1.4em; border-top: 1px solid var(--ink-3); font-size: .8em; color: var(--ink-3); }
-  #deck .twin .tr2.ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; white-space: nowrap; }
+  /* 第 4 頁：100% 堆疊長條（左到右 1～5 星）；2026-11-03 由兩張長條圖改版（試過發散堆疊，Josh 覺得太少見） */
+  #deck .s1 { background: var(--neg); } #deck .s2 { background: color-mix(in srgb, var(--neg) 60%, var(--card)); }
+  #deck .s3 { background: var(--mute); }
+  #deck .s4 { background: color-mix(in srgb, var(--accent) 60%, var(--card)); } #deck .s5 { background: var(--accent); }
+  #deck .two.lkw { grid-template-columns: 1.75fr 1fr; }
+  #deck .lk .r { display: grid; grid-template-columns: 7em 3.4em 3.6em 1fr; gap: .7em; align-items: center; padding: .2em 0; }
+  #deck .lk .r > em { font-style: normal; text-align: right; font-size: .88em; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  #deck .lk .r.hd > em { font-size: .82em; color: var(--ink); font-weight: 600; }
+  #deck .lk .r > span:first-child { text-align: right; font-weight: 600; font-size: .92em; }
+  #deck .lk small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
+  #deck .lk .r > b { text-align: right; font-size: .88em; font-variant-numeric: tabular-nums; }
+  #deck .lk .r.hd > b, #deck .lk .r.hd .ct { margin: 0; font-size: .82em; white-space: nowrap; }
+  #deck .lk .r.ok { border-bottom: 1px dashed var(--line); padding-bottom: .4em; margin-bottom: .15em; }
+  #deck .lk .tr { position: relative; height: 1.3em; }
+  #deck .lk .tr i { position: absolute; top: 0; bottom: 0; box-sizing: border-box; border-right: 2px solid var(--card); }
+  #deck .lk .tr i.s1 { border-radius: .2em 0 0 .2em; } #deck .lk .tr i.s5 { border-radius: 0 .2em .2em 0; border-right: 0; }
+  #deck .lk .r.ax > div { position: relative; height: 1.4em; border-top: 1px solid var(--ink-3); font-size: .8em; color: var(--ink-3); }
+  #deck .lk .r.ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; white-space: nowrap; }
+  html[lang="en"] #deck .lk .r { grid-template-columns: 8.4em 3.4em 3.6em 1fr; }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .two.lkw { grid-template-columns: 1fr; }
+    #deck .lk .r, html[lang="en"] #deck .lk .r { grid-template-columns: 5.4em 2.6em 3.2em minmax(0, 1fr); gap: .35em; }
+    #deck .lk .r > b, #deck .lk .r > em { font-size: .78em; }
+    #deck .lk .r.hd > b, #deck .lk .r.hd > em { white-space: normal; }
+  }
   #deck table.hm { width: 100%; border-collapse: separate; border-spacing: .2em; font-size: .86em; margin: .2em 0 .4em; }
   #deck table.hm th { font-weight: 600; color: var(--ink-2); font-size: .9em; text-align: center; padding: .2em; }
   #deck table.hm tr > th:first-child { text-align: right; white-space: nowrap; }
   #deck table.hm td { text-align: center; padding: .45em .2em; border-radius: .25em; font-variant-numeric: tabular-nums; }
   #deck .nexts .pg { font-style: normal; display: inline-block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin-right: .3em; }
   #deck .nexts.n3 { grid-template-columns: 1fr; }
-  html[lang="en"] #deck .twin .tr2 { grid-template-columns: 8.6em 1fr 1fr; }
   @media (max-width: 760px) and (orientation: portrait) {
-    #deck .twin .tr2, html[lang="en"] #deck .twin .tr2 { grid-template-columns: 5.4em minmax(0, 1fr) minmax(0, 1fr); gap: .4em; }
-    #deck .twin .cell { font-size: .8em; gap: .25em; }
-    #deck .twin .cell .trk, #deck .twin .tr2.ax > div { width: 52%; }
     #deck table.hm { font-size: .78em; border-spacing: .1em; }
   }
   /* 2026-11-03 美術審查：圖表標題與欄標題用正文深色（灰色只留給註解）；熱度表專用色；下一步卡片靠上 */
@@ -1012,11 +1022,12 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>配送延遲與評分</h2>
   <span class="sub">只晚 1～3 天，平均評分即從 4.29 降至 3.29；晚一週以上，約八成給 1～2 星</span>
-  <div class="two">
+  <div class="two lkw">
     <div>
       <p class="ct">已送達且有評價的 95,824 張訂單，依晚到天數分組（晚到＝實際送達日晚於預計送達日）</p>
-      <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到　右圖空心外框＝100%</p>
-      <div class="twin"><div class="tr2 hd"><span></span><p class="ct">平均評分（0～5 分）</p><p class="ct">給 1～2 星的比例</p></div><div class="tr2 ok"><span>準時或提早<small>89,443 張</small></span><div class="cell"><span class="trk"><i style="width:85.8%"></i></span><b>4.29</b></div><div class="cell"><span class="trk out"><i style="width:9.27%"></i></span><b>9.27%</b></div></div><div class="tr2"><span>晚 1～3 天<small>1,852 張</small></span><div class="cell"><span class="trk"><i style="width:65.8%"></i></span><b>3.29</b></div><div class="cell"><span class="trk out"><i style="width:32.13%"></i></span><b>32.13%</b></div></div><div class="tr2"><span>晚 4～7 天<small>1,748 張</small></span><div class="cell"><span class="trk"><i style="width:42.0%"></i></span><b>2.10</b></div><div class="cell"><span class="trk out"><i style="width:67.68%"></i></span><b>67.68%</b></div></div><div class="tr2"><span>晚 8～14 天<small>1,446 張</small></span><div class="cell"><span class="trk"><i style="width:33.4%"></i></span><b>1.67</b></div><div class="cell"><span class="trk out"><i style="width:80.15%"></i></span><b>80.15%</b></div></div><div class="tr2"><span>晚 15 天以上<small>1,335 張</small></span><div class="cell"><span class="trk"><i style="width:34.4%"></i></span><b>1.72</b></div><div class="cell"><span class="trk out"><i style="width:78.35%"></i></span><b>78.35%</b></div></div><div class="tr2 ax"><span></span><div><s style="left:0%">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div><div><s style="left:0%">0%</s><s style="left:50%">50%</s><s style="left:100%">100%</s></div></div></div>
+      <p class="lg"><i class="s1"></i>1 星 <i class="s2"></i>2 星 <i class="s3"></i>3 星 <i class="s4"></i>4 星 <i class="s5"></i>5 星</p>
+      <div class="lk"><div class="r hd"><span></span><em>平均分數</em><b>1～2 星</b><p class="ct">評分分布（占該組訂單）</p></div><div class="r ok"><span>準時或提早<small>89,443 張</small></span><em>4.29</em><b>9.27%</b><div class="tr"><i class="s1" style="left:0.00%;width:6.62%" title="1 星：6.6%"></i><i class="s2" style="left:6.62%;width:2.64%" title="2 星：2.6%"></i><i class="s3" style="left:9.26%;width:8.08%" title="3 星：8.1%"></i><i class="s4" style="left:17.34%;width:20.40%" title="4 星：20.4%"></i><i class="s5" style="left:37.74%;width:62.26%" title="5 星：62.3%"></i></div></div><div class="r"><span>晚 1～3 天<small>1,852 張</small></span><em>3.29</em><b>32.13%</b><div class="tr"><i class="s1" style="left:0.00%;width:25.10%" title="1 星：25.1%"></i><i class="s2" style="left:25.10%;width:7.02%" title="2 星：7.0%"></i><i class="s3" style="left:32.12%;width:14.68%" title="3 星：14.7%"></i><i class="s4" style="left:46.80%;width:20.04%" title="4 星：20.0%"></i><i class="s5" style="left:66.84%;width:33.16%" title="5 星：33.2%"></i></div></div><div class="r"><span>晚 4～7 天<small>1,748 張</small></span><em>2.10</em><b>67.68%</b><div class="tr"><i class="s1" style="left:0.00%;width:58.58%" title="1 星：58.6%"></i><i class="s2" style="left:58.58%;width:9.10%" title="2 星：9.1%"></i><i class="s3" style="left:67.68%;width:9.84%" title="3 星：9.8%"></i><i class="s4" style="left:77.52%;width:8.40%" title="4 星：8.4%"></i><i class="s5" style="left:85.92%;width:14.08%" title="5 星：14.1%"></i></div></div><div class="r"><span>晚 8～14 天<small>1,446 張</small></span><em>1.67</em><b>80.15%</b><div class="tr"><i class="s1" style="left:0.00%;width:70.60%" title="1 星：70.6%"></i><i class="s2" style="left:70.60%;width:9.54%" title="2 星：9.5%"></i><i class="s3" style="left:80.14%;width:8.86%" title="3 星：8.9%"></i><i class="s4" style="left:89.00%;width:4.14%" title="4 星：4.1%"></i><i class="s5" style="left:93.14%;width:6.84%" title="5 星：6.8%"></i></div></div><div class="r"><span>晚 15 天以上<small>1,335 張</small></span><em>1.72</em><b>78.35%</b><div class="tr"><i class="s1" style="left:0.00%;width:68.98%" title="1 星：69.0%"></i><i class="s2" style="left:68.98%;width:9.36%" title="2 星：9.4%"></i><i class="s3" style="left:78.34%;width:9.14%" title="3 星：9.1%"></i><i class="s4" style="left:87.48%;width:5.32%" title="4 星：5.3%"></i><i class="s5" style="left:92.80%;width:7.20%" title="5 星：7.2%"></i></div></div><div class="r ax"><span></span><span></span><span></span><div><s style="left:0%">0%</s><s style="left:25%">25%</s><s style="left:50%">50%</s><s style="left:75%">75%</s><s style="left:100%">100%</s></div></div></div>
+      <p class="note">每條長條＝該組全部訂單（100%），從左到右依序為 1～5 星；橘色越長，給低分的比例越高</p>
     </div>
     <div class="side">
       <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但其中 62.42% 給 1～2 星，準時的只有 9.27%</p>
@@ -1151,11 +1162,12 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>Delivery delays and ratings</h2>
   <span class="sub">Just 1–3 days late drops the average score from 4.29 to 3.29; at a week or more late, about 80% give 1–2 stars</span>
-  <div class="two">
+  <div class="two lkw">
     <div>
       <p class="ct">95,824 delivered, reviewed orders by days late (late = delivered after the estimated delivery date)</p>
-      <p class="lg"><i class="v"></i>On time or early <i class="t"></i>Late　Right chart: hollow outline = 100%</p>
-      <div class="twin"><div class="tr2 hd"><span></span><p class="ct">Average score (0–5)</p><p class="ct">Share giving 1–2 stars</p></div><div class="tr2 ok"><span>On time or early<small>89,443 orders</small></span><div class="cell"><span class="trk"><i style="width:85.8%"></i></span><b>4.29</b></div><div class="cell"><span class="trk out"><i style="width:9.27%"></i></span><b>9.27%</b></div></div><div class="tr2"><span>1–3 days late<small>1,852 orders</small></span><div class="cell"><span class="trk"><i style="width:65.8%"></i></span><b>3.29</b></div><div class="cell"><span class="trk out"><i style="width:32.13%"></i></span><b>32.13%</b></div></div><div class="tr2"><span>4–7 days late<small>1,748 orders</small></span><div class="cell"><span class="trk"><i style="width:42.0%"></i></span><b>2.10</b></div><div class="cell"><span class="trk out"><i style="width:67.68%"></i></span><b>67.68%</b></div></div><div class="tr2"><span>8–14 days late<small>1,446 orders</small></span><div class="cell"><span class="trk"><i style="width:33.4%"></i></span><b>1.67</b></div><div class="cell"><span class="trk out"><i style="width:80.15%"></i></span><b>80.15%</b></div></div><div class="tr2"><span>15+ days late<small>1,335 orders</small></span><div class="cell"><span class="trk"><i style="width:34.4%"></i></span><b>1.72</b></div><div class="cell"><span class="trk out"><i style="width:78.35%"></i></span><b>78.35%</b></div></div><div class="tr2 ax"><span></span><div><s style="left:0%">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 pts</s></div><div><s style="left:0%">0%</s><s style="left:50%">50%</s><s style="left:100%">100%</s></div></div></div>
+      <p class="lg"><i class="s1"></i>1 star <i class="s2"></i>2 <i class="s3"></i>3 <i class="s4"></i>4 <i class="s5"></i>5 stars</p>
+      <div class="lk"><div class="r hd"><span></span><em>Avg score</em><b>1–2 stars</b><p class="ct">Score distribution (share of group)</p></div><div class="r ok"><span>On time or early<small>89,443 orders</small></span><em>4.29</em><b>9.27%</b><div class="tr"><i class="s1" style="left:0.00%;width:6.62%" title="1 star: 6.6%"></i><i class="s2" style="left:6.62%;width:2.64%" title="2 stars: 2.6%"></i><i class="s3" style="left:9.26%;width:8.08%" title="3 stars: 8.1%"></i><i class="s4" style="left:17.34%;width:20.40%" title="4 stars: 20.4%"></i><i class="s5" style="left:37.74%;width:62.26%" title="5 stars: 62.3%"></i></div></div><div class="r"><span>1–3 days late<small>1,852 orders</small></span><em>3.29</em><b>32.13%</b><div class="tr"><i class="s1" style="left:0.00%;width:25.10%" title="1 star: 25.1%"></i><i class="s2" style="left:25.10%;width:7.02%" title="2 stars: 7.0%"></i><i class="s3" style="left:32.12%;width:14.68%" title="3 stars: 14.7%"></i><i class="s4" style="left:46.80%;width:20.04%" title="4 stars: 20.0%"></i><i class="s5" style="left:66.84%;width:33.16%" title="5 stars: 33.2%"></i></div></div><div class="r"><span>4–7 days late<small>1,748 orders</small></span><em>2.10</em><b>67.68%</b><div class="tr"><i class="s1" style="left:0.00%;width:58.58%" title="1 star: 58.6%"></i><i class="s2" style="left:58.58%;width:9.10%" title="2 stars: 9.1%"></i><i class="s3" style="left:67.68%;width:9.84%" title="3 stars: 9.8%"></i><i class="s4" style="left:77.52%;width:8.40%" title="4 stars: 8.4%"></i><i class="s5" style="left:85.92%;width:14.08%" title="5 stars: 14.1%"></i></div></div><div class="r"><span>8–14 days late<small>1,446 orders</small></span><em>1.67</em><b>80.15%</b><div class="tr"><i class="s1" style="left:0.00%;width:70.60%" title="1 star: 70.6%"></i><i class="s2" style="left:70.60%;width:9.54%" title="2 stars: 9.5%"></i><i class="s3" style="left:80.14%;width:8.86%" title="3 stars: 8.9%"></i><i class="s4" style="left:89.00%;width:4.14%" title="4 stars: 4.1%"></i><i class="s5" style="left:93.14%;width:6.84%" title="5 stars: 6.8%"></i></div></div><div class="r"><span>15+ days late<small>1,335 orders</small></span><em>1.72</em><b>78.35%</b><div class="tr"><i class="s1" style="left:0.00%;width:68.98%" title="1 star: 69.0%"></i><i class="s2" style="left:68.98%;width:9.36%" title="2 stars: 9.4%"></i><i class="s3" style="left:78.34%;width:9.14%" title="3 stars: 9.1%"></i><i class="s4" style="left:87.48%;width:5.32%" title="4 stars: 5.3%"></i><i class="s5" style="left:92.80%;width:7.20%" title="5 stars: 7.2%"></i></div></div><div class="r ax"><span></span><span></span><span></span><div><s style="left:0%">0%</s><s style="left:25%">25%</s><s style="left:50%">50%</s><s style="left:75%">75%</s><s style="left:100%">100%</s></div></div></div>
+      <p class="note">Each bar = all orders in the group (100%), 1 to 5 stars from left to right; the longer the orange, the larger the share of low scores</p>
     </div>
     <div class="side">
       <p><b>Late orders are only 6.66%</b> (6,381 orders), but 62.42% of them give 1–2 stars vs. 9.27% of on-time orders</p>
