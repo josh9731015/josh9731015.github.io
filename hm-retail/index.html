@@ -281,9 +281,10 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   #deck .lg i.inc { background: var(--mute); }
   #deck .lg i.g { background: var(--ink-3); }
   #deck .lg i.ol { background: var(--card); border: 2px solid var(--accent); }
-  #deck .lg i.th { width: 0; height: 1em; border-left: 2px dashed var(--ink); border-radius: 0; }
+  #deck .lg i.thk { width: 0; height: 1em; border-left: 2px dashed var(--ink); border-radius: 0; }
   /* 雙向長條（第 2 頁）：刻度 −40～+10 萬件，0 在 80% 的位置 */
-  #deck .dv .r { display: grid; grid-template-columns: 10.5em 1fr 7.6em; gap: .6em; align-items: center; padding: .35em 0; font-size: .92em; }
+  #deck .dv { font-size: .92em; }
+  #deck .dv .r { display: grid; grid-template-columns: 10.5em 1fr 8.8em; gap: .6em; align-items: center; padding: .35em 0; }
   #deck .dv .r > span:first-child { text-align: right; }
   #deck .dv .r.tot { border-top: 1px solid var(--line); margin-top: .3em; padding-top: .6em; font-weight: 700; }
   #deck .dv .trk { position: relative; height: 1.2em; }
@@ -292,30 +293,31 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   #deck .dv .trk i.inc { left: 80%; background: var(--mute); border-radius: 0 .2em .2em 0; }
   #deck .dv .trk::after { content: ""; position: absolute; left: 80%; top: -.35em; bottom: -.35em; border-left: 1px solid var(--ink-3); }
   #deck .dv .r b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  #deck .dv .ax { display: grid; grid-template-columns: 10.5em 1fr 7.6em; gap: .6em; font-size: .82em; }
+  #deck .dv .ax { display: grid; grid-template-columns: 10.5em 1fr 8.8em; gap: .6em; }
   #deck .dv .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
-  #deck .dv .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); white-space: nowrap; }
+  #deck .dv .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); white-space: nowrap; font-size: .85em; }
   /* 每月直條（第 3 頁）：高度＝比例 ÷ 12% */
   #deck .mb { position: relative; display: grid; grid-template-columns: 2.2em 1fr; gap: .4em; }
-  #deck .mb .ya { position: relative; height: 13em; font-size: .78em; color: var(--ink-3); }
-  #deck .mb .ya s { position: absolute; right: 0; transform: translateY(50%); text-decoration: none; }
-  #deck .mb .plot { position: relative; height: 10.4em; display: grid; grid-template-columns: repeat(24, 1fr); gap: .18em; align-items: end; border-bottom: 1px solid var(--ink-3); }
+  #deck .mb .ya { position: relative; height: 10.4em; color: var(--ink-3); }
+  #deck .mb .ya s { position: absolute; right: 0; transform: translateY(50%); text-decoration: none; font-size: .75em; }
+  #deck .mb .plot { position: relative; height: 10.4em; display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: .15em; align-items: end; border-bottom: 1px solid var(--ink-3); }
   #deck .mb .plot > div { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
   #deck .mb .plot i { display: block; width: 100%; background: var(--mute); border-radius: .15em .15em 0 0; }
   #deck .mb .plot .hi i { background: var(--accent); }
-  #deck .mb .plot b { font-size: .62em; font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; margin-bottom: .15em; }
+  #deck .mb .plot b { position: relative; z-index: 1; background: var(--card); padding: 0; font-size: .58em; font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; margin-bottom: .15em; }
   #deck .mb .plot .hi b { color: var(--ink); font-weight: 700; font-size: .72em; }
   #deck .mb .brk { position: absolute; top: -.4em; bottom: 0; left: calc(5 / 24 * 100%); border-left: 2px dashed var(--ink); }
-  #deck .mb .brk span { position: absolute; top: -.2em; left: .4em; font-size: .72em; white-space: nowrap; color: var(--ink); font-weight: 600; }
-  #deck .mb .xa { grid-column: 2; display: grid; grid-template-columns: repeat(24, 1fr); font-size: .7em; color: var(--ink-3); }
+  #deck .mb .brk span { position: absolute; top: -1.3em; left: -.5em; font-size: .72em; white-space: nowrap; color: var(--ink); font-weight: 600; }
+  #deck .mb .xa { grid-column: 2; margin-top: .2em; display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); font-size: .7em; color: var(--ink-3); }
   #deck .mb .xa span { white-space: nowrap; }
-  #deck table.seg { width: 100%; border-collapse: collapse; font-size: .86em; margin: 0 0 .6em; }
+  #deck table.seg { width: 100%; border-collapse: collapse; font-size: .8em; margin: 0 0 .6em; }
   #deck table.seg th { text-align: left; color: var(--ink-2); font-weight: 600; padding: .3em .6em .3em 0; border-bottom: 1px solid var(--ink-3); }
-  #deck table.seg td { padding: .32em .6em .32em 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  #deck table.seg td { padding: .25em .6em .25em 0; border-bottom: 1px solid var(--line); vertical-align: top; }
   #deck table.seg td:first-child { white-space: nowrap; font-weight: 600; }
-  #deck table.seg td.res { white-space: nowrap; color: var(--ink-2); }
-  #deck table.seg td.res.part { color: var(--ink); font-weight: 600; }
+  #deck table.seg small.res { display: block; font-weight: 400; color: var(--ink-3); }
+  #deck table.seg small.res.part { color: var(--ink); font-weight: 600; }
   /* 點圖（第 4 頁）：刻度 46%～58%，left ＝ (值 − 46) ÷ 12 */
+  #deck .dp .pt { font-style: normal; }
   #deck .dp .r { display: grid; grid-template-columns: 9.5em 1fr; gap: 1em; align-items: center; padding: .9em 0; border-bottom: 1px solid var(--line); }
   #deck .dp .r > span:first-child { text-align: right; font-weight: 600; font-size: .92em; }
   #deck .dp .r small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
@@ -326,33 +328,37 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   #deck .dp .pt span { position: absolute; bottom: 1.15em; left: 50%; transform: translateX(-50%); font-size: .82em; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-2); }
   #deck .dp .pt.on span { color: var(--ink); font-weight: 700; }
   #deck .dp .gap { position: absolute; top: 2.25em; transform: translateX(-50%); font-size: .8em; color: var(--ink); font-weight: 600; white-space: nowrap; }
-  #deck .dp .ax { display: grid; grid-template-columns: 9.5em 1fr; gap: 1em; font-size: .82em; }
+  #deck .dp .ax { display: grid; grid-template-columns: 9.5em 1fr; gap: 1em; }
   #deck .dp .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
-  #deck .dp .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); }
+  #deck .dp .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); font-size: .82em; }
   /* 時間軸（第 6 頁）：2018-09-20～2020-09-22 換算成 0～100% */
-  #deck .tl .r { display: grid; grid-template-columns: 8em 1fr; gap: .8em; align-items: center; padding: .5em 0; }
+  #deck .tl .r { display: grid; grid-template-columns: 8em 1fr; gap: .8em; align-items: center; padding: .28em 0; }
   #deck .tl .r > span:first-child { text-align: right; font-weight: 600; font-size: .92em; }
-  #deck .tl .r small { display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
+  #deck .tl .r small { white-space: nowrap; display: block; font-weight: 400; color: var(--ink-3); font-size: .85em; }
   #deck .tl .tr { position: relative; height: 1.6em; }
   #deck .tl .tr i { position: absolute; top: 0; bottom: 0; }
   #deck .tl .tr i.f { background: var(--ink-3); border-radius: .2em 0 0 .2em; }
   #deck .tl .tr i.o { background: var(--card); border: 2px solid var(--accent); border-radius: 0 .2em .2em 0; }
   #deck .tl .tr.hi i.o { background: var(--accent-soft); }
-  #deck .tl .ax { display: grid; grid-template-columns: 8em 1fr; gap: .8em; font-size: .8em; }
+  #deck .tl .ax { display: grid; grid-template-columns: 8em 1fr; gap: .8em; }
   #deck .tl .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
-  #deck .tl .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); white-space: nowrap; }
+  #deck .tl .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; color: var(--ink-3); white-space: nowrap; font-size: .8em; }
   /* 信賴區間（第 7 頁）：刻度 −1～+5 個百分點，left ＝ (值 + 1) ÷ 6；門檻用深色虛線，不用橘色 */
   #deck .ci .th { border-left-color: var(--ink); }
   #deck .ci .thl { position: absolute; top: -1.5em; transform: translateX(-50%); font-size: .78em; color: var(--ink); white-space: nowrap; }
-  #deck .ci .axis { margin-left: 14.2em; }
+  #deck .two.wide { grid-template-columns: 1.6fr 1fr; }
+  #deck .ci .r { grid-template-columns: 11.5em 1fr; }
+  #deck .ci .axis { margin-left: 12.7em; }
+  #deck .ci .nm span { display: block; }
+  #deck .ci .ptl { position: absolute; top: 2.2em; transform: translateX(-50%); font-size: .82em; font-weight: 700; white-space: nowrap; }
   #deck .ci .zero { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); }
   /* 4 道檢查（第 8 頁）、下一步（第 9 頁）沿用 .checks／.nexts */
   #deck .checks.c2 { grid-template-columns: 1fr 1fr; }
   #deck .checks span b { font-size: 1em; margin: 0; color: var(--ink); }
-  #deck .nexts .pg { display: inline-block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin-right: .3em; }
+  #deck .nexts .pg { font-style: normal; display: inline-block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin-right: .3em; }
   html[lang="en"] #deck .dv .r, html[lang="en"] #deck .dv .ax { grid-template-columns: 12.5em 1fr 8.2em; }
   html[lang="en"] #deck .dp .r, html[lang="en"] #deck .dp .ax { grid-template-columns: 11em 1fr; }
-  html[lang="en"] #deck .tl .r, html[lang="en"] #deck .tl .ax { grid-template-columns: 9em 1fr; }
+  html[lang="en"] #deck .tl .r, html[lang="en"] #deck .tl .ax { grid-template-columns: 11.5em 1fr; }
   @media (max-width: 760px) and (orientation: portrait) {
     #deck .two.even, #deck .checks.c2 { grid-template-columns: 1fr; }
     #deck .dv .r, #deck .dv .ax { grid-template-columns: 7em 1fr 5.4em; gap: .4em; }
@@ -360,6 +366,24 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     #deck .mb .plot b { display: none; }
     #deck .mb .plot .hi b { display: block; }
     #deck table.seg td:first-child { white-space: normal; }
+  }
+  #deck .two.p3 { grid-template-columns: 1.3fr 1fr; gap: 1.6em; }
+  #deck .two.p3 > * { min-width: 0; }
+  #deck .mb { margin-top: 1.3em; }
+  @media (max-width: 760px) and (orientation: portrait) { #deck .two.p3, #deck .two.wide { grid-template-columns: 1fr; } #deck .ci .r { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .dv .r, #deck .dv .ax { grid-template-columns: 6.2em 1fr 7.4em; }
+    #deck .dv .r b { font-size: .9em; }
+    #deck .ci .axis { margin-left: 2.8em; }
+    #deck .ci .tr { margin-top: 1.4em; }
+  }
+  @media (max-width: 760px) and (orientation: portrait) {
+    html[lang="en"] #deck .sl { font-size: 15px; }  /* 英文的 1.45cqw 規則權重較高，手機要另外蓋回 15px */
+    .top-ctrls .lang-switch select { max-width: 9.5em; }  /* 英文選項字較長，避免把「報告」鈕擠出畫面 */
+  }
+  @media (max-width: 760px) and (orientation: portrait) {
+    html[lang="en"] #deck .dv .r, html[lang="en"] #deck .dv .ax { grid-template-columns: 6.8em 1fr 7.4em; }
+    #deck .dv .ax s:nth-child(2), #deck .dv .ax s:nth-child(4) { display: none; }  /* 手機寬度只留 −40、−20、0、+10，刻度字才不會重疊 */
   }
 </style>
 <!-- i18n:start --><script>
@@ -1089,24 +1113,24 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>童裝銷量斷崖</h2>
   <span class="sub">2019 年 3 月起童裝占每月件數從 7.5% 降到 3.8%，之後沒有回升；交易資料無法分辨是業務變化還是資料收錄改變</span>
-  <div class="two even top">
+  <div class="two p3 top">
     <div>
       <p class="ct">童裝件數 ÷ 當月全部件數（%）</p>
       <div class="mb"><div class="ya"><s style="bottom:0.0%">0%</s><s style="bottom:26.7%">4%</s><s style="bottom:53.3%">8%</s><s style="bottom:80.0%">12%</s></div><div style="position:relative"><div class="plot"><div><b>10.2</b><i style="height:85.0%"></i></div><div><b>8.9</b><i style="height:74.2%"></i></div><div><b>8.8</b><i style="height:73.3%"></i></div><div><b>7.4</b><i style="height:61.7%"></i></div><div class="hi"><b>7.5</b><i style="height:62.5%"></i></div><div class="hi"><b>3.8</b><i style="height:31.7%"></i></div><div><b>3.6</b><i style="height:30.0%"></i></div><div><b>2.5</b><i style="height:20.8%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.4</b><i style="height:28.3%"></i></div><div><b>3.1</b><i style="height:25.8%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.0</b><i style="height:25.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.2</b><i style="height:18.3%"></i></div><div><b>2.0</b><i style="height:16.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.6</b><i style="height:13.3%"></i></div><div><b>1.4</b><i style="height:11.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.7</b><i style="height:14.2%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div></div><div class="brk"><span>2019-03-03 前後</span></div></div><div class="xa"><span>2018/10</span><span></span><span></span><span>2019/1</span><span></span><span></span><span></span><span></span><span></span><span>2019/7</span><span></span><span></span><span></span><span></span><span></span><span>2020/1</span><span></span><span></span><span></span><span></span><span></span><span>2020/7</span><span></span><span></span></div></div>
-      <p class="note">藍色＝斷點前後的 2019 年 2 月、3 月。2019 年春天沒有去年同季可比（資料從 2018 年 9 月開始），跟上一季比又被春季旺季蓋過，所以到 FY2020 Q1 季報才浮現</p>
+      <p class="note">藍色＝斷點前後的 2019 年 2 月、3 月。2019 年春天沒有去年同季可比（資料從 2018 年 9 月開始），跟上一季比又被春季旺季蓋過，所以到 FY2020 Q1 季報才浮現。這份資料原本是為商品推薦競賽準備的，收錄範圍改變不能排除</p>
     </div>
     <div>
       <p class="ct">逐一檢查其他可能的原因</p>
       <table class="seg">
-        <tr><th>可能原因</th><th>實際看到</th><th>結果</th></tr>
-        <tr><td>季節性</td><td>2019 年 2→3 月降 49%，2020 年同期只降 11%</td><td class="res">排除</td></tr>
-        <tr><td>漲價、特價結束</td><td>同樣商品的價格幾乎沒變</td><td class="res">排除</td></tr>
-        <tr><td>顧客從資料中消失</td><td>買童裝的顧客照樣在買大人衣服</td><td class="res">排除</td></tr>
-        <tr><td>系統全面異常</td><td>只有童裝大跌，其他產品線 −6%～+19%</td><td class="res">排除</td></tr>
-        <tr><td>單一通路問題</td><td>實體店與網路的童裝同時大跌</td><td class="res">排除</td></tr>
-        <tr><td>大量童裝下架</td><td>有銷售的款數少 16%，件數少 43%</td><td class="res part">只能解釋一部分</td></tr>
+        <tr><th>可能原因（結果）</th><th>實際看到</th></tr>
+        <tr><td>季節性<small class="res">排除</small></td><td>2019 年 2→3 月降 49%，2020 年同期只降 11%</td></tr>
+        <tr><td>漲價、特價結束<small class="res">排除</small></td><td>同樣商品的價格幾乎沒變</td></tr>
+        <tr><td>顧客從資料中消失<small class="res">排除</small></td><td>買童裝的顧客照樣在買大人衣服</td></tr>
+        <tr><td>系統全面異常<small class="res">排除</small></td><td>只有童裝大跌，其他產品線 −6%～+19%</td></tr>
+        <tr><td>單一通路問題<small class="res">排除</small></td><td>實體店與網路的童裝同時大跌</td></tr>
+        <tr><td>大量童裝下架<small class="res part">只能解釋一部分</small></td><td>有銷售的款數少 16%，件數少 43%</td></tr>
       </table>
-      <p class="callout">剩下兩種可能：<b>童裝業務本身的變化</b>，或<b>資料收錄範圍改變</b>（這份資料原本是為商品推薦競賽準備的）；向資料提供單位確認，成本最低（第 9 頁）</p>
+      <p class="callout">剩下兩種可能：<b>童裝業務本身的變化</b>或<b>資料收錄範圍改變</b>；向資料提供單位確認，成本最低（第 9 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1160,7 +1184,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <div class="r"><span>訓練<small>預測日 2019-09-28</small></span><div class="tr"><i class="f" style="left:1.09%;width:49.80%"></i><i class="o" style="left:50.89%;width:24.55%"></i></div></div><div class="r"><span>驗證：選方法<small>預測日 2019-12-26</small></span><div class="tr"><i class="f" style="left:13.23%;width:49.80%"></i><i class="o" style="left:63.03%;width:24.56%"></i></div></div><div class="r"><span>測試：報告成績<small>預測日 2020-03-26</small></span><div class="tr hi"><i class="f" style="left:25.65%;width:49.79%"></i><i class="o" style="left:75.44%;width:24.56%"></i></div></div>
     <div class="ax"><span></span><div><s style="left:14.05%">2019/1</s><s style="left:38.74%">2019/7</s><s style="left:63.85%">2020/1</s><s style="left:88.68%">2020/7</s></div></div>
   </div>
-  <div class="checks c2" style="flex:none;margin-top:.9em">
+  <div class="checks c2" style="flex:none;margin-top:.5em">
     <div><b>為什麼依時間切，不隨機切</b><span>實際使用時只能用過去預測未來；依時間切才能模擬這個情況，避免模型看到預測日之後的資料。訓練只用童裝斷崖之後的預測日（第 3 頁），避免把「不再買童裝」學成流失訊號</span></div>
     <div><b>關鍵特徵：更早半年有沒有來過</b><span>預測日前 181～365 天沒買的新顧客流失 60.6%，老顧客 22.3%，三個時期都穩定；補上這個特徵後，Precision@50K 從 68.4% 提升到 79.4%</span><em class="lim">限制：驗證與測試判斷流失的期間重疊約 3 個月（疫情初期），測試成績可能略為偏高</em></div>
   </div>
@@ -1169,12 +1193,12 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>發券效果驗證</h2>
   <span class="sub">隨機保留不發券的對照組，比較 180 天回購比例；模擬結果 A、B 兩份名單都高於回本門檻，建議繼續發</span>
-  <div class="two">
+  <div class="two wide">
     <div class="ci">
       <p class="ct">發券組 − 對照組的 180 天回購比例差距（百分點，模擬）</p>
-      <p class="lg"><i class="t"></i>量到的差距與 95% 信賴區間 <i class="th"></i>回本門檻</p>
-      <div class="r"><div class="nm"><b>A：最可能流失</b><span>預期淨賺 +3.4 萬</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><span class="lab lo" style="left:34.67%">+1.08</span><span class="lab hi" style="left:80.50%">+3.83</span><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="thl" style="left:57.67%;top:2.3em;font-weight:700">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>B：流失損失最大</b><span>預期淨賺 +51.4 萬</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><span class="lab lo" style="left:39.50%">+1.37</span><span class="lab hi" style="left:86.17%">+4.17</span><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="thl" style="left:62.83%;top:2.3em;font-weight:700">+2.77</span></div></div>
+      <p class="lg"><i class="t"></i>量到的差距與 95% 信賴區間 <i class="thk"></i>回本門檻</p>
+      <div class="r"><div class="nm"><b>A：最可能流失</b><span>信賴區間 +1.08～+3.83</span><span>預期淨賺 +3.4 萬</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
+      <div class="r"><div class="nm"><b>B：流失損失最大</b><span>信賴區間 +1.37～+4.17</span><span>預期淨賺 +51.4 萬</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
       <p class="note">資料沒有發券紀錄：對照組回購是真實資料，券的效果為事先設定、分析完成後才對照的模擬值；金額為假設單位。回購比例＝180 天內有再購買的人數 ÷ 該組人數</p>
     </div>
@@ -1253,24 +1277,24 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Kidswear Sales Cliff</h2>
   <span class="sub">From March 2019, kidswear's share of monthly units dropped from 7.5% to 3.8% and never recovered; transaction data cannot tell a business change from a change in data coverage</span>
-  <div class="two even top">
+  <div class="two p3 top">
     <div>
       <p class="ct">Kidswear units ÷ all units that month (%)</p>
       <div class="mb"><div class="ya"><s style="bottom:0.0%">0%</s><s style="bottom:26.7%">4%</s><s style="bottom:53.3%">8%</s><s style="bottom:80.0%">12%</s></div><div style="position:relative"><div class="plot"><div><b>10.2</b><i style="height:85.0%"></i></div><div><b>8.9</b><i style="height:74.2%"></i></div><div><b>8.8</b><i style="height:73.3%"></i></div><div><b>7.4</b><i style="height:61.7%"></i></div><div class="hi"><b>7.5</b><i style="height:62.5%"></i></div><div class="hi"><b>3.8</b><i style="height:31.7%"></i></div><div><b>3.6</b><i style="height:30.0%"></i></div><div><b>2.5</b><i style="height:20.8%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.4</b><i style="height:28.3%"></i></div><div><b>3.1</b><i style="height:25.8%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.0</b><i style="height:25.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.2</b><i style="height:18.3%"></i></div><div><b>2.0</b><i style="height:16.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.6</b><i style="height:13.3%"></i></div><div><b>1.4</b><i style="height:11.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.7</b><i style="height:14.2%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div></div><div class="brk"><span>around 2019-03-03</span></div></div><div class="xa"><span>2018/10</span><span></span><span></span><span>2019/1</span><span></span><span></span><span></span><span></span><span></span><span>2019/7</span><span></span><span></span><span></span><span></span><span></span><span>2020/1</span><span></span><span></span><span></span><span></span><span></span><span>2020/7</span><span></span><span></span></div></div>
-      <p class="note">Blue = February and March 2019, either side of the break. Spring 2019 had no same-quarter-last-year comparison (data starts in September 2018), and the quarter-on-quarter view was masked by the spring peak, so the drop first surfaced in the FY2020 Q1 report</p>
+      <p class="note">Blue = February and March 2019, either side of the break. Spring 2019 had no same-quarter-last-year comparison (data starts in September 2018), and the quarter-on-quarter view was masked by the spring peak, so the drop first surfaced in the FY2020 Q1 report. The data was prepared for a product recommendation competition, so a change in coverage cannot be ruled out</p>
     </div>
     <div>
       <p class="ct">Other possible causes, checked one by one</p>
       <table class="seg">
-        <tr><th>Possible cause</th><th>What the data shows</th><th>Result</th></tr>
-        <tr><td>Seasonality</td><td>Feb→Mar 2019 fell 49%; the same period in 2020 fell only 11%</td><td class="res">Ruled out</td></tr>
-        <tr><td>Price rise, end of sale</td><td>Prices of the same items barely changed</td><td class="res">Ruled out</td></tr>
-        <tr><td>Customers left the data</td><td>Kidswear buyers kept buying adult apparel</td><td class="res">Ruled out</td></tr>
-        <tr><td>System-wide failure</td><td>Only kidswear crashed; other product lines −6% to +19%</td><td class="res">Ruled out</td></tr>
-        <tr><td>One channel's problem</td><td>In-store and online kidswear fell together</td><td class="res">Ruled out</td></tr>
-        <tr><td>Mass delisting</td><td>Kidswear items with sales −16%, units −43%</td><td class="res part">Explains only part</td></tr>
+        <tr><th>Possible cause (result)</th><th>What the data shows</th></tr>
+        <tr><td>Seasonality<small class="res">Ruled out</small></td><td>Feb→Mar 2019 fell 49%; the same period in 2020 fell only 11%</td></tr>
+        <tr><td>Price rise, end of sale<small class="res">Ruled out</small></td><td>Prices of the same items barely changed</td></tr>
+        <tr><td>Customers left the data<small class="res">Ruled out</small></td><td>Kidswear buyers kept buying adult apparel</td></tr>
+        <tr><td>System-wide failure<small class="res">Ruled out</small></td><td>Only kidswear crashed; other product lines −6% to +19%</td></tr>
+        <tr><td>One channel's problem<small class="res">Ruled out</small></td><td>In-store and online kidswear fell together</td></tr>
+        <tr><td>Mass delisting<small class="res part">Explains only part</small></td><td>Kidswear items with sales −16%, units −43%</td></tr>
       </table>
-      <p class="callout">Two possibilities remain: <b>a change in the kidswear business itself</b>, or <b>a change in data coverage</b> (the data was prepared for a product recommendation competition); asking the data provider is the cheapest check (Slide 9)</p>
+      <p class="callout">Two possibilities remain: <b>a change in the kidswear business itself</b> or <b>a change in data coverage</b>; asking the data provider is the cheapest check (Slide 9)</p>
     </div>
   </div>
 </div></section>
@@ -1324,21 +1348,21 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <div class="r"><span>Training<small>prediction date 2019-09-28</small></span><div class="tr"><i class="f" style="left:1.09%;width:49.80%"></i><i class="o" style="left:50.89%;width:24.55%"></i></div></div><div class="r"><span>Validation: choose<small>prediction date 2019-12-26</small></span><div class="tr"><i class="f" style="left:13.23%;width:49.80%"></i><i class="o" style="left:63.03%;width:24.56%"></i></div></div><div class="r"><span>Test: report<small>prediction date 2020-03-26</small></span><div class="tr hi"><i class="f" style="left:25.65%;width:49.79%"></i><i class="o" style="left:75.44%;width:24.56%"></i></div></div>
     <div class="ax"><span></span><div><s style="left:14.05%">2019/1</s><s style="left:38.74%">2019/7</s><s style="left:63.85%">2020/1</s><s style="left:88.68%">2020/7</s></div></div>
   </div>
-  <div class="checks c2" style="flex:none;margin-top:.9em">
+  <div class="checks c2" style="flex:none;margin-top:.5em">
     <div><b>Why split by time, not at random</b><span>In real use, the model can only predict the future from the past; splitting by time mimics that and keeps the model from seeing data after the prediction date. Training uses only prediction dates after the kidswear cliff (Slide 3), so the model does not learn "stopped buying kidswear" as a churn signal</span></div>
-    <div><b>Key feature: visited in the earlier six months?</b><span>New customers (no purchase 181–365 days before the prediction date) churned 60.6% vs 22.3% for existing customers, stable across all three periods; adding this feature raised Precision@50K from 68.4% to 79.4%</span><em class="lim">Limitation: the validation and test churn periods overlap by about 3 months (early pandemic), so the test score may be slightly optimistic</em></div>
+    <div><b>Key feature: purchases in the earlier six months</b><span>New customers (no purchase 181–365 days before the prediction date) churned 60.6% vs 22.3% for existing customers, stable across all three periods; adding this feature raised Precision@50K from 68.4% to 79.4%</span><em class="lim">Limitation: the validation and test churn periods overlap by about 3 months (early pandemic), so the test score may be slightly optimistic</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Measuring Coupon Impact</h2>
   <span class="sub">Randomly hold back a no-coupon control group and compare 180-day repurchase rates; in simulation, both List A and List B are above break-even, so keep sending</span>
-  <div class="two">
+  <div class="two wide">
     <div class="ci">
       <p class="ct">Treatment − control 180-day repurchase rate difference (pp, simulated)</p>
-      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="th"></i>Break-even threshold</p>
-      <div class="r"><div class="nm"><b>A: most likely to churn</b><span>expected net profit +34K</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><span class="lab lo" style="left:34.67%">+1.08</span><span class="lab hi" style="left:80.50%">+3.83</span><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">break-even 2.00</span><i class="pt" style="left:57.67%"></i><span class="thl" style="left:57.67%;top:2.3em;font-weight:700">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>B: largest churn loss</b><span>expected net profit +514K</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><span class="lab lo" style="left:39.50%">+1.37</span><span class="lab hi" style="left:86.17%">+4.17</span><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="thl" style="left:62.83%;top:2.3em;font-weight:700">+2.77</span></div></div>
+      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="thk"></i>Break-even threshold</p>
+      <div class="r"><div class="nm"><b>A: most likely to churn</b><span>95% CI +1.08～+3.83</span><span>expected net profit +34K</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">break-even 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
+      <div class="r"><div class="nm"><b>B: largest churn loss</b><span>95% CI +1.37～+4.17</span><span>expected net profit +514K</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
       <p class="note">The data has no coupon records: control-group repurchases are real data, while the coupon effect is a simulated value set in advance and only compared after the analysis; amounts are in hypothetical units. Repurchase rate = customers who bought again within 180 days ÷ group size</p>
     </div>
