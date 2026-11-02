@@ -416,7 +416,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <div class="tldr lead">
   <p><b>結論：</b>95,824 張已送達且有評價的訂單中，6.66% 晚於 Olist 給顧客的預計送達日。準時訂單平均 4.29 分；只晚 1～3 天就降到 3.29 分，晚 4 天以上降到 2.10 分以下，晚到 4 天以上的三組各有 67.68%～80.15% 給 1～2 星。這個落差不能用州別差異解釋：在晚到訂單較多的 14 個州（見分析二），州內晚到訂單都比準時訂單低 1.63～2.33 分。準時送達的訂單裡，等待天數越長分數也越低（下單後 0～7 天送達的 4.41 分，31 天以上才送達的 3.62 分）。</p>
-  <p><b>建議：</b>① 晚到的訂單只占 6.66%，但分數低很多，是值得優先處理的風險。建議每天列出「即將到預計送達日、仍未送達」的訂單，請物流加急提前處理；這樣做是否真的能減少負評，需要用隨機實驗驗證（實驗規模見「若要繼續追查：需要的資料」）。② 準時率 93.2%（96,470 張已送達訂單中準時或提早的比例，含沒有評價的訂單）不等於顧客滿意：預計送達日抓得很寬（預計送達天數中位數 24 天，實際中位數 10 天），準時的訂單等越久分數仍越低，物流指標建議同時追蹤「實際配送天數」（見附錄）。</p>
+  <p><b>建議：</b>① 晚到的訂單只占 6.66%，但分數低很多，是值得優先處理的風險。建議每天列出「即將到預計送達日、仍未送達」的訂單，請物流加急提前處理；這樣做是否真的能減少負評，需要用隨機實驗驗證（實驗規模見「若要繼續追查：需要的資料」）。② 準時率 93.2%（96,470 張已送達訂單中準時或提早的比例，含沒有評價的訂單）不等於顧客滿意：預計送達日抓得很寬（預計送達天數中位數 24 天，實際中位數 10 天），準時的訂單，實際送達天數越長，分數仍越低，物流指標建議同時追蹤「實際配送天數」（見附錄）。</p>
 </div>
 
 <details class="sec">
@@ -731,7 +731,7 @@ HAVING COUNT_IF(is_late) &gt;= 100
 ORDER BY gap DESC;</code></pre>
 </details>
 
-<p class="bridge"><b>為什麼接著看這個：</b>晚到的訂單通常也等得比較久。顧客給低分，可能是因為「沒有在說好的日期送到」，也可能只是「等太久」。兩者的改善方式不同：前者可以從預計送達日的設定著手，後者需要縮短實際配送時間。</p>
+<p class="bridge"><b>為什麼接著看這個：</b>晚到的訂單，送達天數通常也較長。顧客給低分，可能是因為「沒有在說好的日期送到」，也可能只是「送達天數較長」。兩者的改善方式不同：前者可以從預計送達日的設定著手，後者需要縮短實際配送時間。</p>
 
 <h3>分析三：排除等待天數，等一樣久時晚到比準時低 0.4～1.8 分</h3>
 <p>把訂單依「下單到送達實際等了幾天」分組，每組再分成準時與晚到比較。</p>
@@ -756,7 +756,7 @@ ORDER BY gap DESC;</code></pre>
   <li><b>同一列比較（等待天數相同，只差有沒有晚到）：</b>每一組都是晚到的分數較低，例如下單後 22～30 天送達的訂單，準時 3.94 分、晚到 2.55 分，差 1.39 分。下單後 0～7 天送達的晚到訂單只有 74 張，該組的平均分數較不穩定。</li>
   <li><b>只看準時那一欄（都沒有晚到，只差等多久）：</b>下單後 0～7 天送達的 4.41 分，31 天以上才送達的 3.62 分，等待天數本身也和分數有關。</li>
 </ul>
-<details><summary>補充：同一組裡，晚到的訂單是不是其實等得比較久？</summary>
+<details><summary>補充：同一組裡，晚到訂單的送達天數是否其實較長？</summary>
 <p>是，但差得不多：前四組晚到訂單的等待天數中位數只比準時多 1～2 天；31 天以上這組沒有上限，差距較大。</p>
 <table>
   <tr><th>實際等待天數的中位數</th><th class="num">0～7 天組</th><th class="num">8～14 天組</th><th class="num">15～21 天組</th><th class="num">22～30 天組</th><th class="num">31 天以上組</th></tr>
@@ -805,14 +805,14 @@ ORDER BY wait_bucket;</code></pre>
 </details>
 
 <details class="sec">
-<summary><h2>附錄：準時的訂單為什麼等越久分數越低？</h2></summary>
-<p>分析三中，準時送達的訂單等越久分數越低。如果顧客依照預計送達日安排期待，準時的訂單應該不論等多久都差不多滿意。以下逐一檢查可能的解釋，每一項先寫出「如果成立，資料應該看到什麼」。</p>
+<summary><h2>附錄：準時的訂單為什麼實際送達天數越長、分數越低？</h2></summary>
+<p>分析三中，準時送達的訂單，實際送達天數越長，分數越低。如果顧客依照預計送達日安排期待，準時的訂單應該不論等多久都差不多滿意。以下逐一檢查可能的解釋，每一項先寫出「如果成立，資料應該看到什麼」。</p>
 <table>
   <tr><th>可能的解釋</th><th>如果成立，資料應該看到</th><th>結果</th></tr>
-  <tr><td>等很久的多是大件、重的商品，運送中較易損壞</td><td>只看輕的商品，分數不再隨等待天數下降</td><td>不成立：總重 500 克以下的訂單一樣從 4.44 降到 3.79</td></tr>
+  <tr><td>送達天數長的多是大件、重的商品，運送中較易損壞</td><td>只看輕的商品，分數不再隨等待天數下降</td><td>不成立：總重 500 克以下的訂單一樣從 4.44 降到 3.79</td></tr>
   <tr><td>多件商品分批送達，顧客不滿意</td><td>只看單件訂單，分數不再下降</td><td>不成立：單件訂單一樣從 4.48 降到 3.68</td></tr>
   <tr><td>出貨慢的賣家整體服務較差</td><td>只看賣家 2 天內就交給物流的訂單，分數不再下降</td><td>不成立：一樣從 4.43 降到 3.76</td></tr>
-  <tr class="hi"><td>預計送達日給得很寬，顧客的實際期待是「平常幾天會到」</td><td>承諾天數明顯長於實際天數；準時但等很久的顧客仍抱怨慢</td><td>資料支持，但無法直接證實（見下方）</td></tr>
+  <tr class="hi"><td>預計送達日給得很寬，顧客的實際期待是「平常幾天會到」</td><td>承諾天數明顯長於實際天數；準時但送達天數長的顧客仍抱怨慢</td><td>資料支持，但無法直接證實（見下方）</td></tr>
 </table>
 <table>
   <tr><th>只看準時送達的訂單</th><th class="num">下單後 0～7 天送達</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
@@ -828,14 +828,14 @@ ORDER BY wait_bucket;</code></pre>
   <tr><td>實際送達天數（下單日到送達日）的中位數</td><td class="num">10 天</td></tr>
   <tr><td>準時或提早送達的比例</td><td class="num">93.2%</td></tr>
 </table>
-<p><b>評分跟「實際送達天數」有關，跟「預計送達天數」關係很小：</b>只看準時送達的訂單，依實際與預計送達天數交叉分組。同一列（實際天數相同）往右看，預計天數變長，分數最多只差 0.11 分；同一欄（預計天數相同）往下看，實際天數變長，分數一路下降（例：預計 22～28 天這一欄從 4.40 降到 3.93）。只看預計天數時分數也會下降，是因為預計天數長的訂單，實際也通常比較久才送到。</p>
+<p><b>評分跟「實際送達天數」有關，跟「預計送達天數」關係很小：</b>只看準時送達的訂單，依實際與預計送達天數交叉分組。同一列（實際天數相同）往右看，預計天數變長，分數最多只差 0.11 分；同一欄（預計天數相同）往下看，實際天數變長，分數持續下降（例：預計 22～28 天這一欄從 4.40 降到 3.93）。只看預計天數時分數也會下降，是因為預計天數長的訂單，實際送達天數通常也較長。</p>
 <table>
   <tr><th>準時訂單的平均分數（小字＝訂單數）</th><th class="num">預計 14 天以內</th><th class="num">15～21 天</th><th class="num">22～28 天</th><th class="num">29～35 天</th><th class="num">36 天以上</th></tr>
   <tr><td>實際 0～7 天送達</td><td class="num">4.44<br><small>9,575</small></td><td class="num">4.41<br><small>10,737</small></td><td class="num">4.40<br><small>7,262</small></td><td class="num">4.37<br><small>2,056</small></td><td class="num">4.34<br><small>846</small></td></tr><tr><td>8～14 天</td><td class="num">4.21<br><small>1,631</small></td><td class="num">4.29<br><small>8,869</small></td><td class="num">4.33<br><small>16,643</small></td><td class="num">4.31<br><small>7,232</small></td><td class="num">4.27<br><small>3,066</small></td></tr><tr><td>15～21 天</td><td class="num">—</td><td class="num">4.12<br><small>1,844</small></td><td class="num">4.14<br><small>6,601</small></td><td class="num">4.20<br><small>4,741</small></td><td class="num">4.18<br><small>2,287</small></td></tr><tr><td>22 天以上</td><td class="num">—</td><td class="num">—</td><td class="num">3.93<br><small>1,523</small></td><td class="num">3.93<br><small>2,509</small></td><td class="num">3.82<br><small>2,021</small></td></tr>
 </table>
 <p class="howto">預計送達天數＝下單日到預計送達日；實際送達天數＝下單日到實際送達日；「—」＝準時訂單中沒有這種組合（實際天數不會超過預計天數）。本表在本機以原始檔計算（lakehouse/analysis/b5_promise_vs_score.py），尚未在 Databricks 重跑。</p>
 <p><b>預計送達日給得很寬：</b>預計送達天數的中位數是實際的 2.4 倍（24 ÷ 10）。「準時」的門檻很容易達到，顧客較可能以平常的送達速度、或其他購物網站的速度作為期待。</p>
-<p><b>準時但等很久的顧客，留言較常抱怨慢：</b>在準時送達且有留言的訂單中，計算「留言含葡萄牙文 demor（拖很久，如 demorou、demora）的訂單 ÷ 該組有留言的訂單」。等越久的顧客留言比例也越高（38.4% → 49.3%），所以分母只用有留言的訂單，避免把「比較常留言」誤算成「比較常抱怨」：</p>
+<p><b>準時但送達天數長的顧客，留言較常抱怨慢：</b>在準時送達且有留言的訂單中，計算「留言含葡萄牙文 demor（拖很久，如 demorou、demora）的訂單 ÷ 該組有留言的訂單」。實際送達天數越長，留言比例也越高（38.4% → 49.3%），所以分母只用有留言的訂單，避免把「比較常留言」誤算成「比較常抱怨」：</p>
 <table>
   <tr><th>準時送達的訂單</th><th class="num">下單後 0～7 天送達</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
   <tr><td>① 訂單數</td><td class="num">30,476</td><td class="num">37,441</td><td class="num">15,473</td><td class="num">5,217</td><td class="num">836</td></tr>
@@ -922,7 +922,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>假設的 1～2 星比例變化（實際效果要實驗才知道）</td><td class="num">62.4% → 52.4%</td></tr>
   <tr><td>每組需要的晚到訂單（顯著水準 5%、檢定力 80%）</td><td class="num">380 張</td></tr>
   <tr><td>最近 12 個月（2017-09～2018-08）平均每月晚到訂單</td><td class="num">470 張（各月 71～1,296 張）</td></tr>
-  <tr><td>兩組收滿所需時間</td><td class="num">不到 2 個月</td></tr>
+  <tr><td>兩組合計需要的晚到訂單</td><td class="num">760 張</td></tr>
+  <tr><td>收集完所需時間（760 ÷ 470）</td><td class="num">約 1.6 個月</td></tr>
 </table>
 </details>
 
@@ -1033,7 +1034,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>「是否為偏遠州晚到較多、評分也較低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
-      <p><b>「只是等太久？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時那一列，等越久分數也越低（下一頁）</p>
+      <p><b>「是否只因送達天數較長？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時的訂單，實際送達天數越長，分數也越低（下一頁）</p>
       <p><b>還不是因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
   </div>
@@ -1041,17 +1042,17 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>準時訂單的評分落差</h2>
-  <span class="sub">就算準時送達，實際越久才送到，評分越低；預計送達天數本身的影響很小</span>
+  <span class="sub">即使準時送達，實際送達天數越長，評分越低；預計送達天數本身的影響很小</span>
   <div class="two">
     <div>
       <p class="ct">準時送達的 89,443 張訂單，依實際與預計送達天數交叉分組的平均評分</p>
       <p class="lg">灰色越深＝平均評分越低（這頁都是準時訂單，沿用準時的灰色）　「—」＝沒有這種組合（準時代表實際不超過預計）</p>
       <table class="hm"><tr><th></th><th>預計 14 天以內</th><th>15～21 天</th><th>22～28 天</th><th>29～35 天</th><th>36 天以上</th></tr><tr><th>實際 0～7 天送達</th><td style="background:color-mix(in srgb, var(--ink-3) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--ink-3) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--ink-3) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--ink-3) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--ink-3) 12%, var(--card));">4.34</td></tr><tr><th>8～14 天</th><td style="background:color-mix(in srgb, var(--ink-3) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--ink-3) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--ink-3) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--ink-3) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--ink-3) 19%, var(--card));">4.27</td></tr><tr><th>15～21 天</th><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--ink-3) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--ink-3) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--ink-3) 29%, var(--card));">4.18</td></tr><tr><th>22 天以上</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 68%, var(--card));color:#fff;">3.82</td></tr></table>
-      <p class="note">往右看（實際天數相同、預計變長）：分數最多差 0.11 分；往下看（預計相同、實際變長）：分數一路下降，例如預計 22～28 天從 4.40 降到 3.93</p>
+      <p class="note">往右看（實際天數相同、預計變長）：分數最多差 0.11 分；往下看（預計相同、實際變長）：分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
       <p><b>為什麼重要：</b>準時率 93.2% 看起來很好，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
-      <p class="ct">會不會是其他原因讓「久才送到」的訂單分數低？只看排除該原因的訂單，從 0～7 天送達到 31 天以上，分數一樣下降：</p>
+      <p class="ct">實際送達天數較長的訂單分數低，是否另有原因？排除各項原因後，從 0～7 天送達到 31 天以上，分數仍然下降：</p>
       <p><b>大件商品容易損壞？</b>只看總重 500 克以下：4.44 → 3.79</p>
       <p><b>多件商品分批送達？</b>只看單件訂單：4.48 → 3.68</p>
       <p><b>出貨慢的賣家服務差？</b>只看賣家 2 天內出貨：4.43 → 3.76</p>
@@ -1064,7 +1065,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">每一項都根據前面頁面的發現</span>
   <div class="nexts n3">
     <div><b>① 每天列出快晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，請物流加急；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能降低低分</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，不是因果。隨機一半提前處理、一半照常，比較 1～2 星比例：假設能從 62.4% 降到 52.4%（實際效果要實驗才知道），每組約需 380 張晚到訂單（顯著水準 5%、檢定力 80%），以最近 12 個月平均每月約 470 張估算不到 2 個月</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能降低低分</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，不是因果。做法：快晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組給 1～2 星的比例。假設能從 62.4% 降到 52.4%（實際效果要實驗才知道），兩組各需約 380 張、共 760 張晚到訂單（顯著水準 5%、檢定力 80%）；最近 12 個月平均每月約有 470 張晚到訂單，所以大約 2 個月可以收集完</span></div>
     <div><b>③ 物流指標除了準時率，也追蹤實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
@@ -1074,7 +1075,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">後續分析與需要的資料</span>
   <div class="nexts">
     <div><b>用實驗資料確認延遲是否造成低分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；第 7 頁 ② 的實驗結果，才能證明延遲本身會拉低評分</span></div>
-    <div><b>拆開實際送達天數，找出拖長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，看哪一段拖得最久</span></div>
+    <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
   </div>
 </div></section>
 
@@ -1202,7 +1203,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Each one follows from a finding on an earlier slide</span>
   <div class="nexts n3">
     <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to expedite; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces low ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Act early on a random half and compare 1–2 star shares: assuming a drop from 62.4% to 52.4% (the real effect is what the test measures), about 380 late orders per group are needed (5% significance level, 80% power), under 2 months at the recent average of about 470 late orders a month</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces low ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Assuming a drop from 62.4% to 52.4% (the real effect is what the test measures), each group needs about 380 late orders, 760 in total (5% significance level, 80% power); the last 12 months averaged about 470 late orders a month, so collecting them takes about 2 months</span></div>
     <div><b>③ Track actual delivery time alongside the on-time rate</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>
@@ -1745,7 +1746,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>Assumed change in 1–2 star share (the real effect is what the test measures)</td><td class="num">62.4% → 52.4%</td></tr>
   <tr><td>Late orders needed per group (5% significance level, 80% power)</td><td class="num">380</td></tr>
   <tr><td>Average late orders per month, last 12 months (2017-09 to 2018-08)</td><td class="num">470 (71 to 1,296 by month)</td></tr>
-  <tr><td>Time to fill both groups</td><td class="num">under 2 months</td></tr>
+  <tr><td>Late orders needed for both groups</td><td class="num">760</td></tr>
+  <tr><td>Time to collect them (760 ÷ 470)</td><td class="num">about 1.6 months</td></tr>
 </table>
 </details>
 
