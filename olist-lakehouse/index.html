@@ -380,7 +380,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   /* 2026-11-03 美術審查：圖表標題與欄標題用正文深色（灰色只留給註解）；熱度表專用色；下一步卡片靠上 */
   :root { --heat: #3d8c7a; }
   #deck .ct { color: var(--ink); }
-  #deck .nexts { align-content: start; margin-top: 1.2em; }
+  #deck .nexts { align-content: center; }
+  /* 第 8 頁只有 2 項：改成整列寬的大卡片、垂直置中，避免下方大片空白 */
+  #deck .nexts.n2 { grid-template-columns: 1fr; gap: 1.2em; }
+  #deck .nexts.n2 > div { padding: 1.2em 1.4em; font-size: 1.12em; }
 </style>
 
 <!-- i18n:start --><script>
@@ -1053,7 +1056,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p class="ct">準時送達的 89,443 張訂單，依實際與預計送達天數交叉分組的平均評分</p>
       <p class="lg">顏色越深＝平均評分越低　「—」＝沒有這種組合（準時代表實際不超過預計）</p>
       <table class="hm"><tr><th></th><th>預計 14 天以內</th><th>15～21 天</th><th>22～28 天</th><th>29～35 天</th><th>36 天以上</th></tr><tr><th>實際 0～7 天送達</th><td style="background:color-mix(in srgb, var(--heat) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--heat) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--heat) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--heat) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--heat) 12%, var(--card));">4.34</td></tr><tr><th>8～14 天</th><td style="background:color-mix(in srgb, var(--heat) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--heat) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--heat) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--heat) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--heat) 19%, var(--card));">4.27</td></tr><tr><th>15～21 天</th><td>—</td><td style="background:color-mix(in srgb, var(--heat) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--heat) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--heat) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--heat) 29%, var(--card));">4.18</td></tr><tr><th>22 天以上</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 68%, var(--card));color:#fff;">3.82</td></tr></table>
-      <p><b>怎麼讀：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
+      <p><b>讀法：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
       <p><b>為什麼重要：</b>準時率 93.2% 看起來很好，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
@@ -1078,7 +1081,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>後續分析方向</h2>
   <span class="sub">前面頁面尚未回答的問題，以及要做的分析</span>
-  <div class="nexts">
+  <div class="nexts n2">
     <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
     <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
   </div>
@@ -1192,7 +1195,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p class="ct">Average score of 89,443 on-time orders, grouped by actual and estimated delivery time</p>
       <p class="lg">Darker = lower average score　"—" = no such combination (on time means actual ≤ estimate)</p>
       <table class="hm"><tr><th></th><th>Estimate ≤14</th><th>15–21</th><th>22–28</th><th>29–35</th><th>36+</th></tr><tr><th>Actual 0–7 days</th><td style="background:color-mix(in srgb, var(--heat) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--heat) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--heat) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--heat) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--heat) 12%, var(--card));">4.34</td></tr><tr><th>8–14 days</th><td style="background:color-mix(in srgb, var(--heat) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--heat) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--heat) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--heat) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--heat) 19%, var(--card));">4.27</td></tr><tr><th>15–21 days</th><td>—</td><td style="background:color-mix(in srgb, var(--heat) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--heat) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--heat) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--heat) 29%, var(--card));">4.18</td></tr><tr><th>22+ days</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 68%, var(--card));color:#fff;">3.82</td></tr></table>
-      <p><b>How to read it:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
+      <p><b>Reading the table:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
     </div>
     <div class="side">
       <p><b>Why it matters:</b> a 93.2% on-time rate looks good, but the on-time rate alone hides a rating gap from 4.44 to 3.82 among on-time orders</p>
@@ -1217,7 +1220,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Further analysis</h2>
   <span class="sub">Open questions from earlier slides and the analyses to answer them</span>
-  <div class="nexts">
+  <div class="nexts n2">
     <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
     <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; use the carrier hand-off date in the data to split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
   </div>
