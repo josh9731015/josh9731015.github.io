@@ -336,15 +336,15 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   #deck .sc .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
   #deck .sc .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); white-space: nowrap; }
   #deck .sc .ax .h { font-size: .8em; color: var(--ink-3); line-height: 1.2; }
-  #deck .sc.dual .r { grid-template-columns: 7.5em 1fr; }
-  #deck .sc.dual .ax { grid-template-columns: 7.5em 1fr; }
+  #deck .sc.dual .r { grid-template-columns: 9.6em 1fr; }  /* 列名改成「下單後 N 天送達」（2026-11-02），加寬才不會折行 */
+  #deck .sc.dual .ax { grid-template-columns: 9.6em 1fr; }
   #deck .sc.dual .ax div { width: 70%; }
   #deck .sc.dual .b { display: flex; align-items: center; gap: .6em; font-size: .88em; min-height: 1.5em; white-space: nowrap; font-variant-numeric: tabular-nums; }
   #deck .sc.dual .b .trk { flex: none; width: 70%; height: .95em; }
   #deck .sc.dual .b.v i { background: var(--ink-3); }
   #deck .sc.dual .b.t i { background: var(--accent); }
   html[lang="en"] #deck .sc .r, html[lang="en"] #deck .sc .ax { grid-template-columns: 9.5em 1fr 2.6em 5.6em; }
-  html[lang="en"] #deck .sc.dual .r, html[lang="en"] #deck .sc.dual .ax { grid-template-columns: 9em 1fr; }
+  html[lang="en"] #deck .sc.dual .r, html[lang="en"] #deck .sc.dual .ax { grid-template-columns: 11.6em 1fr; }
   @media (max-width: 760px) and (orientation: portrait) {
     #deck .flow3 { grid-template-columns: 1fr; }
     #deck .flow3 .ar { transform: rotate(90deg); }
@@ -385,12 +385,12 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
   <div class="stat"><b>6.66%</b><span>晚於預計送達日的訂單比例（6,381 ÷ 95,824 張已送達且有評價的訂單）</span></div>
-  <div class="stat"><b>1.00 分</b><span>晚到 1～3 天的訂單，平均評分比準時訂單低多少（4.29 − 3.29，滿分 5 分）</span></div>
+  <div class="stat"><b>62.42%</b><span>晚到訂單中給 1～2 星的比例（3,983 ÷ 6,381；準時訂單為 9.27%）</span></div>
   <div class="stat"><b>15 條</b><span>資料更新後一次重跑的資料品質規則數，目前全部通過（見「資料品質檢查」）</span></div>
 </div>
 
 <div class="tldr lead">
-  <p><b>結論：</b>95,824 張已送達且有評價的訂單中，6.66% 晚於 Olist 給顧客的預計送達日。準時訂單平均 4.29 分；只晚 1～3 天就降到 3.29 分，晚 4 天以上降到 2.10 分以下，晚到 4 天以上的三組各有 67.68%～80.15% 給 1～2 星。這個落差不能用州別差異解釋：在晚到訂單較多的 14 個州（見分析二），州內晚到訂單都比準時訂單低 1.63～2.33 分。準時送達的訂單裡，等待天數越長分數也越低（等 0～7 天 4.41 分，等 31 天以上 3.62 分）。</p>
+  <p><b>結論：</b>95,824 張已送達且有評價的訂單中，6.66% 晚於 Olist 給顧客的預計送達日。準時訂單平均 4.29 分；只晚 1～3 天就降到 3.29 分，晚 4 天以上降到 2.10 分以下，晚到 4 天以上的三組各有 67.68%～80.15% 給 1～2 星。這個落差不能用州別差異解釋：在晚到訂單較多的 14 個州（見分析二），州內晚到訂單都比準時訂單低 1.63～2.33 分。準時送達的訂單裡，等待天數越長分數也越低（下單後 0～7 天送達的 4.41 分，31 天以上才送達的 3.62 分）。</p>
   <p><b>建議：</b>① 晚到的訂單只占 6.66%，但分數低很多，是值得優先處理的風險。建議每天列出「即將到預計送達日、仍未送達」的訂單，提前處理或主動通知顧客；通知是否真的能減少負評，需要用實驗驗證（見「若要繼續追查：需要的資料」）。② 準時率 93.2%（96,470 張已送達訂單中準時或提早的比例，含沒有評價的訂單）不等於顧客滿意：預計送達日抓得很寬（預計送達天數中位數 24 天，實際中位數 10 天），準時的訂單等越久分數仍越低，物流指標建議同時追蹤「實際配送天數」（見附錄）。</p>
 </div>
 
@@ -620,9 +620,10 @@ WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
   <tr class="hi"><td>晚 4～7 天</td><td class="num">1,748</td><td class="num">2.10</td><td class="num">67.68%</td></tr>
   <tr class="hi"><td>晚 8～14 天</td><td class="num">1,446</td><td class="num">1.67</td><td class="num">80.15%</td></tr>
   <tr class="hi"><td>晚 15 天以上</td><td class="num">1,335</td><td class="num">1.72</td><td class="num">78.35%</td></tr>
+  <tr class="total"><td>晚到合計</td><td class="num">6,381</td><td class="num">2.27</td><td class="num">62.42%</td></tr>
   <tr class="total"><td>合計</td><td class="num">95,824</td><td class="num"></td><td class="num"></td></tr>
 </table>
-<p class="howto">晚到的訂單合計 6,381 張（1,852 + 1,748 + 1,446 + 1,335），占 6.66%（6,381 ÷ 95,824）。</p>
+<p class="howto">晚到的訂單合計 6,381 張（1,852 + 1,748 + 1,446 + 1,335），占 6.66%（6,381 ÷ 95,824）；其中 3,983 張給 1～2 星（62.42%）。</p>
 <p>只晚 1～3 天，平均分數就比準時低 1.00 分；晚 8 天以上約八成給 1～2 星，晚 8～14 天與晚 15 天以上的分數相近（1.67 與 1.72），晚到一週以上後，分數不再隨天數明顯下降。</p>
 <p><b>結論：晚到的訂單分數明顯較低，晚到 14 天以內越多天越低，之後持平；晚到一週以上約八成是 1～2 星。</b></p>
 <details><summary>SQL：依晚到天數分組</summary>
@@ -709,13 +710,13 @@ ORDER BY gap DESC;</code></pre>
 
 <h3>分析三：排除等待天數，等一樣久時晚到比準時低 0.4～1.8 分</h3>
 <p>把訂單依「下單到送達實際等了幾天」分組，每組再分成準時與晚到比較。</p>
-<div class="chart-title">同樣等 22～30 天，準時送達平均 3.94 分，晚到只有 2.55 分</div>
+<div class="chart-title">同樣下單後 22～30 天送達的訂單，準時平均 3.94 分，晚到只有 2.55 分</div>
 <div class="legend"><i style="background:var(--mute)"></i>準時或提早<i style="background:var(--neg)"></i>晚到</div>
-<div class="pair"><div class="name">等 0～7 天</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
-<div class="pair"><div class="name">等 8～14 天</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
-<div class="pair"><div class="name">等 15～21 天</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
-<div class="pair hi"><div class="name">等 22～30 天</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
-<div class="pair"><div class="name">等 31 天以上</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
+<div class="pair"><div class="name">下單後 0～7 天送達</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
+<div class="pair"><div class="name">下單後 8～14 天送達</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
+<div class="pair"><div class="name">下單後 15～21 天送達</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
+<div class="pair hi"><div class="name">下單後 22～30 天送達</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
+<div class="pair"><div class="name">下單後 31 天以上送達</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
 <p class="ax-x">X 軸：平均評分（0～5 分）</p>
 <table>
   <tr><th>實際等待天數</th><th class="num">準時：訂單數</th><th class="num">準時：平均分數</th><th class="num">晚到：訂單數</th><th class="num">晚到：平均分數</th><th class="num">差距（準時 − 晚到）</th></tr>
@@ -727,8 +728,8 @@ ORDER BY gap DESC;</code></pre>
 </table>
 <p>這張表回答兩個問題：</p>
 <ul>
-  <li><b>同一列比較（等待天數相同，只差有沒有晚到）：</b>每一組都是晚到的分數較低，例如等 22～30 天，準時 3.94 分、晚到 2.55 分，差 1.39 分。等 0～7 天的晚到訂單只有 74 張，該組的平均分數較不穩定。</li>
-  <li><b>只看準時那一欄（都沒有晚到，只差等多久）：</b>等 0～7 天 4.41 分，等 31 天以上 3.62 分，等待天數本身也和分數有關。</li>
+  <li><b>同一列比較（等待天數相同，只差有沒有晚到）：</b>每一組都是晚到的分數較低，例如下單後 22～30 天送達的訂單，準時 3.94 分、晚到 2.55 分，差 1.39 分。下單後 0～7 天送達的晚到訂單只有 74 張，該組的平均分數較不穩定。</li>
+  <li><b>只看準時那一欄（都沒有晚到，只差等多久）：</b>下單後 0～7 天送達的 4.41 分，31 天以上才送達的 3.62 分，等待天數本身也和分數有關。</li>
 </ul>
 <details><summary>補充：同一組裡，晚到的訂單是不是其實等得比較久？</summary>
 <p>是，但差得不多：前四組晚到訂單的等待天數中位數只比準時多 1～2 天；31 天以上這組沒有上限，差距較大。</p>
@@ -739,14 +740,14 @@ ORDER BY gap DESC;</code></pre>
 </table>
 <p>把 31 天以上這組再細分，差距仍在 1.6 分以上：</p>
 <table>
-  <tr><th>等 31 天以上再細分</th><th class="num">準時：訂單數</th><th class="num">準時：平均分數</th><th class="num">晚到：訂單數</th><th class="num">晚到：平均分數</th></tr>
+  <tr><th>下單後 31 天以上送達，再細分</th><th class="num">準時：訂單數</th><th class="num">準時：平均分數</th><th class="num">晚到：訂單數</th><th class="num">晚到：平均分數</th></tr>
   <tr><td>31～40 天</td><td class="num">729</td><td class="num">3.66</td><td class="num">1,822</td><td class="num">1.95</td></tr>
   <tr><td>41～50 天</td><td class="num">89</td><td class="num">3.30</td><td class="num">933</td><td class="num">1.66</td></tr>
   <tr><td>51 天以上</td><td class="num">18</td><td class="num">3.78</td><td class="num">589</td><td class="num">1.83</td></tr>
 </table>
 <p class="howto">41 天以上的準時訂單只有 107 張（89 + 18），平均分數較不穩定，51 天以上的 18 張不具參考性。</p>
 </details>
-<p>「等 31 天以上卻準時」的訂單，是因為預計送達日給得更長；這類訂單的預計送達天數與實際天數，見附錄。</p>
+<p>「下單後 31 天以上才送達卻算準時」的訂單，是因為預計送達日給得更長；這類訂單的預計送達天數與實際天數，見附錄。</p>
 <p><b>結論：兩者都和分數有關：等待越久分數越低，而等待天數相同時，晚到的訂單又再低 0.44～1.78 分。</b></p>
 <details><summary>SQL：等待天數 × 準時／晚到</summary>
 <div class="sqltags"><span class="tag">兩個 DATEDIFF</span><span class="tag">條件計數 COUNT_IF</span></div>
@@ -789,7 +790,7 @@ ORDER BY wait_bucket;</code></pre>
   <tr class="hi"><td>預計送達日給得很寬，顧客的實際期待是「平常幾天會到」</td><td>承諾天數明顯長於實際天數；準時但等很久的顧客仍抱怨慢</td><td>資料支持，但無法直接證實（見下方）</td></tr>
 </table>
 <table>
-  <tr><th>只看準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
+  <tr><th>只看準時送達的訂單</th><th class="num">下單後 0～7 天送達</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
   <tr><td>全部（89,443 張）</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td><td class="num">3.62</td></tr>
   <tr><td>單件訂單（80,407 張）</td><td class="num">4.48</td><td class="num">4.38</td><td class="num">4.23</td><td class="num">3.99</td><td class="num">3.68</td></tr>
   <tr><td>總重 500 克以下（36,134 張）</td><td class="num">4.44</td><td class="num">4.33</td><td class="num">4.19</td><td class="num">3.93</td><td class="num">3.79</td></tr>
@@ -805,7 +806,7 @@ ORDER BY wait_bucket;</code></pre>
 <p><b>預計送達日給得很寬：</b>預計送達天數的中位數是實際的 2.4 倍（24 ÷ 10）。「準時」的門檻很容易達到，顧客較可能以平常的送達速度、或其他購物網站的速度作為期待。</p>
 <p><b>準時但等很久的顧客，留言較常抱怨慢：</b>在準時送達且有留言的訂單中，計算「留言含葡萄牙文 demor（拖很久，如 demorou、demora）的訂單 ÷ 該組有留言的訂單」。等越久的顧客留言比例也越高（38.4% → 49.3%），所以分母只用有留言的訂單，避免把「比較常留言」誤算成「比較常抱怨」：</p>
 <table>
-  <tr><th>準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
+  <tr><th>準時送達的訂單</th><th class="num">下單後 0～7 天送達</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th><th class="num">31 天以上</th></tr>
   <tr><td>① 訂單數</td><td class="num">30,476</td><td class="num">37,441</td><td class="num">15,473</td><td class="num">5,217</td><td class="num">836</td></tr>
   <tr><td>② 有留言的訂單</td><td class="num">11,696</td><td class="num">14,701</td><td class="num">6,153</td><td class="num">2,149</td><td class="num">412</td></tr>
   <tr><td>留言比例 ② ÷ ①</td><td class="num">38.4%</td><td class="num">39.3%</td><td class="num">39.8%</td><td class="num">41.2%</td><td class="num">49.3%</td></tr>
@@ -817,12 +818,12 @@ ORDER BY wait_bucket;</code></pre>
 <h3>另一個發現：多個賣家的訂單分數特別低</h3>
 <p>同一張訂單的商品來自 2 個以上賣家時，即使準時且 7 天內送達，平均也只有 2.91 分，遠低於全部準時訂單同組的 4.41 分：</p>
 <table>
-  <tr><th>準時送達的訂單</th><th class="num">等 0～7 天</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th></tr>
+  <tr><th>準時送達的訂單</th><th class="num">下單後 0～7 天送達</th><th class="num">8～14 天</th><th class="num">15～21 天</th><th class="num">22～30 天</th></tr>
   <tr><td>全部：平均分數</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
   <tr class="hi"><td>商品來自 2 個以上賣家：平均分數</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
   <tr><td>商品來自 2 個以上賣家：訂單數</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
 </table>
-<p class="howto">準時的多賣家訂單共 1,249 張；等 31 天以上只有 1 張，不列入。</p>
+<p class="howto">準時的多賣家訂單共 1,249 張；下單後 31 天以上才送達的只有 1 張，不列入。</p>
 <p>這類訂單通常分開出貨，可能有部分商品先到、部分後到的情形，但資料沒有記錄每件商品各自的送達日，需要分批出貨的紀錄才能確認原因。</p>
 <details><summary>SQL：排除可能的解釋（只看準時訂單）</summary>
 <div class="sqltags"><span class="tag">先彙總再 JOIN</span><span class="tag">UNION ALL 多組比較</span><span class="tag">MEDIAN</span></div>
@@ -913,7 +914,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構</span><span>資料品質規則</span></div>
   <div class="roles">
     <div><b>6.66%</b><span>已送達且有評價的訂單中，晚於預計送達日的比例</span></div>
-    <div><b>−1.00 分</b><span>只晚 1～3 天，平均評分就比準時低 1 分（滿分 5 分）</span></div>
+    <div><b>62.42%</b><span>晚到訂單中給 1～2 星的比例；準時訂單只有 9.27%</span></div>
     <div><b>15 條</b><span>資料更新後一次重跑的品質規則；目前沒有一條失敗（含 4 條只要求已知問題不惡化的警告級規則）</span></div>
   </div>
   <p class="foot">資料：巴西電商平台 Olist 公開資料，約 10 萬筆訂單（2016-09～2018-10）。SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對</p>
@@ -987,13 +988,13 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">換成同一州比、等待天數相同時比，晚到訂單的評分仍明顯較低</span>
   <div class="two">
     <div class="sc dual" aria-label="等待天數相同時，準時與晚到的平均評分">
-      <p class="ct">「晚到訂單的等待時間是否本來就較長？」→ 等待天數（下單到實際送達的天數）相同時比較平均評分</p>
+      <p class="ct">「晚到訂單的等待時間是否本來就較長？」→ 依下單到實際送達的天數分組，比較準時與晚到訂單的平均評分</p>
       <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到</p>
-      <div class="r"><span>等 0～7 天</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97（只有 74 張）</div></div></div>
-      <div class="r"><span>等 8～14 天</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
-      <div class="r"><span>等 15～21 天</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
-      <div class="r"><span>等 22～30 天</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
-      <div class="r"><span>等 31 天以上</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
+      <div class="r"><span>下單後 0～7 天送達</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97（只有 74 張）</div></div></div>
+      <div class="r"><span>下單後 8～14 天送達</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
+      <div class="r"><span>下單後 15～21 天送達</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
+      <div class="r"><span>下單後 22～30 天送達</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
+      <div class="r"><span>下單後 31 天以上送達</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div></div>
     </div>
     <div class="side">
@@ -1015,14 +1016,14 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       </div>
       <p class="ct">只看準時送達的訂單：等越久，分數越低、抱怨慢的留言越多</p>
       <table class="seg wt">
-        <tr><th>等待天數</th><td>0～7</td><td>8～14</td><td>15～21</td><td>22～30</td><td>31 以上</td></tr>
+        <tr><th>下單後幾天送達</th><td>0～7</td><td>8～14</td><td>15～21</td><td>22～30</td><td>31 以上</td></tr>
         <tr><th>平均分數</th><td>4.41</td><td>4.31</td><td>4.16</td><td>3.94</td><td>3.62</td></tr>
         <tr><th>留言抱怨慢的比例</th><td>0.3%</td><td>1.0%</td><td>3.6%</td><td>7.3%</td><td>10.9%</td></tr>
       </table>
       <p class="note">抱怨慢＝有留言的訂單中，留言含葡萄牙文 demor（拖很久）的比例；只抓一種寫法，屬粗略計算</p>
     </div>
     <div class="side">
-      <p class="ct">另外 3 種解釋都不成立：只看下面這些訂單，從等 0～7 天到等 31 天以上，分數一樣下降</p>
+      <p class="ct">另外 3 種解釋都不成立：只看下面這些訂單，從下單後 0～7 天送達到 31 天以上才送達，分數一樣下降</p>
       <p><b>只看總重 500 克以下：</b>4.44 → 3.79（排除「大件易損壞」）</p>
       <p><b>只看單件訂單：</b>4.48 → 3.68（排除「分批送達」）</p>
       <p><b>只看賣家 2 天內出貨：</b>4.43 → 3.76（排除「出貨慢的賣家服務差」）</p>
@@ -1066,7 +1067,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture</span><span>Data quality rules</span></div>
   <div class="roles">
     <div><b>6.66%</b><span>of delivered, reviewed orders arrived after the estimated delivery date</span></div>
-    <div><b>−1.00 pt</b><span>orders just 1–3 days late average 1 point lower than on-time (out of 5)</span></div>
+    <div><b>62.42%</b><span>share of late orders rated 1–2 stars; only 9.27% for on-time orders</span></div>
     <div><b>15 rules</b><span>quality checks rerun after every update; none currently fail (incl. 4 warning-level rules that only require known issues not to grow)</span></div>
   </div>
   <p class="foot">Data: public dataset from Brazilian e-commerce platform Olist, about 100,000 orders (2016-09 to 2018-10). SQL written with help from Claude Code; I ran each step in Databricks and checked results against answers computed locally from the raw files</p>
@@ -1140,13 +1141,13 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Comparing within the same state, or at the same waiting time, late orders still score much lower than on-time ones</span>
   <div class="two">
     <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
-      <p class="ct">"Do late orders just take longer?" → average score at the same waiting time (days from order to delivery)</p>
+      <p class="ct">"Do late orders just take longer?" → orders grouped by days from purchase to actual delivery, comparing on-time and late average scores</p>
       <p class="lg"><i class="v"></i>On time or early <i class="t"></i>Late</p>
-      <div class="r"><span>Waited 0–7 days</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97 (only 74 orders)</div></div></div>
-      <div class="r"><span>Waited 8–14 days</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
-      <div class="r"><span>Waited 15–21 days</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
-      <div class="r"><span>Waited 22–30 days</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
-      <div class="r"><span>Waited 31+ days</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
+      <div class="r"><span>Delivered in 0–7 days</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97 (74 orders)</div></div></div>
+      <div class="r"><span>Delivered in 8–14 days</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
+      <div class="r"><span>Delivered in 15–21 days</span><div><div class="b v"><span class="trk"><i style="width:83.2%"></i></span>4.16</div><div class="b t"><span class="trk"><i style="width:58.8%"></i></span>2.94</div></div></div>
+      <div class="r"><span>Delivered in 22–30 days</span><div><div class="b v"><span class="trk"><i style="width:78.8%"></i></span>3.94</div><div class="b t"><span class="trk"><i style="width:51%"></i></span>2.55</div></div></div>
+      <div class="r"><span>Delivered in 31+ days</span><div><div class="b v"><span class="trk"><i style="width:72.4%"></i></span>3.62</div><div class="b t"><span class="trk"><i style="width:37%"></i></span>1.85</div></div></div>
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 pts</s></div></div>
     </div>
     <div class="side">
@@ -1168,7 +1169,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       </div>
       <p class="ct">On-time orders only: the longer the wait, the lower the score and the more comments about slowness</p>
       <table class="seg wt">
-        <tr><th>Days waited</th><td>0–7</td><td>8–14</td><td>15–21</td><td>22–30</td><td>31+</td></tr>
+        <tr><th>Days to delivery</th><td>0–7</td><td>8–14</td><td>15–21</td><td>22–30</td><td>31+</td></tr>
         <tr><th>Average score</th><td>4.41</td><td>4.31</td><td>4.16</td><td>3.94</td><td>3.62</td></tr>
         <tr><th>Comments about slowness</th><td>0.3%</td><td>1.0%</td><td>3.6%</td><td>7.3%</td><td>10.9%</td></tr>
       </table>
@@ -1223,7 +1224,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
   <div class="stat"><b>6.66%</b><span>Share of orders delivered after the estimated delivery date (6,381 ÷ 95,824 delivered orders with a review)</span></div>
-  <div class="stat"><b>1.00 pt</b><span>Drop in average score for orders 1–3 days late vs. on-time orders (4.29 − 3.29, on a 5-point scale)</span></div>
+  <div class="stat"><b>62.42%</b><span>Share of late orders rated 1–2 stars (3,983 ÷ 6,381; 9.27% for on-time orders)</span></div>
   <div class="stat"><b>15 rules</b><span>Number of data quality rules re-run after each data update; all currently pass (see "Data quality checks")</span></div>
 </div>
 
@@ -1458,9 +1459,10 @@ WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
   <tr class="hi"><td>4–7 days late</td><td class="num">1,748</td><td class="num">2.10</td><td class="num">67.68%</td></tr>
   <tr class="hi"><td>8–14 days late</td><td class="num">1,446</td><td class="num">1.67</td><td class="num">80.15%</td></tr>
   <tr class="hi"><td>15+ days late</td><td class="num">1,335</td><td class="num">1.72</td><td class="num">78.35%</td></tr>
+  <tr class="total"><td>All late</td><td class="num">6,381</td><td class="num">2.27</td><td class="num">62.42%</td></tr>
   <tr class="total"><td>Total</td><td class="num">95,824</td><td class="num"></td><td class="num"></td></tr>
 </table>
-<p class="howto">Late orders total 6,381 (1,852 + 1,748 + 1,446 + 1,335), or 6.66% (6,381 ÷ 95,824).</p>
+<p class="howto">Late orders total 6,381 (1,852 + 1,748 + 1,446 + 1,335), or 6.66% (6,381 ÷ 95,824); 3,983 of them were rated 1–2 stars (62.42%).</p>
 <p>Being just 1–3 days late lowers the average score by 1.00 point compared with on-time orders; about four in five orders 8 or more days late get 1–2 stars. Scores for 8–14 days late and 15+ days late are similar (1.67 and 1.72): beyond about a week late, scores no longer fall noticeably with more days.</p>
 <p><b>Conclusion: late orders score clearly lower; scores fall with each additional day late up to 14 days, then level off. About four in five orders more than a week late get 1–2 stars.</b></p>
 <details><summary>SQL: group by days late</summary>
@@ -1547,13 +1549,13 @@ ORDER BY gap DESC;</code></pre>
 
 <h3>Analysis 3: ruling out wait time, late orders score 0.4–1.8 points lower than on-time orders with the same wait</h3>
 <p>Orders are grouped by how many days they actually took from purchase to delivery, and each group is split into on-time and late orders.</p>
-<div class="chart-title">With the same 22–30 day wait, on-time orders average 3.94 and late orders only 2.55</div>
+<div class="chart-title">Among orders delivered 22–30 days after purchase, on-time orders average 3.94 and late orders only 2.55</div>
 <div class="legend"><i style="background:var(--mute)"></i>On time or early<i style="background:var(--neg)"></i>Late</div>
-<div class="pair"><div class="name">Wait 0–7 days</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
-<div class="pair"><div class="name">Wait 8–14 days</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
-<div class="pair"><div class="name">Wait 15–21 days</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
-<div class="pair hi"><div class="name">Wait 22–30 days</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
-<div class="pair"><div class="name">Wait 31+ days</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
+<div class="pair"><div class="name">Delivered in 0–7 days</div><div class="bars"><div class="b base"><span style="width:88.2%"></span>4.41</div><div class="b dec"><span style="width:79.4%"></span>3.97</div></div></div>
+<div class="pair"><div class="name">Delivered in 8–14 days</div><div class="bars"><div class="b base"><span style="width:86.2%"></span>4.31</div><div class="b dec"><span style="width:65.4%"></span>3.27</div></div></div>
+<div class="pair"><div class="name">Delivered in 15–21 days</div><div class="bars"><div class="b base"><span style="width:83.2%"></span>4.16</div><div class="b dec"><span style="width:58.8%"></span>2.94</div></div></div>
+<div class="pair hi"><div class="name">Delivered in 22–30 days</div><div class="bars"><div class="b base"><span style="width:78.8%"></span>3.94</div><div class="b dec"><span style="width:51%"></span>2.55</div></div></div>
+<div class="pair"><div class="name">Delivered in 31+ days</div><div class="bars"><div class="b base"><span style="width:72.4%"></span>3.62</div><div class="b dec"><span style="width:37%"></span>1.85</div></div></div>
 <p class="ax-x">X-axis: average score (0–5)</p>
 <table>
   <tr><th>Actual wait</th><th class="num">On time: orders</th><th class="num">On time: avg score</th><th class="num">Late: orders</th><th class="num">Late: avg score</th><th class="num">Gap (on time − late)</th></tr>
@@ -1565,7 +1567,7 @@ ORDER BY gap DESC;</code></pre>
 </table>
 <p>This table answers two questions:</p>
 <ul>
-  <li><b>Across a row (same wait, differing only in lateness):</b> late orders score lower in every group; e.g., with a 22–30 day wait, on-time orders score 3.94 and late orders 2.55, a gap of 1.39. The 0–7 day group has only 74 late orders, so its average is less stable.</li>
+  <li><b>Across a row (same wait, differing only in lateness):</b> late orders score lower in every group; e.g., among orders delivered in 22–30 days, on-time orders score 3.94 and late orders 2.55, a gap of 1.39. The 0–7 day group has only 74 late orders, so its average is less stable.</li>
   <li><b>Down the on-time column (none late, differing only in wait):</b> 4.41 for 0–7 days and 3.62 for 31+ days, so wait time itself is also related to scores.</li>
 </ul>
 <details><summary>Note: within a group, did late orders actually wait longer?</summary>
@@ -1627,7 +1629,7 @@ ORDER BY wait_bucket;</code></pre>
   <tr class="hi"><td>Estimated delivery dates are very generous, and customers actually expect "the usual delivery time"</td><td>Estimated times are clearly longer than actual times; customers with on-time but long waits still complain about slowness</td><td>Supported by the data, but cannot be directly confirmed (see below)</td></tr>
 </table>
 <table>
-  <tr><th>On-time orders only</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
+  <tr><th>On-time orders only</th><th class="num">Delivered in 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
   <tr><td>All (89,443 orders)</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td><td class="num">3.62</td></tr>
   <tr><td>Single-item orders (80,407 orders)</td><td class="num">4.48</td><td class="num">4.38</td><td class="num">4.23</td><td class="num">3.99</td><td class="num">3.68</td></tr>
   <tr><td>Total weight 500 g or less (36,134 orders)</td><td class="num">4.44</td><td class="num">4.33</td><td class="num">4.19</td><td class="num">3.93</td><td class="num">3.79</td></tr>
@@ -1643,7 +1645,7 @@ ORDER BY wait_bucket;</code></pre>
 <p><b>Estimated delivery dates are very generous:</b> the median estimated time is 2.4 times the actual time (24 ÷ 10). "On time" is an easy bar to clear, so customers are more likely to expect the usual delivery speed, or that of other shopping sites.</p>
 <p><b>Customers with on-time but long waits complain about slowness more often:</b> among on-time orders with a comment, the measure is "orders whose comment contains the Portuguese stem demor (taking long, as in demorou, demora) ÷ orders with a comment in the group". Customers who wait longer also comment more often (38.4% → 49.3%), so only orders with a comment are used as the denominator, to avoid mistaking "comments more often" for "complains more often":</p>
 <table>
-  <tr><th>On-time orders</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
+  <tr><th>On-time orders</th><th class="num">Delivered in 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th><th class="num">31+ days</th></tr>
   <tr><td>① Orders</td><td class="num">30,476</td><td class="num">37,441</td><td class="num">15,473</td><td class="num">5,217</td><td class="num">836</td></tr>
   <tr><td>② Orders with a comment</td><td class="num">11,696</td><td class="num">14,701</td><td class="num">6,153</td><td class="num">2,149</td><td class="num">412</td></tr>
   <tr><td>Comment rate ② ÷ ①</td><td class="num">38.4%</td><td class="num">39.3%</td><td class="num">39.8%</td><td class="num">41.2%</td><td class="num">49.3%</td></tr>
@@ -1655,7 +1657,7 @@ ORDER BY wait_bucket;</code></pre>
 <h3>Another finding: orders from multiple sellers score especially low</h3>
 <p>When an order's items come from 2 or more sellers, even orders delivered on time within 7 days average only 2.91 points, far below the 4.41 of all on-time orders in the same wait group:</p>
 <table>
-  <tr><th>On-time orders</th><th class="num">Wait 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th></tr>
+  <tr><th>On-time orders</th><th class="num">Delivered in 0–7 days</th><th class="num">8–14 days</th><th class="num">15–21 days</th><th class="num">22–30 days</th></tr>
   <tr><td>All: avg score</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td></tr>
   <tr class="hi"><td>Items from 2+ sellers: avg score</td><td class="num">2.91</td><td class="num">2.94</td><td class="num">2.49</td><td class="num">2.58</td></tr>
   <tr><td>Items from 2+ sellers: orders</td><td class="num">597</td><td class="num">487</td><td class="num">126</td><td class="num">38</td></tr>
