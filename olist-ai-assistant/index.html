@@ -215,7 +215,6 @@
   #deck .lg i:first-child { margin-left: 0; }
   #deck .lg i.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
   #deck .lg i.code { background: var(--card); border: 2px solid var(--ink-3); }
-  #deck .lg i.v { background: var(--mute); }
   #deck .lg i.t { background: var(--accent); }
   #deck .callout { margin: .9em 0 0; font-size: .88em; background: var(--warn-soft); color: var(--warn-ink); border-radius: .5em; padding: .5em .8em; }
   /* 發現頁：左圖右文 */
@@ -230,6 +229,10 @@
   #deck .hb .r b { font-weight: 500; font-variant-numeric: tabular-nums; }
   #deck .hb .r.hi span, #deck .hb .r.hi b { color: var(--ink); font-weight: 700; }
   #deck .hb .r.hi i { background: var(--accent); }
+  #deck .hb .ax { display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: .6em; font-size: .88em; }
+  #deck .hb .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
+  #deck .hb .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); }
+  #deck .hb .axt { text-align: center; font-size: .78em; color: var(--ink-3); margin: 0; padding-left: 8.5em; }
   #deck .vb .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
   #deck .vb .cols > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
   #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
@@ -245,18 +248,22 @@
   #deck .checks span { color: var(--ink-2); font-size: .9em; flex: 1; }
   #deck .checks em { font-style: normal; font-size: .85em; margin-top: .5em; padding: .3em .55em; border-radius: .35em; background: var(--warn-soft); color: var(--warn-ink); }
   #deck .checks em.lim { background: transparent; color: var(--ink-3); padding-left: 0; }
-  /* 成績長條圖 */
+  /* 成績：進度條（灰色底條＝100%，填滿＝比例，紅虛線＝90% 門檻）；調查是「跑幾次全過」不是比例，只寫文字 */
   #deck .bars { flex: 1; display: flex; flex-direction: column; justify-content: center; }
   #deck .bars .r { display: grid; grid-template-columns: 15em 1fr; gap: 1.2em; align-items: center; padding: .5em 0; border-bottom: 1px solid var(--line); }
-  #deck .bars .r:last-child { border-bottom: 0; }
   #deck .bars .nm { text-align: right; font-weight: 600; }
   #deck .bars .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: .78em; line-height: 1.35; }
-  #deck .bars .b { display: flex; align-items: center; gap: .6em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.6em; }
-  #deck .bars .b i { display: block; height: .95em; border-radius: 0 .25em .25em 0; flex: none; }
-  #deck .bars .b.v i { background: var(--mute); }
+  #deck .bars .b { display: flex; align-items: center; gap: .7em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.7em; }
+  #deck .bars .trk { position: relative; flex: none; width: 45%; height: 1em; background: var(--line); border-radius: .25em; }
+  #deck .bars .trk i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .25em; }
+  #deck .bars .trk u { position: absolute; left: 90%; top: -.3em; bottom: -.3em; border-left: 2px dashed var(--neg); }
+  #deck .bars .b.v i { background: var(--ink-3); }
   #deck .bars .b.t i { background: var(--accent); }
   #deck .bars .b.t.miss i { background: var(--neg); }
   #deck .bars .b.none { color: var(--ink-3); font-style: italic; }
+  #deck .bars .txt { font-size: .88em; line-height: 1.7; }
+  #deck .bars .note { margin-top: .8em; }
+  #deck .lg i.v { background: var(--ink-3); }
   /* 信賴區間圖：刻度 60%～100%，left 換算＝(值 − 60) ÷ 40 */
   #deck .ci { flex: 1; display: flex; flex-direction: column; justify-content: center; }
   #deck .ci .r { display: grid; grid-template-columns: 13em 1fr; gap: 1.2em; align-items: center; margin: .8em 0; }
@@ -292,6 +299,8 @@
     #deck .roles, #deck .checks, #deck .shotrow, #deck .two, #deck .nexts { grid-template-columns: 1fr; }
     #deck .imgbox { height: auto; }
     #deck .hb .r { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .ax { grid-template-columns: 8.6em 1fr 3.2em; gap: .4em; }
+    #deck .hb .axt { padding-left: 8.6em; }
     #deck .vb .area { height: 10em; }
     #deck .bars .r { grid-template-columns: 1fr; gap: .2em; }
     #deck .bars .nm { text-align: left; }
@@ -467,14 +476,14 @@
   <div class="shotrow">
     <div class="imgbox"><img src="slide-ask.jpg" alt="問資料畫面：回答上方顯示每個數字都能在查詢結果找到"></div>
     <div>
-      <p class="lg"><i class="ai"></i>AI <i class="code"></i>程式　以「問資料」為例</p>
+      <p class="lg">以「問資料」為例　<i class="ai"></i>藍框＝AI 做的 <i class="code"></i>灰框＝程式做的</p>
       <div class="vpipe">
         <div class="st io">中文問題：2018 年哪個月營收最高？</div>
         <div class="st ai">AI 寫 SQL</div>
         <div class="st code">SQL 護欄<small>只能讀取、逾時、列數上限</small></div>
         <div class="st code">DuckDB 查詢</div>
         <div class="st ai">AI 寫白話回答</div>
-        <div class="st code">核對每個數字<small>都在查詢結果裡 ✅，對不上 ⚠️</small></div>
+        <div class="st code">核對回答裡的每個數字<small>都在查詢結果裡就標 ✅；找不到就標 ⚠️，提醒使用者這個數字可能是 AI 編的</small></div>
       </div>
     </div>
   </div>
@@ -482,19 +491,19 @@
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>Agent 調查流程</h2>
-  <span class="sub">問「為什麼某些州差評比較多」：假說由程式判定，報告由 AI 撰寫</span>
+  <span class="sub">問「為什麼某些州差評比較多」：6 個程式寫好的分析工具負責計算和判定，AI 負責挑工具、寫報告</span>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-agent.jpg" alt="調查畫面：AI 寫的結論，下方有程式依工具判定加的附註"></div>
     <div>
-      <p class="lg"><i class="ai"></i>AI <i class="code"></i>程式</p>
+      <p class="lg"><i class="ai"></i>藍框＝AI 做的 <i class="code"></i>灰框＝程式做的</p>
       <div class="vpipe">
-        <div class="st code">各州總覽，挑出要深入的州</div>
-        <div class="st code">每州檢驗 4 個假說<small>配送延遲、時間、品類、賣家</small></div>
+        <div class="st code">比較各州差評率，挑出要深入的州<small>多出差評最多的 2 州＋差評率最高的 1 州</small></div>
+        <div class="st code">每州檢驗 4 個假說<small>配送延遲、集中在某幾季、買的品類不同、少數問題賣家</small></div>
         <div class="st code">依事先寫好的規則判定<small>成立／部分成立／不成立</small></div>
         <div class="st ai">AI 決定工具呼叫順序、寫報告</div>
         <div class="st code">核對數字和引用、補判定附註<small>不合格就退回重寫</small></div>
       </div>
-      <p class="callout">截圖：AI 寫「物流因素皆能解釋大部分的差距」，程式附註更正為「物流只能解釋部分差距」</p>
+      <p class="callout">截圖：AI 結論寫「物流因素皆能解釋大部分的差距」（這些州比全國多的差評）；程式依判定結果，在下方附註更正為「物流只能解釋部分差距，還有其他原因」</p>
     </div>
   </div>
 </div></section>
@@ -515,21 +524,24 @@
       <div class="r"><span>訂單被取消或缺貨</span><i style="width:24.7%"></i><b>7.4%</b></div>
       <div class="r"><span>跟描述不符</span><i style="width:21.3%"></i><b>6.4%</b></div>
       <div class="r"><span>評分與留言矛盾</span><i style="width:5.3%"></i><b>1.6%</b></div>
+      <div class="ax"><span></span><div><s style="left:0">0%</s><s style="left:33.3%">10%</s><s style="left:66.7%">20%</s><s style="left:100%">30%</s></div><span></span></div>
+      <p class="axt">長條長度＝占 500 則差評的比例</p>
     </div>
     <div class="side">
-      <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 把隨機 500 則差評分到 10 類（Agent 調查各州時，也拿這份結果當全國對照）</p>
-      <p><b>彩蛋：</b>1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會誤判</p>
-      <p class="note">「送貨太慢」「沒收到貨」由程式比對實際送達日判定；評論分類測試集準確率 88%，占比是估計值</p>
+      <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 讀隨機 500 則差評，歸到 10 個類別（Agent 調查各州時，也拿這份結果當全國對照）</p>
+      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，排名站得住；但分類準確率 88%，占比是估計值</p>
+      <p><b>彩蛋：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會把滿意的顧客算成不滿</p>
+      <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>深入分析</h2>
-  <span class="sub">為什麼缺件最多？同一筆訂單買多件，差評率是只買 1 件的 2～4 倍</span>
+  <span class="sub">推測：缺件多半發生在一次買多件的訂單 → 兩個跡象支持（還不是證明）</span>
   <div class="two">
     <div class="vb" aria-label="三種訂單的差評率">
-      <p class="ct">差評率（1～2 星占評論的比例），全部約 9.8 萬則評論</p>
+      <p class="ct">跡象①：多件訂單的差評率是只買 1 件的 2～4 倍（1～2 星占評論的比例，全部約 9.8 萬則評論）</p>
       <div class="cols">
         <div><em class="area"><b>12.71%</b><i style="height:26.9%"></i></em><span>只買 1 件<small>88,227 則</small></span></div>
         <div><em class="area"><b>24.72%</b><i style="height:52.3%"></i></em><span>多件、同一賣家<small>8,426 則</small></span></div>
@@ -537,10 +549,10 @@
       </div>
     </div>
     <div class="side">
-      <p><b>追問「問資料」</b>：AI 自己寫 SQL 算出這 3 組，數字根據檢查通過</p>
-      <p><b>追問「找相關評論」</b>：「顧客買了好幾件商品，卻只收到其中一部分？」→ 找到 10 則，例：</p>
+      <p><b>跡象① 怎麼得到的：追問「問資料」</b>，AI 自己寫 SQL 算出這 3 組；回答裡的數字都在查詢結果裡找得到（第 2 頁的核對）</p>
+      <p><b>跡象②：追問「找相關評論」</b>：「顧客買了好幾件商品，卻只收到其中一部分？」→ 從 10,784 則有留言的差評中找出最相近的 10 則，AI 判斷 10 則都在講這件事，例：</p>
       <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞，我需要收到另一盞。</span></blockquote>
-      <p class="note">這是關聯，不是因果：是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
+      <p class="note">還不是證明：多件訂單的差評也可能來自其他原因；是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
     </div>
   </div>
 </div></section>
@@ -550,33 +562,34 @@
   <span class="sub">6 道檢查，以及每道實際抓到的錯誤</span>
   <div class="checks">
     <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>抓到：評論日期 11/09 被抄成 09/09 → 改由程式貼原文</em></div>
-    <div><b>SQL 有沒有寫對</b><span>17 題用另一段 SQL 算標準答案比對（另 2 題要答「資料裡沒有」）</span><em class="lim">限制：兩段 SQL 都由 Claude Code 寫，本人審查定義</em></div>
-    <div><b>驗證集／測試集分開</b><span>開發時只用驗證集調整，測試集留到最後評分</span><em class="lim">避免只是背熟題目</em></div>
-    <div><b>防答案外洩</b><span>標準答案不放進 prompt，程式自動掃描</span><em>抓到：範例洩漏 19 題中 11 題的答案 → 改代稱，重跑仍 19/19</em></div>
-    <div><b>人工盲標</b><span>本人先標答案，標的時候看不到 AI 的答案</span><em class="lim">避免被 AI 的答案帶著走</em></div>
-    <div><b>程式更正誇大</b><span>依工具判定，在 AI 結論下自動加附註</span><em>抓到：AI 把只能解釋部分差距的原因寫成主因</em></div>
+    <div><b>SQL 有沒有寫對</b><span>「問資料」19 題測驗：17 題先用另一段 SQL 算好標準答案，比對 AI 算出的數字；2 題故意問資料裡沒有的東西，AI 要回答「查不到」才算對</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
+    <div><b>驗證集／測試集分開</b><span>驗證集：開發時拿來找錯、調整；測試集：開發時不看，留到最後評分</span><em class="lim">避免 AI 只是被調到會答這幾題</em></div>
+    <div><b>防答案外洩</b><span>給 AI 的指示（prompt）不能含標準答案，程式自動掃描</span><em>抓到：指示裡的範例寫出了 19 題中 11 題的答案 → 改成代稱（例：&lt;州&gt;），重跑「問資料」19 題仍全對</em></div>
+    <div><b>人工盲標</b><span>「評論分類」「找相關評論」的標準答案由本人標，標的時候看不到 AI 的答案；第 7 頁的成績就是拿這份答案比對</span><em class="lim">避免被 AI 的答案帶著走</em></div>
+    <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>抓到：AI 把只能解釋部分差距的原因寫成主因</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>各功能測試成績</h2>
-  <span class="sub">AI 的答案跟標準答案一致的比例：驗證集（開發時調整用）vs 測試集（沒練過）</span>
+  <span class="sub">各功能的評分方式見左欄；驗證集＝開發時調整用，測試集＝開發時沒看過的新題目</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集</p>
+    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　灰色底條＝100%，紅色虛線＝90% 門檻</p>
     <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
-      <div><div class="b v"><i style="width:60%"></i>19/19 題</div><div class="b none">沒有測試集，成績可能偏高</div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 題＝100%</div><div class="b none">沒有測試集：19 題開發時都拿來調整過，成績可能偏高</div></div></div>
     <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
-      <div><div class="b v"><i style="width:54%"></i>45/50 則（90%）</div><div class="b t"><i style="width:60%"></i>20/20 則</div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 則＝90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%</div></div></div>
     <div class="r"><div class="nm">評論分類<small>選的類別跟本人標的完全一致</small></div>
-      <div><div class="b v"><i style="width:54%"></i>27/30 則（90%，舊版定義）</div><div class="b t miss"><i style="width:52.8%"></i>22/25 則（88%，未達 90% 門檻）</div></div></div>
-    <div class="r"><div class="nm">調查（Agent）<small>報告通過全部程式檢查的次數</small></div>
-      <div><div class="b v"><i style="width:60%"></i>4/4 次（17 項檢查）</div><div class="b t"><i style="width:60%"></i>2/2 次（6 項通用檢查）</div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（之後類別定義改過，現行版沒重測）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span>22/25 則＝88%（未達 90% 門檻）</div></div></div>
+    <div class="r"><div class="nm">調查（Agent）<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
+      <div class="txt">驗證集：跑 4 次，4 次都通過 17 項檢查<br>測試集：換問 CE 州，跑 2 次都通過（只適用其中 6 項檢查）</div></div>
+    <p class="note">測試集只有 20～25 則，100% 也可能是運氣好；真實準確率的可能範圍見下一頁</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>評論分類樣本數夠嗎</h2>
-  <span class="sub">只測了 25 則評論，真實準確率可能落在 70%～96%；要宣稱 90%，需要約 140 則</span>
+  <span class="sub">只測了 25 則，真實準確率可能落在 70%～96%；要證明有 90%，得先調到約 95%，再測約 140 則</span>
   <div class="ci">
     <p class="ct">真實準確率的可能範圍（Wilson 95% 信賴區間）；紅色虛線＝90% 門檻</p>
     <div class="r"><div class="nm"><b>現在</b><span>25 則對 22 則（88%）</span></div>
@@ -586,7 +599,7 @@
       <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
         <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
     <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
-    <p class="take">所以不能說評論分類有 90%：下一步先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
+    <p class="take">所以目前不能說評論分類有 90%，第 4 頁的占比也只是估計。下一步：先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
   </div>
 </div></section>
 
@@ -594,10 +607,10 @@
   <h2>下一步</h2>
   <span class="sub">從自學專案到團隊實際使用</span>
   <div class="nexts">
-    <div><b>讓團隊用起來</b><span>每週自動跑「各州差評」調查，結果做成監控報表</span></div>
-    <div><b>發現交給負責團隊</b><span>多件訂單缺件 → 請物流／賣家營運確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
-    <div><b>程式檢查再擴大</b><span>「最多」「主因」這類比較說法也交給程式核對（實測：Agent 把差距在誤差內的 29% 對 25% 寫成「抱怨最多」）</span></div>
-    <div><b>擴充功能與測試</b><span>調查改成通用流程：假說 → 預期 → SQL → 程式判定；補問資料測試集；評論分類另標約 140 則測試集</span></div>
+    <div><b>讓團隊用起來</b><span>第 3 頁的「各州差評」調查每週自動跑一次，結果做成監控報表</span></div>
+    <div><b>發現交給負責團隊</b><span>第 5 頁的多件訂單缺件 → 請物流／賣家營運確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
+    <div><b>補足測試</b><span>第 8 頁：評論分類先調到約 95%，再標約 140 則新的測試集；第 7 頁：「問資料」補一批開發時沒用過的題目</span></div>
+    <div><b>調查不只問各州差評</b><span>第 3 頁的 4 個假說是寫死的；改成任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
   </div>
 </div></section>
 
