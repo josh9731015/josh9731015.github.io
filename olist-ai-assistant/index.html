@@ -533,7 +533,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div class="side">
       <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 讀隨機 500 則差評，歸到 10 個類別（Agent 調查各州時，也拿這份結果當全國對照）</p>
       <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，排名成立；但分類準確率 88%，占比是估計值</p>
-      <p><b>補充：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會把滿意的顧客算成不滿</p>
+      <p><b>補充：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會誤判顧客滿意度</p>
       <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
     </div>
   </div>
@@ -561,20 +561,20 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
-  <h2>如何確認 AI 沒答錯</h2>
-  <span class="sub">6 道檢查，以及每道實際抓到的錯誤</span>
+  <h2>AI 輸出驗證機制</h2>
+  <span class="sub">6 道檢查與實際發現的錯誤</span>
   <div class="checks">
-    <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>抓到：評論日期 11/09 被抄成 09/09 → 改由程式貼原文</em></div>
+    <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>實例：評論日期 11/09 被抄成 09/09 → 改由程式貼原文</em></div>
     <div><b>SQL 有沒有寫對</b><span>「問資料」19 題測驗：17 題先用另一段 SQL 算好標準答案，比對 AI 算出的數字；2 題故意問資料裡沒有的東西，AI 要回答「查不到」才算對</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
-    <div><b>驗證集／測試集分開</b><span>驗證集：開發時拿來找錯、調整；測試集：開發時不看，留到最後評分</span><em class="lim">避免 AI 只是被調到會答這幾題</em></div>
-    <div><b>防答案外洩</b><span>給 AI 的指示（prompt）不能含標準答案，程式自動掃描</span><em>抓到：指示裡的範例寫出了 19 題中 11 題的答案 → 改成代稱（例：&lt;州&gt;），重跑「問資料」19 題仍全對</em></div>
-    <div><b>人工盲標</b><span>「評論分類」「找相關評論」的標準答案由本人標，標的時候看不到 AI 的答案；第 7 頁的成績就是拿這份答案比對</span><em class="lim">避免被 AI 的答案帶著走</em></div>
-    <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>抓到：AI 把只能解釋部分差距的原因寫成主因</em></div>
+    <div><b>驗證集／測試集分開</b><span>驗證集：開發時拿來找錯、調整；測試集：開發時不看，留到最後評分</span><em class="lim">避免 AI 只對特定題目表現好</em></div>
+    <div><b>防答案外洩</b><span>給 AI 的指示（prompt）不能含標準答案，程式自動掃描</span><em>實例：指示裡的範例寫出了 19 題中 11 題的答案 → 改成代稱（例：&lt;州&gt;），重跑「問資料」19 題仍全對</em></div>
+    <div><b>人工盲標</b><span>「評論分類」「找相關評論」的標準答案由本人標，標的時候看不到 AI 的答案；第 7 頁的成績就是拿這份答案比對</span><em class="lim">避免受 AI 答案影響</em></div>
+    <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>實例：AI 把只能解釋部分差距的原因寫成主因</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
-  <h2>各功能測試成績</h2>
+  <h2>各功能評估結果</h2>
   <span class="sub">各功能的評分方式見左欄；驗證集＝開發時調整用，測試集＝開發時沒看過的新題目</span>
   <div class="bars">
     <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻</p>
@@ -591,7 +591,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
-  <h2>評論分類樣本數夠嗎</h2>
+  <h2>評論分類樣本數評估</h2>
   <span class="sub">只測了 25 則，真實準確率可能落在 70%～96%；要證明有 90%，得先調到約 95%，再測約 140 則</span>
   <div class="ci">
     <p class="ct">真實準確率的可能範圍（Wilson 95% 信賴區間）；紅色虛線＝90% 門檻</p>
@@ -724,20 +724,20 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 </div></section>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
-  <h2>Verifying the AI's answers</h2>
-  <span class="sub">6 checks, and the real errors each one caught</span>
+  <h2>AI output verification</h2>
+  <span class="sub">6 checks and the real errors they caught</span>
   <div class="checks">
-    <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Caught: a review date 11/09 copied as 09/09 → code now pastes the original text</em></div>
+    <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Example: a review date 11/09 copied as 09/09 → code now pastes the original text</em></div>
     <div><b>Is the SQL correct?</b><span>"Ask the data" 19-question test: 17 compare the AI's numbers with answers from a separate SQL query; 2 ask for data that doesn't exist, so only "not found" is correct</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
     <div><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: unseen during development, used only for final scoring</span><em class="lim">So the AI isn't just tuned to answer these specific questions</em></div>
-    <div><b>Prevent answer leakage</b><span>The instructions given to the AI (prompt) must not contain reference answers; code scans them automatically</span><em>Caught: instruction examples held answers to 11 of 19 questions → replaced with placeholders (e.g. &lt;state&gt;); still 19/19 on rerun</em></div>
+    <div><b>Prevent answer leakage</b><span>The instructions given to the AI (prompt) must not contain reference answers; code scans them automatically</span><em>Example: instruction examples held answers to 11 of 19 questions → replaced with placeholders (e.g. &lt;state&gt;); still 19/19 on rerun</em></div>
     <div><b>Blind labeling</b><span>I labeled the reference answers for "Review classification" and "Find relevant reviews" without seeing the AI's; slide 7 scores against these labels</span><em class="lim">So the AI's answers don't bias the labels</em></div>
-    <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Caught: the AI called a cause that explains only part of the gap the main cause</em></div>
+    <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Example: the AI called a cause that explains only part of the gap the main cause</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
-  <h2>Test scores by feature</h2>
+  <h2>Evaluation results by feature</h2>
   <span class="sub">Scoring method for each feature is in the left column; validation set = used for tuning during development, test set = new questions not seen during development</span>
   <div class="bars">
     <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold</p>
@@ -754,7 +754,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
-  <h2>Is the classification sample big enough?</h2>
+  <h2>Classification sample size</h2>
   <span class="sub">Only 25 reviews tested, so true accuracy is likely 70%–96%; to show 90%, first reach about 95%, then test about 140 reviews</span>
   <div class="ci">
     <p class="ct">Likely range of true accuracy (Wilson 95% confidence interval); red dashed line = 90% threshold</p>

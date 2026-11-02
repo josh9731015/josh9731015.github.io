@@ -716,7 +716,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
-  <h2>哪一步流失最多</h2>
+  <h2>漏斗轉換結果</h2>
   <span class="sub">「看商品→加入購物車」轉換率 26.6%，是三個轉換中最低的</span>
   <div class="two">
     <div class="fun" aria-label="四步漏斗人數">
@@ -731,25 +731,25 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     </div>
     <div class="side">
       <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
-      <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數本來就最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
-      <p><b>換算法也不變：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
+      <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數自然最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
+      <p><b>不同算法下結論一致：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
-  <h2>數字可信嗎</h2>
+  <h2>資料品質檢查</h2>
   <span class="sub">算漏斗之前先檢查資料，3 個發現改變了算法</span>
   <div class="checks c3">
-    <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不可能是沒人加購</span><em>做法：分析期間改從 11-26 開始（共 67 天）</em></div>
-    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，高低倒過來</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，所以後兩步誰高誰低只當初步結果</em></div>
+    <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不太可能是實際無人加入購物車</span><em>做法：分析期間改從 11-26 開始（共 67 天）</em></div>
+    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，兩步的排序相反</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，因此後兩步的排序僅為初步結果</em></div>
     <div><b>同一時間的兩個事件</b><span>6,569 人的「看商品」和「加購」時間完全相同：GA4 把同一批送出的事件記成同一個時間，分不出先後</span><em>做法：同時發生也算有照順序；否則會少算 481 位加購者</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>26.6% 算低嗎</h2>
-  <span class="sub">沒有同業基準，無法單看 26.6% 說高低；跟自己比：年底購物季每週約 34%～37%，1 月下旬只剩約 18%；裝置、進站來源之間幾乎沒差</span>
+  <h2>轉換率比較基準</h2>
+  <span class="sub">沒有同業基準，無法單看 26.6% 判斷高低；與自身比較：年底購物季每週約 34%～37%，1 月下旬約 18%；各裝置、進站來源之間差異不大</span>
   <div class="two">
     <div>
       <p class="ct">每週「看商品→加購」比例（當週看過商品的人中，1 天內加購的比例；10 週合計 26.5%，跟 26.6% 幾乎相同；第一週只有 11/26～11/29 四天）</p>
@@ -778,8 +778,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
-  <h2>1 月為什麼下滑</h2>
-  <span class="sub">後兩步在 1 月下旬都回到年底水準，只有「看商品→加購」沒有回來；也沒有加購漏記變多的跡象，比較像來逛的人購買意願變低</span>
+  <h2>1 月下滑原因</h2>
+  <span class="sub">1 月下旬後兩步已回到年底水準，唯獨「看商品→加購」未回升；加購漏記也沒有增加，較可能是訪客購買意願下降</span>
   <div class="two">
     <div>
       <p class="ct">每週後兩步的轉換率（當週人數相除）</p>
@@ -797,21 +797,21 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     <div class="side">
       <p><b>後兩步：</b>「加購→結帳」從年底約 60% 降到 1 月初 37%，1 月下旬回到 55%～59%；「結帳→購買」每週都在 38%～56%</p>
       <p><b>加購漏記沒有變多：</b>「開始結帳、但之前沒有加購紀錄」的人，1 月下旬佔 23%～26%，沒有比年底的 26%～34% 高</p>
-      <p><b>逛得比較少：</b>每人每天看的商品頁從 12 月初約 6 頁，降到 1 月下旬約 3.5～4 頁；1 月下旬看商品的人比上旬多約 35%，加購的人只多約 8%，新增的訪客比較少加購</p>
-      <p><b>裝置、進站來源的組成沒變</b>（自然搜尋每週都佔 34%～36%），各裝置、各來源都一起下滑；新增的訪客從哪來，這份資料看不出</p>
+      <p><b>瀏覽量下降：</b>每人每天看的商品頁從 12 月初約 6 頁，降到 1 月下旬約 3.5～4 頁；1 月下旬看商品的人比上旬多約 35%，加購的人只多約 8%，新增訪客的加購比例較低</p>
+      <p><b>裝置、進站來源的組成沒變</b>（自然搜尋每週都佔 34%～36%），各裝置、各來源都一起下滑；新增訪客的來源，這份資料無法判斷</p>
       <p><b>推測：</b>年底送禮需求結束。資料只有一個年底，無法跟去年同期比，未證實</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
-  <h2>建議做什麼</h2>
-  <span class="sub">先改哪裡 → 先從誰開始 → 怎麼驗證 → 怎麼避免資料出錯</span>
+  <h2>建議</h2>
+  <span class="sub">改善重點 → 優先族群 → 驗證方式 → 資料監控</span>
   <div class="nexts">
     <div><b>① 先改善「看商品→加購」</b><span>轉換率最低的一步；每提升 1 個百分點，約多 450 人加購（45,107 × 1%），若後兩步轉換率不變，約多 100 筆購買</span></div>
-    <div><b>② 先從新訪客下手</b><span>新訪客佔看商品者 93%，加購比例 25.8%，比舊訪客的 38.2% 低很多，改善空間最大；但舊訪客本來就比較想買，改版對新訪客有沒有效要靠 ③ 驗證</span></div>
-    <div><b>③ 改版前先做 A/B 測試</b><span>要看出加購比例從 26.6% 升到 28.6%（多 2 個百分點），每組約需 7,800 人；以這個網站的流量約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
-    <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件掉到 0 就發警示；11 月加購有 18 天沒紀錄，有監控的話當天就能發現</span></div>
+    <div><b>② 先從新訪客下手</b><span>新訪客佔看商品者 93%，加購比例 25.8%，比舊訪客的 38.2% 低很多，改善空間最大；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
+    <div><b>③ 改版前先做 A/B 測試</b><span>要偵測加購比例從 26.6% 升到 28.6%（多 2 個百分點），每組約需 7,800 人；以這個網站的流量約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
+    <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
 </div></section>
 
@@ -839,7 +839,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">要再往下追，需要的資料</span>
   <div class="nexts">
     <div><b>1 月下滑是季節還是網站問題</b><span>第 5 頁：拿去年同期資料比較（這份資料只有 3 個月）；同時對照 1 月有沒有改版或行銷活動</span></div>
-    <div><b>33,091 人卡在商品頁哪裡</b><span>第 2 頁：需要商品頁的互動事件（選尺寸、查庫存、看評價），找出看了沒加購的人停在哪個環節</span></div>
+    <div><b>33,091 人的流失環節</b><span>第 2 頁：需要商品頁的互動事件（選尺寸、查庫存、看評價），找出看了沒加購的人停在哪個環節</span></div>
     <div><b>哪類商品最需要改善</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
     <div><b>舊訪客為什麼加購比較多</b><span>第 4 頁：比較新舊訪客看的商品和進站來源，找出新訪客可以學的地方</span></div>
   </div>
@@ -865,7 +865,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
-  <h2>Where users drop off most</h2>
+  <h2>Funnel results</h2>
   <span class="sub">"View item → add to cart" converts at 26.6%, the lowest of the three conversions</span>
   <div class="two">
     <div class="fun" aria-label="Users at each funnel step">
@@ -887,7 +887,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
-  <h2>Can the numbers be trusted?</h2>
+  <h2>Data quality checks</h2>
   <span class="sub">I checked the data before building the funnel; 3 findings changed how it is calculated</span>
   <div class="checks c3">
     <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the analysis period starts Nov 26 (67 days)</em></div>
@@ -897,7 +897,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
-  <h2>Is 26.6% low?</h2>
+  <h2>Benchmarking the 26.6%</h2>
   <span class="sub">With no industry benchmark, 26.6% alone can't be called high or low; compared over time: about 34%–37% weekly in the holiday season, only about 18% in late January; little difference across devices or sources</span>
   <div class="two">
     <div>
@@ -927,7 +927,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
-  <h2>Why January dropped</h2>
+  <h2>Drivers of the January decline</h2>
   <span class="sub">By late January the two later steps were back to holiday levels, but "view item → add to cart" was not; with no sign of more untracked add-to-carts, visitors seem less inclined to buy</span>
   <div class="two">
     <div>
@@ -955,7 +955,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
   <h2>Recommendations</h2>
-  <span class="sub">Where to fix → whom to start with → how to verify → how to prevent data errors</span>
+  <span class="sub">Focus → priority segment → validation → data monitoring</span>
   <div class="nexts">
     <div><b>① Improve "view item → add to cart" first</b><span>The lowest-converting step; each 1 percentage point gained means about 450 more add-to-cart users (45,107 × 1%), or about 100 more purchases if the later steps hold</span></div>
     <div><b>② Start with new visitors</b><span>New visitors are 93% of item viewers and add to cart at 25.8%, far below returning visitors' 38.2%, so the room to improve is largest; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>

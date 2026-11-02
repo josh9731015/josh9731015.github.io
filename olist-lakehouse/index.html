@@ -574,8 +574,8 @@ LIMIT 5;</code></pre>
 <p>規則分兩級：11 條是 <b>ERROR</b>（錯誤），一列都不能違反；4 條是 <b>WARN</b>（警告），對應已知、目前不修的問題，例如上一節的 23 張「送達早於交貨」，只要筆數沒有比現在多就算通過，用來發現問題是否變嚴重。目前 15 條全部通過。</p>
 <p>WARN 中有一條是「付款總額與商品＋運費不符（差超過 1 雷亞爾）」（比對 <code>silver_order_payments</code> 與 <code>silver_order_items</code>），共 249 張訂單，其中 232 張是付款多於商品＋運費。這 232 張有 98.7% 選擇分期付款（期數大於 1），金額相符的訂單用分期付款的只有 51.4%，多付的部分可能是分期利息，但資料無法證實；另外 17 張付款少於商品＋運費，原因不明。因此兩者都列為已知問題、不修改金額。</p>
 
-<h3>表上的「門禁」：哪些規則會在寫入時擋下壞資料</h3>
-<p>品質 VIEW 是資料寫進去之後才檢查；Delta 格式的表另外可以設定「寫入時就檢查」的規則，像大樓門禁，不合規的資料進不來。實際測試三種寫法：</p>
+<h3>寫入限制：哪些規則會在寫入時阻擋不合規的資料</h3>
+<p>品質 VIEW 是資料寫進去之後才檢查；Delta 格式的表另外可以設定「寫入時就檢查」的規則，不合規的資料無法寫入。實際測試三種寫法：</p>
 <table>
   <tr><th>寫法</th><th>測試的表</th><th>測試</th><th>結果</th></tr>
   <tr class="hi"><td>CHECK 條件（評分 1～5）</td><td><code>silver_order_reviews</code></td><td>寫入一筆 6 分的評價</td><td>被擋下，資料沒有寫入</td></tr>
@@ -918,7 +918,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
-  <h2>三層架構</h2>
+  <h2>資料湖倉架構</h2>
   <span class="sub">原始檔永遠留著、每一層都能各自檢查：清洗出錯可以從上一層重來</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表（9 個檔＋1 張用預設設定讀評價檔、留著跟修正版比對列數的對照表）</em></div>
@@ -927,16 +927,16 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     <div class="ar">→</div>
     <div><b>gold 分析層</b><span>星狀結構：1 張事實表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張維度表</span><em>5 張表</em></div>
   </div>
-  <p class="ct">bronze 讀進來就跟原始檔核對列數，抓到 2 個讀取錯誤</p>
+  <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
     <div><b>評價留言含換行，一則被切成好幾列</b><span>評價表變成 104,162 列，比原始檔 99,224 則多出 4,938 列</span><em>做法：加上「一筆資料可跨行」的讀取設定，列數與原始檔一致</em></div>
-    <div><b>郵遞區號開頭的 0 不見了</b><span>系統把郵遞區號當成數字，23,995 筆被改掉（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
+    <div><b>郵遞區號開頭的 0 不見了</b><span>系統把郵遞區號當成數字，23,995 筆被改動（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
-  <h2>資料品質把關</h2>
-  <span class="sub">寫入後用 15 條規則檢查；寫入時再用「門禁」擋下不合規的資料</span>
+  <h2>資料品質控管</h2>
+  <span class="sub">寫入後用 15 條規則檢查；寫入時再以限制條件阻擋不合規的資料</span>
   <div class="two top">
     <div>
       <p class="ct">15 條規則寫成一個 VIEW，每次資料更新後一行查詢全部重跑</p>
@@ -949,18 +949,18 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p>分兩級：<b>11 條 ERROR</b> 一列都不能違反；<b>4 條 WARN</b> 對應已知、目前不修的問題（例：23 張「送達早於交給物流」），筆數沒有變多就算通過</p>
     </div>
     <div class="side">
-      <p class="ct">寫入時的門禁：實際測試三種寫法</p>
-      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 被擋下</p>
-      <p><b>CHECK（評分至少 3）：</b>測試加規則時會不會檢查舊資料 → 會：14,575 列違反，規則加不上去</p>
-      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → <b>沒被擋</b>，Databricks 的主鍵只是標示、不會強制</p>
-      <p><b>所以：</b>「不准重複」要在寫入時處理：先在新資料裡去重，再用 MERGE 寫入（已存在就更新、不存在才新增）</p>
+      <p class="ct">寫入限制：實際測試三種寫法</p>
+      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 寫入失敗</p>
+      <p><b>CHECK（評分至少 3）：</b>測試加規則時會不會檢查舊資料 → 會：14,575 列違反，規則無法新增</p>
+      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → <b>未被阻擋</b>，Databricks 的主鍵只是標示、不會強制</p>
+      <p><b>所以：</b>避免重複須在寫入時處理：先在新資料裡去重，再用 MERGE 寫入（已存在就更新、不存在才新增）</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>晚到就掉分</h2>
-  <span class="sub">只晚 1～3 天，平均評分就從 4.29 掉到 3.29；晚一週以上，約八成給 1～2 星</span>
+  <h2>配送延遲與評分</h2>
+  <span class="sub">只晚 1～3 天，平均評分即從 4.29 降至 3.29；晚一週以上，約八成給 1～2 星</span>
   <div class="two">
     <div class="sc" aria-label="晚到天數與平均評分">
       <p class="ct">已送達且有評價的 95,824 張訂單，依晚到天數分組的平均評分（晚到＝實際送達日晚於預計送達日）</p>
@@ -974,18 +974,18 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但約 62% 給 1～2 星，準時的只有 9.27%</p>
-      <p><b>掉分很快：</b>晚 1～3 天就掉 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
+      <p><b>評分下降集中在前幾天：</b>晚到 1～3 天即低 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
       <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最後回覆的一則</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
-  <h2>排除其他解釋</h2>
-  <span class="sub">換成同一州比、等待天數相同時比，晚到還是比準時低很多</span>
+  <h2>排除干擾因素</h2>
+  <span class="sub">換成同一州比、等待天數相同時比，晚到訂單的評分仍明顯較低</span>
   <div class="two">
     <div class="sc dual" aria-label="等待天數相同時，準時與晚到的平均評分">
-      <p class="ct">「晚到的訂單本來就等比較久？」→ 等待天數（下單到實際送達的天數）相同時比較平均評分</p>
+      <p class="ct">「晚到訂單的等待時間是否本來就較長？」→ 等待天數（下單到實際送達的天數）相同時比較平均評分</p>
       <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到</p>
       <div class="r"><span>等 0～7 天</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97（只有 74 張）</div></div></div>
       <div class="r"><span>等 8～14 天</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
@@ -995,7 +995,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div></div>
     </div>
     <div class="side">
-      <p><b>「偏遠州本來就常晚到、評分也低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
+      <p><b>「是否為偏遠州晚到較多、評分也較低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
       <p><b>「只是等太久？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時那一列，等越久分數也越低（下一頁）</p>
       <p><b>還不是因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
@@ -1003,8 +1003,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
-  <h2>準時率高就夠嗎</h2>
-  <span class="sub">準時率 93.2%（96,470 張已送達訂單，含沒有評價的），但準時的訂單等越久分數也越低：預計送達日抓得太寬，「準時」很容易達成</span>
+  <h2>準時率的侷限</h2>
+  <span class="sub">準時率 93.2%（96,470 張已送達訂單，含沒有評價的），但準時的訂單等越久分數也越低：預計送達日設定過寬，「準時」的門檻偏低</span>
   <div class="two">
     <div>
       <div class="roles r2">
@@ -1030,12 +1030,12 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
-  <h2>建議做什麼</h2>
-  <span class="sub">先處理晚到、再改指標、最後確保資料不出錯</span>
+  <h2>建議</h2>
+  <span class="sub">晚到處理 → 成效驗證 → 指標調整 → 資料品質</span>
   <div class="nexts">
     <div><b>① 快晚到的訂單主動通知</b><span>每天列出「即將到預計送達日、仍未送達」的訂單，提前處理（例：請物流加急）或主動告知顧客新的到貨日；晚到訂單只占 6.66%，但約 62% 給 1～2 星</span></div>
     <div><b>② 用實驗證明通知有效</b><span>隨機一半通知、一半不通知，比較 1～2 星比例：假設能從 62.4% 降到 52.4%（實際效果要實驗才知道），每組約需 380 張晚到訂單，以平均每月約 270 張晚到訂單估算約 3 個月（顯著水準 5%、檢定力 80%）</span></div>
-    <div><b>③ 物流指標加上「實際配送天數」</b><span>準時率 93.2% 看起來很好，但準時的訂單等越久分數越低；只看準時率會漏掉這個問題</span></div>
+    <div><b>③ 物流指標加上「實際配送天數」</b><span>準時率 93.2% 看起來很好，但準時的訂單等越久分數越低；只看準時率無法反映這個問題</span></div>
     <div><b>④ 品質規則每天自動跑</b><span>資料更新後執行 15 條規則，任何 ERROR 失敗就暫停更新 gold 層，避免分析用到錯的資料</span></div>
   </div>
 </div></section>
@@ -1071,7 +1071,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
-  <h2>Three-layer architecture</h2>
+  <h2>Lakehouse architecture</h2>
   <span class="sub">Raw files are always kept and every layer can be checked on its own, so a cleaning mistake can be redone from the previous layer</span>
   <div class="flow3">
     <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables (9 files + 1 table of reviews read with default settings, kept to compare row counts with the fixed version)</em></div>
@@ -1089,7 +1089,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality controls</h2>
-  <span class="sub">15 rules check data after it is written; write-time "gates" block bad data before it gets in</span>
+  <span class="sub">15 rules check data after it is written; write-time constraints block invalid data</span>
   <div class="two top">
     <div>
       <p class="ct">The 15 rules live in one VIEW; one query reruns them all after every data update</p>
@@ -1102,7 +1102,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p>Two levels: <b>11 ERROR rules</b> allow no violating row; <b>4 WARN rules</b> track known issues left unfixed for now (e.g. 23 orders "delivered before handed to the carrier") and pass as long as the count doesn't grow</p>
     </div>
     <div class="side">
-      <p class="ct">Write-time gates: three approaches tested</p>
+      <p class="ct">Write-time constraints: three approaches tested</p>
       <p><b>CHECK (score 1–5):</b> inserting a review scored 6 → blocked</p>
       <p><b>CHECK (score at least 3):</b> tests whether adding a rule checks existing data → it does: 14,575 rows violate it, so it can't be added</p>
       <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID → <b>not blocked</b>; Databricks primary keys are informational and not enforced</p>
@@ -1112,7 +1112,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
-  <h2>Late orders score lower</h2>
+  <h2>Delivery delays and ratings</h2>
   <span class="sub">Just 1–3 days late drops the average score from 4.29 to 3.29; at a week or more late, about 80% give 1–2 stars</span>
   <div class="two">
     <div class="sc" aria-label="Days late and average review score">
@@ -1134,7 +1134,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
-  <h2>Ruling out other explanations</h2>
+  <h2>Controlling for other factors</h2>
   <span class="sub">Comparing within the same state, or at the same waiting time, late orders still score much lower than on-time ones</span>
   <div class="two">
     <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
@@ -1156,7 +1156,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
-  <h2>Is a high on-time rate enough?</h2>
+  <h2>Limits of the on-time rate</h2>
   <span class="sub">The on-time rate is 93.2% (96,470 delivered orders, incl. unreviewed), yet on-time orders score lower the longer they take: estimates are so generous that "on time" is easy to hit</span>
   <div class="two">
     <div>
@@ -1184,7 +1184,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Recommendations</h2>
-  <span class="sub">Tackle late orders first, then fix the metric, then keep the data reliable</span>
+  <span class="sub">Late orders → validation → metrics → data quality</span>
   <div class="nexts">
     <div><b>① Notify customers before orders run late</b><span>Each day, list orders nearing the estimated date but not yet delivered, and act early (e.g. ask the carrier to expedite) or tell the customer the new date; late orders are only 6.66%, but about 62% get 1–2 stars</span></div>
     <div><b>② Prove it works with an experiment</b><span>Notify a random half and compare 1–2 star shares: assuming a drop from 62.4% to 52.4% (the real effect is what the test measures), about 380 late orders per group are needed, roughly 3 months at about 270 late orders a month (5% significance level, 80% power)</span></div>
@@ -1412,8 +1412,8 @@ LIMIT 5;</code></pre>
 <p>Rules have two levels: 11 are <b>ERROR</b> rules, where no row may fail; 4 are <b>WARN</b> rules for known issues that are not fixed for now, such as the 23 orders "delivered before being handed to the carrier" from the previous section. A WARN rule passes as long as the count does not exceed the current count, which shows whether a problem is getting worse. All 15 rules currently pass.</p>
 <p>One WARN rule is "payment total differs from items + freight (by more than 1 real)", covering 249 orders, 232 of which paid more than items + freight. Of these 232 orders, 98.7% chose installments (more than 1 installment), while only 51.4% of orders with matching amounts used installments. The extra amount may be installment interest, but the data cannot confirm this; the other 17 orders paid less than items + freight, for unknown reasons. Both are therefore kept as known issues, and amounts are not modified.</p>
 
-<h3>Table "gatekeeping": which rules block bad data at write time</h3>
-<p>The quality VIEW checks data after it is written; Delta tables can also have rules that check data at write time, like building security that keeps non-compliant data out. Three approaches were tested:</p>
+<h3>Write-time constraints: which rules block invalid data at write time</h3>
+<p>The quality VIEW checks data after it is written; Delta tables can also have rules that check data at write time, so non-compliant data cannot be written. Three approaches were tested:</p>
 <table>
   <tr><th>Approach</th><th>Table tested</th><th>Test</th><th>Result</th></tr>
   <tr class="hi"><td>CHECK constraint (score 1–5)</td><td><code>silver_order_reviews</code></td><td>Write a review with a score of 6</td><td>Blocked; the row was not written</td></tr>
