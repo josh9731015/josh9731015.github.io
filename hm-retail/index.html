@@ -427,7 +427,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="stats" aria-label="關鍵數字">
   <div class="stat"><b>−10.3%</b><span>FY2020 Q1 賣出的件數與去年同一季相比的變化（少賣 36.8 萬件）</span></div>
-  <div class="stat"><b>54%</b><span>減少的件數來自童裝；童裝原本只占銷量的 7.9%</span></div>
+  <div class="stat"><b>54%</b><span>減少的件數來自童裝；童裝原本只占去年同季件數的 7.9%</span></div>
   <div class="stat"><b>46%</b><span>其餘減少來自大人衣服，集中在深藍色、條紋、蕾絲款式（−48%），其他款式反而 +2.4%</span></div>
   <div class="stat"><b>79.4%</b><span>流失預測模型（<a href="#analysis-3">分析三</a>）挑出的 5 萬名顧客中，之後半年真的沒再回來買的比例</span></div>
 </section>
@@ -579,9 +579,9 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <tr><td>FY2020 Q1 vs FY2019 Q1</td><td class="num"><b>−70.8%</b></td><td class="num">−13.3%</td><td class="num">−2.7%</td><td class="num">−5.4%</td><td class="num">+4.8%</td></tr>
   </table>
   <p class="howto">怎麼算：長條＝該類今年比去年減少的件數 ÷ 全部減少的 36.8 萬件，五類合計 100%（運動服件數增加，貢獻為負；圖上數字四捨五入到小數點後一位，相加為 99.9%）。年增率＝該類今年同季件數 ÷ 去年同季件數 − 1。童裝不只貢獻最多的減少，本身也掉了七成，遠超過其他類別的 −13%～+5%。</p>
-  <p class="howto" style="margin-top:6px">童裝原本只占銷量的 7.9%，卻貢獻一半以上的減少，是最集中的異常，所以先追童裝（第 3、4 步），再回頭追大人衣服的 46%（第 5 步）。</p>
+  <p class="howto" style="margin-top:6px">童裝原本只占去年同季件數的 7.9%，卻貢獻一半以上的減少，是最集中的異常，所以先追童裝（第 3、4 步），再回頭追大人衣服的 46%（第 5 步）。</p>
 </div>
-<p>另外也用顏色、花色、款式、年齡、通路、會員狀態等共 15 種分類各拆一次，並比較每一類「占減少的比例」與「原本占銷量的比例」的差距，童裝仍是差距最大、最集中的來源。本專案第一版只從「顧客類型」和「上衣／褲子」等角度拆解，童裝被分散在各類之中而沒有被發現，改為逐一比較所有分類後才找到。</p>
+<p>另外也用顏色、花色、款式、年齡、通路、會員狀態等共 15 種分類各拆一次，並比較每一類「占這季減少件數的比例」與「占去年同季件數的比例」的差距，童裝仍是差距最大、最集中的來源。本專案第一版只從「顧客類型」和「上衣／褲子」等角度拆解，童裝被分散在各類之中而沒有被發現，改為逐一比較所有分類後才找到。</p>
 <details>
   <summary>補充：原本的結論為什麼要修正</summary>
   <p style="margin-top:8px">第一版的結論是「老顧客買得比較少，占減少的 64%」。這個數字沒有算錯，但它把兩件事混在一起：老顧客少買的 23.5 萬件中，有 6.5 萬件其實是不再買童裝。改用商品類別去切，才看得出童裝這個集中的異常。這次修正後，另外請一位沒看過任何結論的 AI 分析者，只拿原始資料重新分析，得到相同的結果（童裝 54%、大人衣服 46%）。</p>
@@ -1106,7 +1106,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     </div>
     <div class="side">
       <p><b>比較基準：</b>依本資料算出的「季營收比上一季 −23.5%」受淡旺季影響而誇大（秋季本來就比冬季好賣）；改與去年同季比，件數 −10.3%，平均每件售價反而 +1.7%，問題在賣出件數</p>
-      <p><b>15 種分類逐一拆解：</b>比較每一類「占減少的比例」與「原本占銷量的比例」，童裝差距最大：只占去年銷量 7.9%，卻占減少的 54%（第 3 頁）</p>
+      <p><b>15 種分類逐一拆解：</b>比較每一類「占這季減少件數的比例」與「占去年同季件數的比例」，童裝差距最大：童裝占去年同季件數的 7.9%，卻占這季減少件數的 54%（第 3 頁）</p>
       <p><b>深藍、條紋、蕾絲款式少了 48.4%：</b>四類大人衣服（年輕系列、女裝、男裝、運動服）都在減少，屬商品組合的變化；是款式決策還是顧客偏好改變，需向商品企劃確認</p>
     </div>
   </div>
@@ -1270,7 +1270,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     </div>
     <div class="side">
       <p><b>Comparison baseline:</b> the quarterly "revenue −23.5% vs the previous quarter" computed from this data is exaggerated by seasonality (autumn normally sells better than winter); compared with the same quarter last year, units fell 10.3% while the average price per unit actually rose 1.7%, so the problem is the number of units sold</p>
-      <p><b>Breaking down all 15 categories:</b> comparing each category's share of the decline with its original share of sales, kidswear had the biggest gap: only 7.9% of last year's units, but 54% of the decline (Slide 3)</p>
+      <p><b>Breaking down all 15 categories:</b> comparing each category's share of this quarter's lost units with its share of units in the same quarter last year, kidswear had the biggest gap: kidswear was 7.9% of units in the same quarter last year, but 54% of this quarter's lost units (Slide 3)</p>
       <p><b>Dark blue, striped, and lace styles fell 48.4%:</b> they declined in all four adult apparel groups (Divided, Ladieswear, Menswear, Sport), a change in product mix; whether it was a styling decision or a change in customer taste needs to be confirmed with merchandising</p>
     </div>
   </div>
@@ -1422,7 +1422,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="stats" aria-label="Key figures">
   <div class="stat"><b>−10.3%</b><span>Change in FY2020 Q1 units sold vs the same quarter last year (368K fewer units)</span></div>
-  <div class="stat"><b>54%</b><span>of the lost units came from kidswear, which was only 7.9% of unit sales</span></div>
+  <div class="stat"><b>54%</b><span>of the lost units came from kidswear, which was only 7.9% of units in the same quarter last year</span></div>
   <div class="stat"><b>46%</b><span>The remaining 46% came from adult apparel, concentrated in dark blue, striped, and lace styles (−48%); other styles grew +2.4%</span></div>
   <div class="stat"><b>79.4%</b><span>of the 50,000 customers picked by the churn model (<a href="#analysis-3">Analysis 3</a>) actually did not buy again in the next six months</span></div>
 </section>
@@ -1574,7 +1574,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <tr><td>FY2020 Q1 vs FY2019 Q1</td><td class="num"><b>−70.8%</b></td><td class="num">−13.3%</td><td class="num">−2.7%</td><td class="num">−5.4%</td><td class="num">+4.8%</td></tr>
   </table>
   <p class="howto">How it's calculated: bar = the group's units lost vs last year ÷ the 368K total lost units; the five groups sum to 100% (Sport units grew, so its contribution is negative; the chart rounds to one decimal, so the figures add to 99.9%). Year-over-year change = the group's units this quarter ÷ units in the same quarter last year − 1. Kidswear not only contributed the most to the decline, it also fell by about 70% itself, far beyond the other groups' −13% to +5%.</p>
-  <p class="howto" style="margin-top:6px">Kidswear was only 7.9% of units yet contributed more than half the decline — the most concentrated anomaly — so kidswear is traced first (Steps 3 and 4), then adult apparel's 46% (Step 5).</p>
+  <p class="howto" style="margin-top:6px">Kidswear was only 7.9% of units in the same quarter last year yet contributed more than half the decline — the most concentrated anomaly — so kidswear is traced first (Steps 3 and 4), then adult apparel's 46% (Step 5).</p>
 </div>
 <p>I also split the data by 15 different dimensions, including color, pattern, style, age, channel, and membership status, and compared each category's "share of the decline" with its "original share of units." Kidswear still had the largest gap and was the most concentrated source. The first version of this project only looked at "customer type" and "tops/bottoms," which spread kidswear across many categories so it went unnoticed; it was only found after comparing every dimension one by one.</p>
 <details>
