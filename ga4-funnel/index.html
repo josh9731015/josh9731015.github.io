@@ -287,6 +287,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     #deck .ci .tr, #deck .ci .axis { margin-right: 2.8em; margin-left: 2.8em; }  /* 區間兩端的數字標籤放在線段外，左右要留位置 */
   }
   /* ===== GA4 簡報專用元件（2026-11-02） ===== */
+  #deck .side .bridge { border-top: 1px dashed var(--line); padding-top: .6em; color: var(--ink-2); }
   #deck .sg2 .gh { margin: .35em 0 .1em; font-size: .8em; font-weight: 700; color: var(--ink-2); }
   #deck .sg2 .r { display: grid; grid-template-columns: 6.5em 1fr 3em 5.2em; gap: .5em; align-items: center; font-size: .85em; padding: .05em 0; }
   #deck .sg2 .r > span:first-child { text-align: right; color: var(--ink-2); }
@@ -751,6 +752,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
       <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數自然最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
       <p><b>不同算法下結論一致：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
+      <p class="bridge"><b>接下來：</b>只看整段期間的 26.6% 無法判斷高低，所以第 4 頁把它拆成每週，跟這個網站自己的不同時間比較</p>
     </div>
   </div>
 </div></section>
@@ -767,7 +769,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>轉換率比較基準</h2>
-  <span class="sub">沒有同業基準，無法單看 26.6% 判斷高低；與自身比較：年底購物季每週約 34%～37%，1 月下旬約 18%</span>
+  <span class="sub">為了判斷 26.6% 的高低，把整段期間拆成每週比較（沒有同業基準，只能與自身比較）：年底購物季每週約 34%～37%，1 月下旬約 18%</span>
   <div class="two">
     <div>
       <p class="ct">每週「看商品→加購」比例（當週看過商品的人中，1 天內加購的比例；10 週合計 26.5%，跟 26.6% 幾乎相同；第一週只有 11/26～11/29 四天）</p>
@@ -783,7 +785,6 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       </svg>
     </div>
     <div class="side">
-      <p><b>沒有同業基準：</b>只看 26.6% 一個數字，無法判斷高低，所以先跟這個網站自己的不同時間比</p>
       <p><b>時間差異很大：</b>「看商品→加購」比例在年底購物季每週約 34%～37%，1 月下旬只剩約 18%，相差將近一半；原因見第 6 頁</p>
       <p><b>分群差異：</b>裝置、進站來源之間差異不大，見第 5 頁</p>
     </div>
@@ -849,9 +850,9 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>建議</h2>
   <span class="sub">改善重點 → 優先族群 → 驗證方式 → 資料監控</span>
   <div class="nexts">
-    <div><b>① 先改善「看商品→加購」</b><span>轉換率最低的一步；每提升 1 個百分點，約多 450 人加購（45,107 × 1%），若後兩步轉換率不變，約多 100 筆購買</span></div>
+    <div><b>① 先改善「看商品→加購」</b><span>三步中只有這一步在 1 月下滑後沒有回升（年底每週約 37%，1 月下旬約 18%）；加購之後的兩步都已回到年底水準</span></div>
     <div><b>② 先從新訪客下手</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，比同一時期第一次出現的舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
-    <div><b>③ 改版前先做 A/B 測試</b><span>要偵測加購比例從 26.6% 升到 28.6%（多 2 個百分點），每組約需 7,800 人；以這個網站的流量約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
+    <div><b>③ 改版前先做 A/B 測試</b><span>把新訪客隨機分成兩組：對照組看現在的商品頁，實驗組看改版後的商品頁，比較兩組「看過商品後加入購物車的比例」。要偵測從 25.8% 升到 27.8%（多 2 個百分點），每組約需 7,700 人，以每天約 630 位新訪客估算約 3～4 週（顯著水準 5%、檢定力 80%）</span></div>
     <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
 </div></section>
@@ -923,6 +924,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>Conversion rate</b> = users reaching this step ÷ users reaching the previous step; each step must happen after the previous one</p>
       <p><b>Judged by conversion rate, not users lost:</b> the first step has the most users, so it naturally loses the most; but its 26.6% rate is also far below the next two steps' 40.0% and 57.4%</p>
       <p><b>Holds under other definitions:</b> limiting each step to 30 minutes, 1 day or 7 days, or adding back users who checked out with no add-to-cart record as untracked (max 29.2%), it stays the lowest</p>
+      <p class="bridge"><b>Next:</b> the whole-period 26.6% alone can't be judged high or low, so slide 4 splits it by week and compares the site against itself</p>
     </div>
   </div>
 </div></section>
@@ -939,7 +941,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>Benchmarking the 26.6%</h2>
-  <span class="sub">With no industry benchmark, 26.6% alone can't be called high or low; compared over time: about 34%–37% weekly in the holiday season, only about 18% in late January</span>
+  <span class="sub">To judge whether 26.6% is high or low, the period is split by week (no industry benchmark, so the site is compared against itself): about 34%–37% weekly in the holiday season, only about 18% in late January</span>
   <div class="two">
     <div>
       <p class="ct">Weekly "view item → add to cart" rate (share of the week's item viewers who added to cart within 1 day; 26.5% over all 10 weeks, almost the same as 26.6%; the first week has only 4 days, 11/26–11/29)</p>
@@ -955,7 +957,6 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       </svg>
     </div>
     <div class="side">
-      <p><b>No industry benchmark:</b> 26.6% alone can't be judged high or low, so compare the site against itself over time</p>
       <p><b>Big differences over time:</b> the view-to-cart rate is about 34%–37% a week in the holiday season vs. about 18% in late January, nearly half; causes on slide 6</p>
       <p><b>By segment:</b> little difference across devices and traffic sources; see slide 5</p>
     </div>
@@ -1021,9 +1022,9 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>Recommendations</h2>
   <span class="sub">Focus → priority segment → validation → data monitoring</span>
   <div class="nexts">
-    <div><b>① Improve "view item → add to cart" first</b><span>The lowest-converting step; each 1 percentage point gained means about 450 more add-to-cart users (45,107 × 1%), or about 100 more purchases if the later steps hold</span></div>
+    <div><b>① Improve "view item → add to cart" first</b><span>The only step that fell in January and didn't recover (about 37% a week in the holidays vs. about 18% in late January); both steps after add to cart are back to holiday levels</span></div>
     <div><b>② Start with new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is 7–12 points below returning visitors first seen in the same period; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
-    <div><b>③ A/B test before rolling out</b><span>To detect a rise from 26.6% to 28.6% (+2 percentage points), each group needs about 7,800 users, roughly 3–4 weeks of this site's traffic (5% significance level, 80% power)</span></div>
+    <div><b>③ A/B test before rolling out</b><span>Randomly split new visitors into two groups: control sees the current product page, treatment sees the redesigned page; compare each group's share of item viewers who add to cart. Detecting a rise from 25.8% to 27.8% (+2 points) needs about 7,700 users per group, roughly 3–4 weeks at about 630 new visitors a day (5% significance level, 80% power)</span></div>
     <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
 </div></section>
