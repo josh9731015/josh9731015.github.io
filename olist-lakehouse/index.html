@@ -377,6 +377,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     #deck .twin .cell .trk, #deck .twin .tr2.ax > div { width: 52%; }
     #deck table.hm { font-size: .78em; border-spacing: .1em; }
   }
+  /* 2026-11-03 美術審查：圖表標題與欄標題用正文深色（灰色只留給註解）；熱度表專用色；下一步卡片靠上 */
+  :root { --heat: #3d8c7a; }
+  #deck .ct { color: var(--ink); }
+  #deck .nexts { align-content: start; margin-top: 1.2em; }
 </style>
 
 <!-- i18n:start --><script>
@@ -607,7 +611,7 @@ LIMIT 5;</code></pre>
   <tr><th>寫法</th><th>測試的表</th><th>測試</th><th>結果</th></tr>
   <tr class="hi"><td>CHECK 條件（評分 1～5）</td><td><code>silver_order_reviews</code></td><td>寫入一筆 6 分的評價</td><td>被擋下，資料沒有寫入</td></tr>
   <tr><td>CHECK 條件（評分至少 3）</td><td><code>silver_order_reviews</code></td><td>對已有 1、2 分評價的表加上這條規則</td><td>加不上去：系統會先檢查現有資料，14,575 列違反</td></tr>
-  <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td><code>silver_orders</code></td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，不會強制。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
+  <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td><code>silver_orders</code></td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，寫入時不會檢查編號是否重複。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
 </table>
 <p>因此「不准重複」不能靠主鍵，要在寫入時處理：新資料用 <code>MERGE</code>（合併寫入）指令寫入，同一張訂單已存在就更新、不存在才新增。測試時也發現，如果同一批新資料裡同一張新訂單出現兩次，<code>MERGE</code> 會新增兩列，所以寫入前要先在新資料裡去重。</p>
 <details><summary>SQL：先去重再 MERGE</summary>
@@ -964,7 +968,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>資料湖倉架構</h2>
   <span class="sub">原始檔永遠留著、每一層都能各自檢查：清洗出錯可以從上一層重來</span>
   <div class="flow3">
-    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表（9 個檔＋1 張用預設設定讀評價檔、留著跟修正版比對列數的對照表）</em></div>
+    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張未修正的評價表，用來對照列數</em></div>
     <div class="ar">→</div>
     <div><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
     <div class="ar">→</div>
@@ -972,8 +976,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   </div>
   <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
-    <div><b>評價留言含換行，一則被切成好幾列</b><span>評價表變成 104,162 列，比原始檔 99,224 則多出 4,938 列</span><em>做法：加上「一筆資料可跨行」的讀取設定，列數與原始檔一致</em></div>
-    <div><b>郵遞區號開頭的 0 不見了</b><span>系統把郵遞區號當成數字，23,995 筆被改動（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
+    <div><b>評價留言含換行，一則評價被拆成多列</b><span>評價表變成 104,162 列，比原始檔 99,224 則多出 4,938 列</span><em>做法：加上「一筆資料可跨行」的讀取設定，列數與原始檔一致</em></div>
+    <div><b>郵遞區號開頭的 0 被刪除</b><span>系統把郵遞區號當成數字，23,995 筆被改動（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
   </div>
 </div></section>
 
@@ -989,14 +993,15 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
         <tr><th>有效性</th><td>例：評分介於 1～5、價格大於 0</td><td class="n">3 條</td></tr>
         <tr><th>一致性</th><td>例：訂單明細的商品都存在商品表</td><td class="n">5 條</td></tr>
       </table>
-      <p>分兩級：<b>11 條 ERROR</b> 一列都不能違反；<b>4 條 WARN</b> 對應已知、目前不修的問題（例：23 張「送達早於交給物流」），筆數沒有變多就算通過</p>
+      <p><b>ERROR 級（11 條）：</b>一列都不能違反</p>
+      <p><b>WARN 級（4 條）：</b>對應已知、目前不修的問題（例：23 張「送達早於交給物流」），筆數沒有變多就算通過</p>
     </div>
     <div class="side">
       <p class="ct">寫入限制：實際測試三種寫法</p>
-      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 寫入失敗</p>
-      <p><b>CHECK（評分至少 3）：</b>測試加規則時會不會檢查舊資料 → 會：14,575 列違反，規則無法新增</p>
-      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → <b>未被阻擋</b>，Databricks 的主鍵只是標示、不會強制</p>
-      <p><b>所以：</b>避免重複須在寫入時處理：先在新資料裡去重，再用 MERGE 寫入（已存在就更新、不存在才新增）</p>
+      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 寫入失敗，不合規的值會被擋下</p>
+      <p><b>CHECK（評分至少 3）：</b>這條是刻意設計的測試，不是業務規則：表裡本來就有 1、2 分的評價，用來確認加規則時會不會檢查舊資料 → 14,575 列違反，規則無法新增，代表 Databricks 會先檢查現有資料</p>
+      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → 兩筆都寫入成功；Databricks 的主鍵只是說明用的標示，寫入時不會檢查編號是否重複</p>
+      <p><b>因應做法：</b>既然主鍵擋不住重複，就在寫入流程中處理：先在新資料裡去重，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
     </div>
   </div>
 </div></section>
@@ -1023,7 +1028,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">換成同一州比、等待天數相同時比，晚到訂單的評分仍明顯較低</span>
   <div class="two">
     <div class="sc dual" aria-label="等待天數相同時，準時與晚到的平均評分">
-      <p class="ct">「晚到訂單的等待時間是否本來就較長？」→ 依下單到實際送達的天數分組，比較準時與晚到訂單的平均評分</p>
+      <p class="ct">送達天數相同時，晚到訂單的平均評分仍較低（依下單到實際送達的天數分組）</p>
       <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到</p>
       <div class="r"><span>下單後 0～7 天送達</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97</div></div></div>
       <div class="r"><span>下單後 8～14 天送達</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
@@ -1035,7 +1040,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     <div class="side">
       <p><b>「是否為偏遠州晚到較多、評分也較低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
       <p><b>「是否只因送達天數較長？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時的訂單，實際送達天數越長，分數也越低（下一頁）</p>
-      <p><b>還不是因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
+      <p><b>尚未證明因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1046,13 +1051,13 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <div class="two">
     <div>
       <p class="ct">準時送達的 89,443 張訂單，依實際與預計送達天數交叉分組的平均評分</p>
-      <p class="lg">灰色越深＝平均評分越低（這頁都是準時訂單，沿用準時的灰色）　「—」＝沒有這種組合（準時代表實際不超過預計）</p>
-      <table class="hm"><tr><th></th><th>預計 14 天以內</th><th>15～21 天</th><th>22～28 天</th><th>29～35 天</th><th>36 天以上</th></tr><tr><th>實際 0～7 天送達</th><td style="background:color-mix(in srgb, var(--ink-3) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--ink-3) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--ink-3) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--ink-3) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--ink-3) 12%, var(--card));">4.34</td></tr><tr><th>8～14 天</th><td style="background:color-mix(in srgb, var(--ink-3) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--ink-3) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--ink-3) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--ink-3) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--ink-3) 19%, var(--card));">4.27</td></tr><tr><th>15～21 天</th><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--ink-3) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--ink-3) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--ink-3) 29%, var(--card));">4.18</td></tr><tr><th>22 天以上</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 68%, var(--card));color:#fff;">3.82</td></tr></table>
-      <p class="note">往右看（實際天數相同、預計變長）：分數最多差 0.11 分；往下看（預計相同、實際變長）：分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
+      <p class="lg">顏色越深＝平均評分越低　「—」＝沒有這種組合（準時代表實際不超過預計）</p>
+      <table class="hm"><tr><th></th><th>預計 14 天以內</th><th>15～21 天</th><th>22～28 天</th><th>29～35 天</th><th>36 天以上</th></tr><tr><th>實際 0～7 天送達</th><td style="background:color-mix(in srgb, var(--heat) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--heat) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--heat) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--heat) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--heat) 12%, var(--card));">4.34</td></tr><tr><th>8～14 天</th><td style="background:color-mix(in srgb, var(--heat) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--heat) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--heat) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--heat) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--heat) 19%, var(--card));">4.27</td></tr><tr><th>15～21 天</th><td>—</td><td style="background:color-mix(in srgb, var(--heat) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--heat) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--heat) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--heat) 29%, var(--card));">4.18</td></tr><tr><th>22 天以上</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 68%, var(--card));color:#fff;">3.82</td></tr></table>
+      <p><b>怎麼讀：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
       <p><b>為什麼重要：</b>準時率 93.2% 看起來很好，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
-      <p class="ct">實際送達天數較長的訂單分數低，是否另有原因？排除各項原因後，從 0～7 天送達到 31 天以上，分數仍然下降：</p>
+      <p><b>排除其他解釋：</b>實際送達天數較長的訂單分數低，是否另有原因？分別排除以下三種原因後，從 0～7 天送達到 31 天以上，分數仍然下降</p>
       <p><b>大件商品容易損壞？</b>只看總重 500 克以下：4.44 → 3.79</p>
       <p><b>多件商品分批送達？</b>只看單件訂單：4.48 → 3.68</p>
       <p><b>出貨慢的賣家服務差？</b>只看賣家 2 天內出貨：4.43 → 3.76</p>
@@ -1064,17 +1069,17 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>結論與建議</h2>
   <span class="sub">每一項都根據前面頁面的發現</span>
   <div class="nexts n3">
-    <div><b>① 每天列出快晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，請物流加急；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能降低低分</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，不是因果。做法：快晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組給 1～2 星的比例。假設能從 62.4% 降到 52.4%（實際效果要實驗才知道），兩組各需約 380 張、共 760 張晚到訂單（顯著水準 5%、檢定力 80%）；最近 12 個月平均每月約有 470 張晚到訂單，所以大約 2 個月可以收集完</span></div>
-    <div><b>③ 物流指標除了準時率，也追蹤實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
+    <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，請物流加急；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能降低低分</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組給 1～2 星的比例。假設比例能從 62.4% 降到 52.4%（實際效果需由實驗測得），兩組各需約 380 張、共 760 張晚到訂單（顯著水準 5%＝誤判為有效的機率上限；檢定力 80%＝效果存在時能測出的機率）。最近 12 個月平均每月約有 470 張晚到訂單，約 2 個月可收滿</span></div>
+    <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>後續分析方向</h2>
-  <span class="sub">後續分析與需要的資料</span>
+  <span class="sub">前面頁面尚未回答的問題，以及要做的分析</span>
   <div class="nexts">
-    <div><b>用實驗資料確認延遲是否造成低分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；第 7 頁 ② 的實驗結果，才能證明延遲本身會拉低評分</span></div>
+    <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
     <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
   </div>
 </div></section>
@@ -1102,7 +1107,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>Lakehouse architecture</h2>
   <span class="sub">Raw files are always kept and every layer can be checked on its own, so a cleaning mistake can be redone from the previous layer</span>
   <div class="flow3">
-    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables (9 files + 1 table of reviews read with default settings, kept to compare row counts with the fixed version)</em></div>
+    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 uncorrected review table kept to compare row counts</em></div>
     <div class="ar">→</div>
     <div><b>silver (cleaned)</b><span>Fix load errors, deduplicate, flag suspicious data (flag, never delete)</span><em>Cleaned tables + 15 quality rules</em></div>
     <div class="ar">→</div>
@@ -1127,14 +1132,15 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
         <tr><th>Validity</th><td>e.g. score between 1 and 5; price above 0</td><td class="n">3</td></tr>
         <tr><th>Consistency</th><td>e.g. every item in order lines exists in the product table</td><td class="n">5</td></tr>
       </table>
-      <p>Two levels: <b>11 ERROR rules</b> allow no violating row; <b>4 WARN rules</b> track known issues left unfixed for now (e.g. 23 orders "delivered before handed to the carrier") and pass as long as the count doesn't grow</p>
+      <p><b>ERROR level (11 rules):</b> no row may violate them</p>
+      <p><b>WARN level (4 rules):</b> track known issues left unfixed for now (e.g. 23 orders "delivered before handed to the carrier") and pass as long as the count doesn't grow</p>
     </div>
     <div class="side">
       <p class="ct">Write-time constraints: three approaches tested</p>
-      <p><b>CHECK (score 1–5):</b> inserting a review scored 6 → blocked</p>
-      <p><b>CHECK (score at least 3):</b> tests whether adding a rule checks existing data → it does: 14,575 rows violate it, so it can't be added</p>
-      <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID → <b>not blocked</b>; Databricks primary keys are informational and not enforced</p>
-      <p><b>So:</b> "no duplicates" has to be handled at write time: deduplicate the new data first, then write with MERGE (update if it exists, insert if not)</p>
+      <p><b>CHECK (score 1–5):</b> inserting a review scored 6 → the write fails, so invalid values are blocked</p>
+      <p><b>CHECK (score at least 3):</b> a deliberate test, not a business rule: the table already has 1- and 2-point reviews, so it checks whether adding a rule validates existing data → 14,575 rows violate it and the rule can't be added, so Databricks does check existing data first</p>
+      <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID → both rows are written; Databricks primary keys are informational labels only, and writes are not checked for duplicate IDs</p>
+      <p><b>How to handle it:</b> since the primary key does not stop duplicates, handle them in the write process: deduplicate the new data first, then write with MERGE (update if the order ID exists, insert if not)</p>
     </div>
   </div>
 </div></section>
@@ -1161,7 +1167,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Comparing within the same state, or at the same waiting time, late orders still score much lower than on-time ones</span>
   <div class="two">
     <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
-      <p class="ct">"Do late orders just take longer?" → orders grouped by days from purchase to actual delivery, comparing on-time and late average scores</p>
+      <p class="ct">At the same delivery time, late orders still score lower (grouped by days from purchase to actual delivery)</p>
       <p class="lg"><i class="v"></i>On time or early <i class="t"></i>Late</p>
       <div class="r"><span>Delivered in 0–7 days</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97</div></div></div>
       <div class="r"><span>Delivered in 8–14 days</span><div><div class="b v"><span class="trk"><i style="width:86.2%"></i></span>4.31</div><div class="b t"><span class="trk"><i style="width:65.4%"></i></span>3.27</div></div></div>
@@ -1184,13 +1190,13 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <div class="two">
     <div>
       <p class="ct">Average score of 89,443 on-time orders, grouped by actual and estimated delivery time</p>
-      <p class="lg">Darker grey = lower average score (all on-time orders, so the on-time grey is used)　"—" = no such combination (on time means actual ≤ estimate)</p>
-      <table class="hm"><tr><th></th><th>Estimate ≤14</th><th>15–21</th><th>22–28</th><th>29–35</th><th>36+</th></tr><tr><th>Actual 0–7 days</th><td style="background:color-mix(in srgb, var(--ink-3) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--ink-3) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--ink-3) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--ink-3) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--ink-3) 12%, var(--card));">4.34</td></tr><tr><th>8–14 days</th><td style="background:color-mix(in srgb, var(--ink-3) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--ink-3) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--ink-3) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--ink-3) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--ink-3) 19%, var(--card));">4.27</td></tr><tr><th>15–21 days</th><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--ink-3) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--ink-3) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--ink-3) 29%, var(--card));">4.18</td></tr><tr><th>22+ days</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--ink-3) 68%, var(--card));color:#fff;">3.82</td></tr></table>
-      <p class="note">Across a row (same actual time, longer estimate): at most 0.11 apart; down a column (same estimate, longer actual time): scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
+      <p class="lg">Darker = lower average score　"—" = no such combination (on time means actual ≤ estimate)</p>
+      <table class="hm"><tr><th></th><th>Estimate ≤14</th><th>15–21</th><th>22–28</th><th>29–35</th><th>36+</th></tr><tr><th>Actual 0–7 days</th><td style="background:color-mix(in srgb, var(--heat) 1%, var(--card));">4.44</td><td style="background:color-mix(in srgb, var(--heat) 4%, var(--card));">4.41</td><td style="background:color-mix(in srgb, var(--heat) 5%, var(--card));">4.40</td><td style="background:color-mix(in srgb, var(--heat) 9%, var(--card));">4.37</td><td style="background:color-mix(in srgb, var(--heat) 12%, var(--card));">4.34</td></tr><tr><th>8–14 days</th><td style="background:color-mix(in srgb, var(--heat) 26%, var(--card));">4.21</td><td style="background:color-mix(in srgb, var(--heat) 17%, var(--card));">4.29</td><td style="background:color-mix(in srgb, var(--heat) 13%, var(--card));">4.33</td><td style="background:color-mix(in srgb, var(--heat) 15%, var(--card));">4.31</td><td style="background:color-mix(in srgb, var(--heat) 19%, var(--card));">4.27</td></tr><tr><th>15–21 days</th><td>—</td><td style="background:color-mix(in srgb, var(--heat) 36%, var(--card));">4.12</td><td style="background:color-mix(in srgb, var(--heat) 33%, var(--card));">4.14</td><td style="background:color-mix(in srgb, var(--heat) 27%, var(--card));">4.20</td><td style="background:color-mix(in srgb, var(--heat) 29%, var(--card));">4.18</td></tr><tr><th>22+ days</th><td>—</td><td>—</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 56%, var(--card));color:#fff;">3.93</td><td style="background:color-mix(in srgb, var(--heat) 68%, var(--card));color:#fff;">3.82</td></tr></table>
+      <p><b>How to read it:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
     </div>
     <div class="side">
       <p><b>Why it matters:</b> a 93.2% on-time rate looks good, but the on-time rate alone hides a rating gap from 4.44 to 3.82 among on-time orders</p>
-      <p class="ct">Could something else make slow-arriving orders score lower? Within orders that exclude each cause, scores still fall from 0–7 days to 31+ days:</p>
+      <p><b>Ruling out other explanations:</b> do orders that take longer score lower for some other reason? After excluding each of the three causes below, scores still fall from 0–7 days to 31+ days</p>
       <p><b>Bulky items get damaged?</b> Total weight 500 g or less: 4.44 → 3.79</p>
       <p><b>Split deliveries?</b> Single-item orders: 4.48 → 3.68</p>
       <p><b>Slow sellers give poor service?</b> Seller shipped within 2 days: 4.43 → 3.76</p>
@@ -1203,16 +1209,16 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Each one follows from a finding on an earlier slide</span>
   <div class="nexts n3">
     <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to expedite; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces low ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Assuming a drop from 62.4% to 52.4% (the real effect is what the test measures), each group needs about 380 late orders, 760 in total (5% significance level, 80% power); the last 12 months averaged about 470 late orders a month, so collecting them takes about 2 months</span></div>
-    <div><b>③ Track actual delivery time alongside the on-time rate</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces low ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Assuming the share drops from 62.4% to 52.4% (the real effect is what the test measures), each group needs about 380 late orders, 760 in total (5% significance level = the maximum chance of wrongly calling it effective; 80% power = the chance of detecting a real effect). The last 12 months averaged about 470 late orders a month, so about 2 months to collect them</span></div>
+    <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Further analysis</h2>
-  <span class="sub">Follow-up analyses and the data they need</span>
+  <span class="sub">Open questions from earlier slides and the analyses to answer them</span>
   <div class="nexts">
-    <div><b>Use experiment data to confirm whether delays cause low scores</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; only the results of the experiment in slide 7 ② can show that delay itself lowers ratings</span></div>
+    <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
     <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; use the carrier hand-off date in the data to split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
   </div>
 </div></section>
@@ -1431,7 +1437,7 @@ LIMIT 5;</code></pre>
   <tr><th>Approach</th><th>Table tested</th><th>Test</th><th>Result</th></tr>
   <tr class="hi"><td>CHECK constraint (score 1–5)</td><td><code>silver_order_reviews</code></td><td>Write a review with a score of 6</td><td>Blocked; the row was not written</td></tr>
   <tr><td>CHECK constraint (score at least 3)</td><td><code>silver_order_reviews</code></td><td>Add this rule to a table that already has 1- and 2-point reviews</td><td>Could not be added: the system first checks existing data, and 14,575 rows violate it</td></tr>
-  <tr><td>PRIMARY KEY (declares order IDs unique)</td><td><code>silver_orders</code></td><td>Write 2 test orders with the same ID</td><td>Not blocked; both rows were written. In Databricks, primary keys are informational only and not enforced. The quality VIEW's uniqueness rule therefore showed FAIL, and the test rows were then deleted</td></tr>
+  <tr><td>PRIMARY KEY (declares order IDs unique)</td><td><code>silver_orders</code></td><td>Write 2 test orders with the same ID</td><td>Not blocked; both rows were written. In Databricks, primary keys are informational only; writes are not checked for duplicate IDs. The quality VIEW's uniqueness rule therefore showed FAIL, and the test rows were then deleted</td></tr>
 </table>
 <p>So "no duplicates" cannot rely on primary keys and must be handled at write time: new data is written with the <code>MERGE</code> command, which updates an order if it already exists and inserts it only if it does not. Testing also showed that if the same new order appears twice in one batch, <code>MERGE</code> inserts two rows, so new data must be deduplicated before writing.</p>
 <details><summary>SQL: deduplicate first, then MERGE</summary>
