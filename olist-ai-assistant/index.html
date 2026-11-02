@@ -239,7 +239,7 @@
   #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
   #deck .vb .area b { font-variant-numeric: tabular-nums; margin-bottom: .2em; }
   #deck .vb .area i { display: block; width: 65%; background: var(--mute); border-radius: .25em .25em 0 0; }
-  #deck .vb .hi .area i { background: var(--neg); }
+  #deck .vb .hi .area i { background: var(--accent); }  /* 重點用藍色，跟第 4 頁一致 */
   #deck .vb .cols > div > span { font-size: .88em; margin-top: .4em; }
   #deck .vb .cols small { display: block; color: var(--ink-3); font-size: .9em; }
   /* 6 道檢查 */
@@ -260,8 +260,8 @@
   #deck .bars .trk u { position: absolute; left: 90%; top: -.3em; bottom: -.3em; border-left: 2px dashed var(--neg); }
   #deck .bars .b.v i { background: var(--ink-3); }
   #deck .bars .b.t i { background: var(--accent); }
-  #deck .bars .b.t.miss i { background: var(--neg); }
-  #deck .bars .b.none { color: var(--ink-3); font-style: italic; }
+  #deck .bars .b.t.miss em { font-style: normal; color: var(--neg); font-weight: 600; }  /* 未達門檻：長條維持測試集的藍色，只把說明文字標紅（顏色只代表一件事） */
+  #deck .bars .b.none { color: var(--ink-2); }  /* 沒有數據：同樣字體，只用灰色區分（不用斜體，格式跟其他行一致） */
   #deck .bars .txt { font-size: .88em; line-height: 1.7; }
   #deck .bars .note { margin-top: .8em; }
   #deck .lg i.v { background: var(--ink-3); }
@@ -581,7 +581,7 @@
     <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 則＝90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%</div></div></div>
     <div class="r"><div class="nm">評論分類<small>選的類別跟本人標的完全一致</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（之後類別定義改過，現行版沒重測）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span>22/25 則＝88%（未達 90% 門檻）</div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（之後類別定義改過，現行版沒重測）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 則＝88%<em>（未達 90% 門檻）</em></span></div></div></div>
     <div class="r"><div class="nm">調查（Agent）<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
       <div class="txt">驗證集：跑 4 次，4 次都通過 17 項檢查<br>測試集：換問 CE 州，跑 2 次都通過（只適用其中 6 項檢查）</div></div>
     <p class="note">測試集只有 20～25 則，100% 也可能是運氣好；真實準確率的可能範圍見下一頁</p>
@@ -744,7 +744,7 @@
     <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 reviews = 90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100%</div></div></div>
     <div class="r"><div class="nm">Review classification<small>Categories exactly match my labels</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (definitions changed later; current version not re-tested)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span>22/25 reviews = 88% (below the 90% threshold)</div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (definitions changed later; current version not re-tested)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 reviews = 88%<em> (below the 90% threshold)</em></span></div></div></div>
     <div class="r"><div class="nm">Investigation (agent)<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
       <div class="txt">Validation: 4 runs, all 4 passed all 17 checks<br>Test: asked about state CE instead; 2 runs, both passed (only 6 of the checks apply)</div></div>
     <p class="note">The test sets have only 20–25 reviews, so even 100% could be luck; the likely range of true accuracy is on the next slide</p>
