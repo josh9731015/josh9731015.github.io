@@ -742,7 +742,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">算漏斗之前先檢查資料，3 個發現改變了算法</span>
   <div class="checks c3">
     <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不太可能是實際無人加入購物車</span><em>做法：分析期間改從 11-26 開始（共 67 天）</em></div>
-    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，兩步的排序相反</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，因此後兩步的排序僅為初步結果</em></div>
+    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，兩步轉換率的高低順序相反</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，因此後兩步轉換率的高低順序僅為初步結果</em></div>
     <div><b>同一時間的兩個事件</b><span>6,569 人的「看商品」和「加購」時間完全相同：GA4 把同一批送出的事件記成同一個時間，分不出先後</span><em>做法：同時發生也算有照順序；否則會少算 481 位加購者</em></div>
   </div>
 </div></section>
@@ -891,7 +891,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">I checked the data before building the funnel; 3 findings changed how it is calculated</span>
   <div class="checks c3">
     <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the analysis period starts Nov 26 (67 days)</em></div>
-    <div><b>Steps must be in order</b><span>Counting anyone who did a step at some point, "add to cart → begin checkout" (54.1%) beats "begin checkout → purchase" (51.5%); requiring each step to follow the previous one gives 40.0% vs. 57.4%, flipping the ranking</span><em>Action: always count in order (SQL: CTEs chained step by step + non-equi JOIN); but 1,639 users checked out with no add-to-cart record, possibly untracked, so the ranking of the last two steps is only preliminary</em></div>
+    <div><b>Steps must be in order</b><span>Counting anyone who did a step at some point, "add to cart → begin checkout" (54.1%) beats "begin checkout → purchase" (51.5%); requiring each step to follow the previous one gives 40.0% vs. 57.4%, reversing which conversion rate is higher</span><em>Action: always count in order (SQL: CTEs chained step by step + non-equi JOIN); but 1,639 users checked out with no add-to-cart record, possibly untracked, so which of the last two conversion rates is higher is only preliminary</em></div>
     <div><b>Two events at the same time</b><span>For 6,569 users, "view item" and "add to cart" have identical timestamps: GA4 gives events sent in one batch the same timestamp, so their order is unknown</span><em>Action: same-time events count as in order; otherwise 481 add-to-cart users would be missed</em></div>
   </div>
 </div></section>

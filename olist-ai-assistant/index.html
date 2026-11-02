@@ -500,7 +500,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div>
       <p class="lg"><i class="ai"></i>藍框＝AI 做的 <i class="code"></i>灰框＝程式做的</p>
       <div class="vpipe">
-        <div class="st code">比較各州差評率，挑出要深入的州<small>多出差評最多的 2 州＋差評率最高的 1 州</small></div>
+        <div class="st code">比較各州差評率，挑出要深入的州<small>比全國多出最多差評的 2 州＋差評率最高的 1 州</small></div>
         <div class="st code">每州檢驗 4 個假說<small>配送延遲、集中在某幾季、買的品類不同、少數問題賣家</small></div>
         <div class="st code">依事先寫好的規則判定<small>成立／部分成立／不成立</small></div>
         <div class="st ai">AI 決定工具呼叫順序、寫報告</div>
@@ -532,7 +532,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     </div>
     <div class="side">
       <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 讀隨機 500 則差評，歸到 10 個類別（Agent 調查各州時，也拿這份結果當全國對照）</p>
-      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，排名成立；但分類準確率 88%，占比是估計值</p>
+      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，這兩類的排名成立；但分類準確率 88%，占比是估計值</p>
       <p><b>補充：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會誤判顧客滿意度</p>
       <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
     </div>
@@ -663,7 +663,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div>
       <p class="lg"><i class="ai"></i>Blue = done by AI <i class="code"></i>Gray = done by code</p>
       <div class="vpipe">
-        <div class="st code">Compare states' negative-review rates, pick states to dig into<small>2 states with the most excess negative reviews + 1 state with the highest rate</small></div>
+        <div class="st code">Compare states' negative-review rates, pick states to dig into<small>2 states with the most negative reviews above the national rate + 1 with the highest rate</small></div>
         <div class="st code">Test 4 hypotheses per state<small>delivery delays, concentrated in certain quarters, product mix, a few problem sellers</small></div>
         <div class="st code">Apply pre-written rules<small>supported / partly supported / not supported</small></div>
         <div class="st ai">AI decides the order of tool calls and writes the report</div>
@@ -695,7 +695,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     </div>
     <div class="side">
       <p><b>How it was obtained:</b> the "Review classification" feature had the AI read 500 random negative reviews and sort them into 10 categories (the agent also uses these results as the national baseline when investigating states)</p>
-      <p><b>Is it reliable?</b> With only 500 reviews, the true share behind 28.2% is likely ~24–32%, and behind 18.8% ~15–22%; the ranges don't overlap, so the ranking holds. But classification accuracy is 88%, so the shares are estimates</p>
+      <p><b>Is it reliable?</b> With only 500 reviews, the true share behind 28.2% is likely ~24–32%, and behind 18.8% ~15–22%; the ranges don't overlap, so the two categories' ranking holds. But classification accuracy is 88%, so the shares are estimates</p>
       <p><b>Note:</b> the last category, "rating contradicts comment", is not a complaint: 1.6% gave 1–2 stars but wrote a positive comment, e.g. "Muito bom eu gostei" (Very good, I liked it) → counting stars alone treats satisfied customers as unhappy</p>
       <p class="note">"Late delivery" and "Not received": the AI only judges whether the comment complains about delivery; code picks the category by comparing actual delivery dates</p>
     </div>
