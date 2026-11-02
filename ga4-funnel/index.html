@@ -726,14 +726,14 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>電商轉換漏斗分析</h1>
-  <p class="lead">網站訪客在購買流程的哪一步流失最多？<b>用 BigQuery SQL 找答案，並先檢查資料可不可信</b></p>
+  <p class="lead">網站訪客最大的流失點在<b>「看商品→加入購物車」</b>；用 BigQuery SQL 找出答案，並先確認資料是否可信</p>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>非等值 JOIN</span><span>分區／叢集</span></div>
   <div class="roles">
-    <div><b>45,107 人</b><span>看過商品</span></div>
-    <div><b>2,755 人</b><span>依序完成看商品→加購→結帳→購買</span></div>
-    <div><b>6.11%</b><span>整體轉換率（2,755 ÷ 45,107）</span></div>
+    <div><b>26.6%</b><span>看過商品的人中，之後加入購物車的比例，是三個轉換中最低</span></div>
+    <div><b>約 90%</b><span>依篩選欄位分區或叢集後，查詢處理量（＝費用）減少的幅度</span></div>
+    <div><b>6.11%</b><span>依序完成看商品→加購→結帳→購買的比例（2,755 ÷ 45,107）</span></div>
   </div>
-  <p class="foot">資料：Google 官方 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-26～2021-01-31）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
+  <p class="foot">資料：Google 公開的 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-01～2021-01-31，分析採 11-26 起的 67 天，原因見第 3 頁）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
@@ -743,18 +743,18 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     <div class="fun" aria-label="四步漏斗人數">
       <p class="ct">每一步的人數（長條長度＝人數）</p>
       <div class="fr"><span>看商品</span><span class="bar"><i style="width:100%"></i></span><b>45,107</b></div>
-      <div class="fc hi">↓ 26.6%（流失 33,091 人）</div>
+      <div class="fc hi">↓ 轉換 26.6%｜流失 33,091 人</div>
       <div class="fr"><span>加入購物車</span><span class="bar"><i style="width:26.6%"></i></span><b>12,016</b></div>
-      <div class="fc">↓ 40.0%（流失 7,214 人）</div>
+      <div class="fc">↓ 轉換 40.0%｜流失 7,214 人</div>
       <div class="fr"><span>開始結帳</span><span class="bar"><i style="width:10.6%"></i></span><b>4,802</b></div>
-      <div class="fc">↓ 57.4%（流失 2,047 人）</div>
+      <div class="fc">↓ 轉換 57.4%｜流失 2,047 人</div>
       <div class="fr"><span>購買</span><span class="bar"><i style="width:6.1%"></i></span><b>2,755</b></div>
     </div>
     <div class="side">
       <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
       <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數自然最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
-      <p><b>不同算法下結論一致：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
-      <p class="bridge"><b>26.6% 偏低嗎：</b>要用同樣算法跟上一季或去年同期比；這份範例資料只有 67 天，做不到（見第 7 頁）。所以先比同一段期間內的不同族群（第 4 頁）</p>
+      <p><b>不同算法下結論一致：</b>限定每步 30 分鐘、1 天、7 天內完成，它都還是最低</p>
+      <p class="bridge"><b>26.6% 偏低嗎：</b>要用同樣算法跟上一季或去年同期比；這份範例資料只有 67 天，做不到（見第 7 頁）。因此先比同一段期間內的不同族群（第 4 頁）</p>
     </div>
   </div>
 </div></section>
@@ -763,8 +763,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>資料品質檢查</h2>
   <span class="sub">算漏斗之前先檢查資料，3 個發現改變了算法</span>
   <div class="checks c3">
-    <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不太可能是實際無人加入購物車</span><em>做法：分析期間改從 11-26 開始（共 67 天）</em></div>
-    <div><b>要照順序算</b><span>只看「期間內有沒有做過」時，「加購→結帳」54.1% 比「結帳→購買」51.5% 高；規定每一步要在上一步之後，變成 40.0% 對 57.4%，兩步轉換率的高低順序相反</span><em>做法：一律照順序算（SQL 用 CTE 一步接一步＋非等值 JOIN）；但有 1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，因此後兩步轉換率的高低順序僅為初步結果</em></div>
+    <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不太可能是實際無人加入購物車</span><em>做法：原始資料從 11-01 開始，分析改從 11-26 開始（共 67 天）</em></div>
+    <div><b>不照順序算，後兩步的高低會顛倒</b><span>只看「期間內有沒有做過」，會把後兩步轉換率的高低算反；規定每一步都要在上一步之後才算</span><em>做法：照順序算（CTE：把查詢拆成依序的步驟；非等值 JOIN：用「時間在後」配對兩筆紀錄）；1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，後兩步的高低僅為初步結果</em></div>
     <div><b>同一時間的兩個事件</b><span>6,569 人的「看商品」和「加購」時間完全相同：GA4 把同一批送出的事件記成同一個時間，分不出先後</span><em>做法：同時發生也算有照順序；否則會少算 481 位加購者</em></div>
   </div>
 </div></section>
@@ -774,7 +774,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">「看商品→加購」比例在裝置、進站來源之間差不到 3 個百分點；只有新舊訪客之間差異明顯</span>
   <div class="two">
     <div class="sg2" aria-label="各群看過商品的人中加入購物車的比例">
-      <p class="ct">各群「看過商品的人中，之後有加入購物車的比例」（2020/11/26～2021/1/31 整段期間；每群各自計算，同一類加起來不是 100%）；右欄＝看過商品的人數</p>
+      <p class="ct">各群「看過商品的人中，之後有加入購物車的比例」（2020/11/26～2021/1/31；每群各自計算，同一類加起來不是 100%）；右欄＝看過商品的人數</p>
       <p class="gh">裝置</p>
       <div class="r"><span>電腦</span><span class="trk"><i style="width:52.8%"></i></span><b>26.4%</b><em>26,351 人</em></div>
       <div class="r"><span>手機</span><span class="trk"><i style="width:54.0%"></i></span><b>27.0%</b><em>17,726 人</em></div>
@@ -786,41 +786,41 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <div class="r"><span>付費廣告</span><span class="trk"><i style="width:50.2%"></i></span><b>25.1%</b><em>2,095 人</em></div>
       <p class="gh">新舊訪客</p>
       <div class="r"><span>新訪客</span><span class="trk"><i style="width:51.6%"></i></span><b>25.8%</b><em>41,920 人</em></div>
-      <div class="r"><span>舊訪客</span><span class="trk"><i style="width:76.4%"></i></span><b>38.2%</b><em>3,187 人</em></div>
+      <div class="r hi"><span>舊訪客</span><span class="trk"><i style="width:76.4%"></i></span><b>38.2%</b><em>3,187 人</em></div>
       <div class="ax"><span></span><div><s style="left:0">0%</s><s style="left:20%">10%</s><s style="left:40%">20%</s><s style="left:60%">30%</s><s style="left:80%">40%</s><s style="left:100%">50%</s></div><span></span><span></span></div>
     </div>
     <div class="side">
       <p><b>裝置、進站來源之間差不到 3 個百分點：</b>改善「看商品→加購」不需要先分裝置或進站來源處理</p>
-      <p><b>舊訪客明顯較高：</b>38.2% 對新訪客 25.8%；新訪客佔看過商品的人 93%，是改善的重點對象</p>
-      <p class="note">舊訪客多半在年底旺季就出現，拿同一時期第一次出現的人比，差距仍有 7～12 個百分點。舊訪客＝資料裡沒有 GA4 自動記錄的「第一次造訪」（first_visit）事件，代表 11/1 資料開始前就來過；進站來源另有兩類是匿名化後的替代值，不列入</p>
+      <p><b>舊訪客明顯較高：</b>舊訪客＝11/1 資料開始前就來過網站的人；38.2% 對新訪客 25.8%；新訪客佔看過商品的人 93%，是改善的重點對象</p>
+      <p><b>排除旺季影響後仍成立：</b>舊訪客多在年底旺季出現；只跟同樣在旺季第一次來的新訪客比，舊訪客仍高 7～12 個百分點</p>
+      <p class="note">舊訪客判斷方式：資料裡沒有 GA4 自動記錄的「第一次造訪」（first_visit）事件；進站來源另有兩類是匿名化後的替代值，不列入</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
-  <h2>改善行動</h2>
-  <span class="sub">確認問題 → 鎖定族群 → 驗證改版 → 資料監控</span>
+  <h2>結論與建議</h2>
+  <span class="sub">先確認 26.6% 是否偏低，再用 A/B 測試驗證針對新訪客的改版</span>
   <div class="nexts">
-    <div><b>① 先確認 26.6% 是否偏低</b><span>「看商品→加購」轉換率是三步中最低，但最低本身不代表有問題（很多人看商品只是在比較、還沒打算買）；要跟歷史數字（上一季、去年同期，用同樣算法計算）比較，才知道是不是問題</span></div>
-    <div><b>② 先從新訪客下手</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，比同一時期第一次出現的舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
-    <div><b>③ 改版前先做 A/B 測試</b><span>網站同時保留兩個版本，依新訪客的瀏覽器代號隨機分組（同一瀏覽器每次看到同一版）：對照組看現在的商品頁，實驗組看改版後的，比較兩組的「看商品→加購」轉換率。要偵測新訪客的轉換率從 25.8% 升到 27.8%，每組約需 7,700 人（顯著水準 5%、檢定力 80%）；兩組合計約 15,400 人，以資料期間平均每天約 630 位新訪客計，實驗約需跑 25 天，淡季流量較少時會更久</span></div>
+    <div><b>① 先確認 26.6% 是否偏低</b><span>「看商品→加購」是三步中轉換率最低、最優先檢查的環節；是否偏低，要用同樣算法跟上一季、去年同期比較才能確認</span></div>
+    <div><b>② 優先改善新訪客</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，即使只跟同樣在旺季第一次來的新訪客比，仍比舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
+    <div><b>③ 改版前先做 A/B 測試</b><span>隨機把新訪客分成兩組，一組看現在的商品頁、一組看改版後的，比較「看商品→加購」轉換率；假設改版能提升 2 個百分點，要看出 25.8%→27.8% 的差異，每組約需 7,700 人，約需 25 天</span></div>
     <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>查詢成本控制</h2>
-  <span class="sub">BigQuery 依處理量計費：篩選條件用哪個欄位，就用那個欄位分區或叢集，處理量可減少約 90%；資料到 TB 級時，少讀 90% 就等於費用少 90%</span>
+  <span class="sub">BigQuery 依處理量計費：分區（依日期切成小塊）或叢集（依常查欄位排序存放）讓查詢只讀需要的部分，處理量（＝費用）減少約 90%</span>
   <div class="two">
     <div class="cost" aria-label="一般表與分區、叢集表的處理量比較">
-      <p class="ct">同一份資料（4,295,584 列）建成三種表，比較處理量</p>
-      <p class="lg"><i class="v"></i>一般表 <i class="t"></i>依篩選欄位整理後的表（查詢 A 用分區表、查詢 B 用叢集表）</p>
+      <p class="ct">同一份資料（4,295,584 列）：一般表 vs 整理後的表（分區表、叢集表），比較處理量</p>
+      <p class="lg"><i class="v"></i>一般表 <i class="t"></i>整理後的表（查詢 A 用分區表、查詢 B 用叢集表）</p>
       <div class="r"><span>查詢 A：只查 7 天<small>依日期分區</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
       <div class="r"><span>查詢 B：只查購買事件<small>依事件名稱叢集</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:33.3%">50</s><s style="left:66.7%">100</s><s style="left:100%">150 MB</s></div></div>
     </div>
     <div class="side">
-      <p><b>原始資料一天一張表，本身就等於按日期分好：</b>用表名（_TABLE_SUFFIX）篩日期只處理 8.75 MB（自建分區表的 12.13 MB 是多讀了日期欄）；用表內的日期欄位篩則處理 125.66 MB（推測 92 張表全部讀取）</p>
       <p><b>叢集要執行後才看得到：</b>查詢 B 執行前報價仍是 138.05 MB，實際只處理 13.76 MB</p>
       <p><b>習慣：</b>每次先報價（dry run）再執行，並設定單次處理上限 2 GB，避免一次掃描整個資料集</p>
     </div>
@@ -829,11 +829,11 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>後續分析方向</h2>
-  <span class="sub">後續分析與需要的資料</span>
+  <span class="sub">主要缺歷史資料與商品頁互動紀錄，補齊後才能確認問題、找出原因</span>
   <div class="nexts">
     <div><b>取得歷史資料，比較當期轉換率</b><span>第 2 頁：取得上一季與去年同期資料，用同樣算法（照順序、同樣長度的期間）算「看商品→加購」轉換率比較；這份範例資料只有 2020/11/26～2021/1/31</span></div>
     <div><b>記錄商品頁互動，找出加購前的流失點</b><span>第 2 頁：看過商品卻沒加入購物車的有 33,091 人；需要商品頁的互動事件（選尺寸、查庫存、看評價），找出他們停在哪個環節</span></div>
-    <div><b>整理商品類別，找出最需改善的類別</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
+    <div><b>整理商品類別，找出最需改善的類別</b><span>資料檢查時發現商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
     <div><b>比較新舊訪客，找出提升新訪客加購的做法</b><span>第 4 頁：同一時期比較，舊訪客看過商品後加入購物車的比例仍比新訪客高 7～12 個百分點；比較兩者看的商品和進站來源，找出可以用在新訪客的做法</span></div>
   </div>
 </div></section>
@@ -847,14 +847,14 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
   <h1>E-commerce Conversion Funnel</h1>
-  <p class="lead">At which step of the purchase flow do site visitors drop off most? <b>Answered with BigQuery SQL, after first checking whether the data can be trusted</b></p>
+  <p class="lead">Site visitors drop off most at <b>"view item → add to cart"</b>; found with BigQuery SQL, after first checking whether the data can be trusted</p>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>Non-equi JOIN</span><span>Partitioning / clustering</span></div>
   <div class="roles">
-    <div><b>45,107 users</b><span>viewed an item</span></div>
-    <div><b>2,755 users</b><span>went view item → add to cart → begin checkout → purchase in order</span></div>
-    <div><b>6.11%</b><span>overall conversion rate (2,755 ÷ 45,107)</span></div>
+    <div><b>26.6%</b><span>of item viewers then added to cart, the lowest of the three conversions</span></div>
+    <div><b>~90%</b><span>less data processed per query (= cost) after partitioning or clustering on the filter column</span></div>
+    <div><b>6.11%</b><span>went view item → add to cart → begin checkout → purchase in order (2,755 ÷ 45,107)</span></div>
   </div>
-  <p class="foot">Data: Google's official GA4 e-commerce sample dataset (Google Merchandise Store, 2020-11-26 to 2021-01-31); partly obfuscated, so the numbers are not real business results. SQL written with help from Claude Code; scope and presentation decided by me, every query reviewed step by step</p>
+  <p class="foot">Data: Google's public GA4 e-commerce sample dataset (Google Merchandise Store, 2020-11-01 to 2021-01-31; the analysis uses the 67 days from Nov 26, see slide 3); partly obfuscated, so the numbers are not real business results. SQL written with help from Claude Code; scope and presentation decided by me, every query reviewed step by step</p>
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
@@ -864,17 +864,17 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     <div class="fun" aria-label="Users at each funnel step">
       <p class="ct">Users at each step (bar length = number of users)</p>
       <div class="fr"><span>View item</span><span class="bar"><i style="width:100%"></i></span><b>45,107</b></div>
-      <div class="fc hi">↓ 26.6% (33,091 users lost)</div>
+      <div class="fc hi">↓ 26.6% convert | 33,091 users lost</div>
       <div class="fr"><span>Add to cart</span><span class="bar"><i style="width:26.6%"></i></span><b>12,016</b></div>
-      <div class="fc">↓ 40.0% (7,214 users lost)</div>
+      <div class="fc">↓ 40.0% convert | 7,214 users lost</div>
       <div class="fr"><span>Begin checkout</span><span class="bar"><i style="width:10.6%"></i></span><b>4,802</b></div>
-      <div class="fc">↓ 57.4% (2,047 users lost)</div>
+      <div class="fc">↓ 57.4% convert | 2,047 users lost</div>
       <div class="fr"><span>Purchase</span><span class="bar"><i style="width:6.1%"></i></span><b>2,755</b></div>
     </div>
     <div class="side">
       <p><b>Conversion rate</b> = users reaching this step ÷ users reaching the previous step; each step must happen after the previous one</p>
       <p><b>Judged by conversion rate, not users lost:</b> the first step has the most users, so it naturally loses the most; but its 26.6% rate is also far below the next two steps' 40.0% and 57.4%</p>
-      <p><b>Holds under other definitions:</b> limiting each step to 30 minutes, 1 day or 7 days, or adding back users who checked out with no add-to-cart record as untracked (max 29.2%), it stays the lowest</p>
+      <p><b>Holds under other definitions:</b> limiting each step to 30 minutes, 1 day or 7 days, it stays the lowest</p>
       <p class="bridge"><b>Is 26.6% low?</b> That needs the same metric for the previous quarter or the same period last year; this sample covers only 67 days, so it can't be done (slide 7). Instead, compare groups within the same period (slide 4)</p>
     </div>
   </div>
@@ -884,8 +884,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>Data quality checks</h2>
   <span class="sub">I checked the data before building the funnel; 3 findings changed how it is calculated</span>
   <div class="checks c3">
-    <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the analysis period starts Nov 26 (67 days)</em></div>
-    <div><b>Steps must be in order</b><span>Counting anyone who did a step at some point, "add to cart → begin checkout" (54.1%) beats "begin checkout → purchase" (51.5%); requiring each step to follow the previous one gives 40.0% vs. 57.4%, reversing which conversion rate is higher</span><em>Action: always count in order (SQL: CTEs chained step by step + non-equi JOIN); but 1,639 users checked out with no add-to-cart record, possibly untracked, so which of the last two conversion rates is higher is only preliminary</em></div>
+    <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the raw data starts Nov 1; the analysis starts Nov 26 (67 days)</em></div>
+    <div><b>Without order, the last two steps flip</b><span>Counting anyone who did a step at some point reverses which of the last two conversion rates is higher; each step must follow the previous one</span><em>Action: count in order (CTE: a query split into sequential steps; non-equi JOIN: matching records where one comes later in time); 1,639 users checked out with no add-to-cart record, possibly untracked, so the order of the last two steps is only preliminary</em></div>
     <div><b>Two events at the same time</b><span>For 6,569 users, "view item" and "add to cart" have identical timestamps: GA4 gives events sent in one batch the same timestamp, so their order is unknown</span><em>Action: same-time events count as in order; otherwise 481 add-to-cart users would be missed</em></div>
   </div>
 </div></section>
@@ -895,7 +895,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and traffic sources; only new vs. returning visitors differ clearly</span>
   <div class="two">
     <div class="sg2" aria-label="Share of each group's item viewers who added to cart">
-      <p class="ct">Share of each group's item viewers who later added to cart (whole period 2020/11/26–2021/1/31; each group computed separately, so a category doesn't sum to 100%); right column = item viewers</p>
+      <p class="ct">Share of each group's item viewers who later added to cart (2020/11/26–2021/1/31; each group computed separately, so a category doesn't sum to 100%); right column = item viewers</p>
       <p class="gh">Device</p>
       <div class="r"><span>Desktop</span><span class="trk"><i style="width:52.8%"></i></span><b>26.4%</b><em>26,351</em></div>
       <div class="r"><span>Mobile</span><span class="trk"><i style="width:54.0%"></i></span><b>27.0%</b><em>17,726</em></div>
@@ -907,41 +907,41 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <div class="r"><span>Paid ads</span><span class="trk"><i style="width:50.2%"></i></span><b>25.1%</b><em>2,095</em></div>
       <p class="gh">New vs. returning</p>
       <div class="r"><span>New</span><span class="trk"><i style="width:51.6%"></i></span><b>25.8%</b><em>41,920</em></div>
-      <div class="r"><span>Returning</span><span class="trk"><i style="width:76.4%"></i></span><b>38.2%</b><em>3,187</em></div>
+      <div class="r hi"><span>Returning</span><span class="trk"><i style="width:76.4%"></i></span><b>38.2%</b><em>3,187</em></div>
       <div class="ax"><span></span><div><s style="left:0">0%</s><s style="left:20%">10%</s><s style="left:40%">20%</s><s style="left:60%">30%</s><s style="left:80%">40%</s><s style="left:100%">50%</s></div><span></span><span></span></div>
     </div>
     <div class="side">
       <p><b>Devices and traffic sources differ by under 3 points:</b> improving view-to-cart doesn't need to start with a specific device or source</p>
-      <p><b>Returning visitors are clearly higher:</b> 38.2% vs. 25.8% for new visitors; new visitors are 93% of item viewers, so they are the main target</p>
-      <p class="note">Returning visitors mostly appear in the holiday peak; compared with new visitors first seen in the same period, the gap is still 7–12 points. Returning = no GA4 automatic "first visit" (first_visit) event in the data, so they visited before the data starts on 11/1; two other traffic-source values are obfuscated placeholders and left out</p>
+      <p><b>Returning visitors are clearly higher:</b> returning = visited before the data starts on 11/1; 38.2% vs. 25.8% for new visitors; new visitors are 93% of item viewers, so they are the main target</p>
+      <p><b>Holds after accounting for the holiday peak:</b> returning visitors mostly appear in the year-end peak; compared only with new visitors who first came during that peak, returning visitors are still 7–12 points higher</p>
+      <p class="note">Returning visitors are identified by having no GA4 automatic "first visit" (first_visit) event in the data; two other traffic-source values are obfuscated placeholders and left out</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
-  <h2>Recommended actions</h2>
-  <span class="sub">Confirm the problem → target group → validate changes → monitor data</span>
+  <h2>Conclusions and recommendations</h2>
+  <span class="sub">First confirm whether 26.6% is low, then A/B test a redesign aimed at new visitors</span>
   <div class="nexts">
-    <div><b>① Confirm whether 26.6% is low</b><span>"View item → add to cart" converts lowest of the three steps, but lowest doesn't by itself mean a problem (many viewers are only comparing, not yet planning to buy); compare it with historical figures (the previous quarter and the same period last year, computed the same way) to know whether it's a problem</span></div>
-    <div><b>② Start with new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is 7–12 points below returning visitors first seen in the same period; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
-    <div><b>③ A/B test before rolling out</b><span>The site serves both versions, assigning new visitors at random by browser ID (same browser, same version): control sees the current product page, treatment the redesign; compare their view-to-cart rates. Detecting new visitors' rate rising from 25.8% to 27.8% needs about 7,700 users per group (5% significance, 80% power); about 15,400 in total at the period's average of ~630 new visitors a day means about 25 days, longer in slow seasons</span></div>
+    <div><b>① Confirm whether 26.6% is low</b><span>"View item → add to cart" converts lowest of the three steps, so it is the first step to examine; whether it is low needs the same metric for the previous quarter and the same period last year</span></div>
+    <div><b>② Prioritize new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is still 7–12 points below returning visitors, even counting only new visitors who first came during the holiday peak; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
+    <div><b>③ A/B test before rolling out</b><span>Randomly split new visitors into two groups, one seeing the current product page and one the redesign, and compare view-to-cart rates; assuming the redesign adds 2 points, detecting a rise from 25.8% to 27.8% needs about 7,700 users per group, about 25 days</span></div>
     <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
   <h2>Controlling query cost</h2>
-  <span class="sub">BigQuery bills by data processed: partitioning or clustering on the filter column can cut processing by about 90%; at terabyte scale, reading 90% less means paying 90% less</span>
+  <span class="sub">BigQuery bills by data processed: partitioning (splitting by date) or clustering (storing sorted by a common filter) lets queries read only what they need, cutting processing (= cost) by about 90%</span>
   <div class="two">
     <div class="cost" aria-label="Data processed: regular table vs. partitioned or clustered table">
-      <p class="ct">Same data (4,295,584 rows) stored as three tables; data processed per query</p>
-      <p class="lg"><i class="v"></i>Regular table <i class="t"></i>Table organized by the filter column (A: partitioned, B: clustered)</p>
+      <p class="ct">Same data (4,295,584 rows): regular table vs organized tables (partitioned, clustered), data processed per query</p>
+      <p class="lg"><i class="v"></i>Regular table <i class="t"></i>Organized table (A: partitioned, B: clustered)</p>
       <div class="r"><span>Query A: 7 days only<small>partitioned by date</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
       <div class="r"><span>Query B: purchase events only<small>clustered by event name</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:33.3%">50</s><s style="left:66.7%">100</s><s style="left:100%">150 MB</s></div></div>
     </div>
     <div class="side">
-      <p><b>The raw data is one table per day, which already splits it by date:</b> filtering dates by table name (_TABLE_SUFFIX) processes only 8.75 MB (the self-built partitioned table's 12.13 MB includes reading its date column); filtering by the date column inside the tables processes 125.66 MB (likely reading all 92 tables)</p>
       <p><b>Clustering savings show only after running:</b> query B's dry-run estimate is still 138.05 MB, but only 13.76 MB is actually processed</p>
       <p><b>Habit:</b> estimate every query with a dry run first, and cap each query at 2 GB to avoid accidentally scanning the whole dataset</p>
     </div>
@@ -950,11 +950,11 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Further analysis</h2>
-  <span class="sub">Follow-up analyses and the data they need</span>
+  <span class="sub">The main gaps are historical data and product-page interaction records; filling them would confirm the problem and find its causes</span>
   <div class="nexts">
     <div><b>Get historical data to benchmark the current rate</b><span>Slide 2: get the previous quarter and the same period last year, and compute the view-to-cart rate the same way (in order, same-length period); this sample covers only 2020/11/26–2021/1/31</span></div>
     <div><b>Track product-page interactions to find where users drop off</b><span>Slide 2: 33,091 users viewed items but did not add to cart; product-page interaction events (choosing a size, checking stock, reading reviews) would show where they stopped</span></div>
-    <div><b>Rebuild product categories to find which need work</b><span>Category labels are inconsistent (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
+    <div><b>Rebuild product categories to find which need work</b><span>Data checks found inconsistent category labels (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
     <div><b>Compare new and returning visitors to lift new visitors' add-to-cart rate</b><span>Slide 4: in the same period, returning visitors' view-to-cart rate is still 7–12 points higher than new visitors'; compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
   </div>
 </div></section>

@@ -353,7 +353,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   #deck .ci .nm span { display: block; }
   #deck .ci .ptl { position: absolute; top: 2.2em; transform: translateX(-50%); font-size: .82em; font-weight: 700; white-space: nowrap; }
   #deck .ci .zero { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); }
-  /* 下一步（第 8 頁）沿用 .nexts；.checks.c2 第 6 頁也在用 */
+  /* 結論（第 8 頁，3 欄 .checks）、下一步（第 9 頁）沿用 .nexts；.checks.c2 第 6 頁也在用 */
   #deck .checks.c2 { grid-template-columns: 1fr 1fr; }
   #deck .checks span b { font-size: 1em; margin: 0; color: var(--ink); }
   #deck .nexts .pg { font-style: normal; display: inline-block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin-right: .3em; }
@@ -391,7 +391,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   #deck .ct { color: var(--ink); }
   #deck .tl .tr i.o, #deck .lg i.ol { background: repeating-linear-gradient(45deg, var(--accent) 0 2px, var(--card) 2px 6px); border: 1px solid var(--accent); }
   #deck .tl .tr.hi i.o { background: repeating-linear-gradient(45deg, var(--accent) 0 2px, var(--card) 2px 6px); }
-  #deck table.seg small.res { color: var(--ink-2); }
+  #deck table.seg small.res { color: var(--ink); font-weight: 600; }  /* 結果是論點，不用灰字（2026-11-03 HR 審查） */
   #deck .checks.c2 > div:last-child b { font-size: 1em; }
 </style>
 <!-- i18n:start --><script>
@@ -1089,37 +1089,37 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <p class="lead">用 H&amp;M 交易資料回答：<b>業績為什麼下滑、挽留券該發給誰、發券後怎麼證明有效</b></p>
   <div class="chips"><span>Python（pandas）</span><span>邏輯迴歸</span><span>LightGBM</span><span>時間切分回測</span><span>A/B 測試（檢定力分析）</span></div>
   <div class="roles">
-    <div><b>−10.3%</b><span>FY2020 Q1 賣出件數與去年同季相比的變化</span></div>
-    <div><b>54%</b><span>減少的件數中，來自童裝的比例</span></div>
+    <div><b>54%</b><span>業績下滑（件數比去年同季 −10.3%）中來自童裝的比例；童裝可能是資料收錄改變，待確認</span></div>
     <div><b>79.4%</b><span>模型挑出的 5 萬人中，之後半年未再購買的比例（隨機抽樣為 35.0%）</span></div>
+    <div><b>3,500 人</b><span>驗證發券效果時，每輪需隨機保留的不發券對照組人數（名單一），以 180 天結果判斷</span></div>
   </div>
   <p class="foot">資料：H&amp;M 在 Kaggle 公開的部分顧客交易樣本（2018-09～2020-09），結果不代表 H&amp;M 真實業績；價格為換算後的相對值；發券效果為模擬。程式由 Claude Code 協助撰寫，分析方向與結論由本人負責</p>
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>業績下滑來源</h2>
-  <span class="sub">FY2020 Q1 比去年同季少賣 10.3%（36.8 萬件），由兩件不相關的事組成</span>
+  <span class="sub">童裝只占去年同季件數的 7.9%，卻占這季減少件數的 54%；成人服飾的深藍、條紋、蕾絲款少 23.6 萬件，被其他款式 +6.7 萬件部分抵銷</span>
   <div class="two">
     <div class="dv" aria-label="FY2020 Q1 件數比去年同季的增減">
       <p class="ct">FY2020 Q1 件數比去年同季的增減（萬件）</p>
       <p class="lg"><i class="dec"></i>減少 <i class="inc"></i>增加</p>
       <div class="r"><span>童裝</span><div class="trk"><i class="dec" style="width:39.8%"></i></div><b>−19.9（54%）</b></div>
-      <div class="r"><span>大人衣服：深藍、條紋、蕾絲</span><div class="trk"><i class="dec" style="width:47.2%"></i></div><b>−23.6</b></div>
-      <div class="r"><span>大人衣服：其他款式</span><div class="trk"><i class="inc" style="width:13.4%"></i></div><b>+6.7</b></div>
+      <div class="r"><span>成人服飾：深藍、條紋、蕾絲</span><div class="trk"><i class="dec" style="width:47.2%"></i></div><b>−23.6</b></div>
+      <div class="r"><span>成人服飾：其他款式</span><div class="trk"><i class="inc" style="width:13.4%"></i></div><b>+6.7</b></div>
       <div class="r tot"><span>合計</span><div class="trk"><i class="dec" style="width:73.6%"></i></div><b>−36.8（−10.3%）</b></div>
       <div class="ax"><span></span><div><s style="left:0%">−40</s><s style="left:20%">−30</s><s style="left:40%">−20</s><s style="left:60%">−10</s><s style="left:80%">0</s><s style="left:100%">+10</s></div><span></span></div>
       <p class="note">FY2020 Q1＝2019 年 12 月～2020 年 2 月（H&amp;M 會計年度從 12 月起算）；括號內 54%＝童裝減少件數 ÷ 全部減少的 36.8 萬件</p>
     </div>
     <div class="side">
-      <p><b>比較基準：</b>依本資料算出的「季營收比上一季 −23.5%」受淡旺季影響而誇大（秋季本來就比冬季好賣）；改與去年同季比，件數 −10.3%，平均每件售價反而 +1.7%，問題在賣出件數</p>
+      <p><b>比較基準：</b>與去年同季比，避開淡旺季影響；件數 −10.3%，平均每件售價反而 +1.7%，問題在賣出件數</p>
       <p><b>15 種分類逐一拆解：</b>比較每一類「占這季減少件數的比例」與「占去年同季件數的比例」，童裝差距最大：童裝占去年同季件數的 7.9%，卻占這季減少件數的 54%（第 3 頁）；另請一位沒看過先前分析的 AI 分析者只拿原始資料重做，結果相同</p>
-      <p><b>深藍、條紋、蕾絲款式少了 23.6 萬件：</b>比去年同季少 48.4%，四類大人衣服（年輕系列、女裝、男裝、運動服）都在減少，屬商品組合的變化；是款式決策還是顧客偏好改變，需向商品企劃確認</p>
+      <p><b>深藍、條紋、蕾絲款式少了 23.6 萬件：</b>比去年同季少 48.4%，四類成人服飾（年輕系列、女裝、男裝、運動服）都在減少，屬商品組合的變化；是款式決策還是顧客偏好改變，需向商品企劃確認</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
-  <h2>童裝銷量斷崖</h2>
+  <h2>童裝銷量驟降</h2>
   <span class="sub">2019 年 3 月起童裝占每月件數從 7.5% 降到 3.8%，之後沒有回升；交易資料無法分辨是業務變化還是資料收錄改變</span>
   <div class="two p3 top">
     <div>
@@ -1127,7 +1127,6 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <div class="mb"><div class="ya"><s style="bottom:0.0%">0%</s><s style="bottom:26.7%">4%</s><s style="bottom:53.3%">8%</s><s style="bottom:80.0%">12%</s></div><div style="position:relative"><div class="plot"><div><b>10.2</b><i style="height:85.0%"></i></div><div><b>8.9</b><i style="height:74.2%"></i></div><div><b>8.8</b><i style="height:73.3%"></i></div><div><b>7.4</b><i style="height:61.7%"></i></div><div class="hi"><b>7.5</b><i style="height:62.5%"></i></div><div class="hi"><b>3.8</b><i style="height:31.7%"></i></div><div><b>3.6</b><i style="height:30.0%"></i></div><div><b>2.5</b><i style="height:20.8%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.4</b><i style="height:28.3%"></i></div><div><b>3.1</b><i style="height:25.8%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.0</b><i style="height:25.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.2</b><i style="height:18.3%"></i></div><div><b>2.0</b><i style="height:16.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.6</b><i style="height:13.3%"></i></div><div><b>1.4</b><i style="height:11.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.7</b><i style="height:14.2%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div></div><div class="brk"><span>2019-03-03 前後</span></div></div><div class="xa"><span>2018/10</span><span></span><span></span><span>2019/1</span><span></span><span></span><span></span><span></span><span></span><span>2019/7</span><span></span><span></span><span></span><span></span><span></span><span>2020/1</span><span></span><span></span><span></span><span></span><span></span><span>2020/7</span><span></span><span></span></div></div>
       <p class="note">藍色＝斷點前後的 2019 年 2 月、3 月</p>
       <p><b>為什麼到 FY2020 Q1 才發現：</b>2019 年春天沒有去年同季可比（資料從 2018 年 9 月開始），跟上一季比又被春季旺季蓋過；FY2020 Q1 是第一個有去年同季可比的季度</p>
-      <p><b>資料收錄的可能性：</b>這份資料原本是為商品推薦競賽準備的，收錄範圍改變不能排除</p>
     </div>
     <div>
       <p class="ct">逐一檢查其他可能的原因</p>
@@ -1135,12 +1134,12 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
         <tr><th>可能原因（結果）</th><th>實際看到</th></tr>
         <tr><td>季節性<small class="res">排除</small></td><td>2019 年 2→3 月降 49%，2020 年同期只降 11%</td></tr>
         <tr><td>漲價、特價結束<small class="res">排除</small></td><td>同樣商品的價格幾乎沒變</td></tr>
-        <tr><td>顧客從資料中消失<small class="res">排除</small></td><td>買童裝的顧客照樣在買大人衣服</td></tr>
+        <tr><td>顧客從資料中消失<small class="res">排除</small></td><td>買童裝的顧客照樣在買成人服飾</td></tr>
         <tr><td>系統全面異常<small class="res">排除</small></td><td>只有童裝大跌，其他產品線 −6%～+19%</td></tr>
         <tr><td>單一通路問題<small class="res">排除</small></td><td>實體店與網路的童裝同時大跌</td></tr>
         <tr><td>大量童裝下架<small class="res">只能解釋一部分</small></td><td>有銷售的款數少 16%，件數少 43%</td></tr>
       </table>
-      <p class="callout">剩下兩種可能：童裝業務本身的變化，或資料收錄範圍改變；向資料提供單位確認，成本最低（第 8 頁）</p>
+      <p class="callout">剩下兩種可能：童裝業務本身的變化，或資料收錄範圍改變；向資料提供單位確認，成本最低（第 9 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1155,12 +1154,12 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <div class="r"><span>直接比較<small>各組實際比例</small></span><div class="tr" style="--a:53.33%;--b:83.33%"><i class="pt" style="left:53.33%"><span>52.4%</span></i><i class="pt on" style="left:83.33%"><span>56.0%</span></i><em class="gap" style="left:68.33%;font-style:normal">+3.6</em></div></div>
       <div class="r"><span>購買件數、年齡相同<small>邏輯迴歸控制後</small></span><div class="tr" style="--a:20.83%;--b:80.00%"><i class="pt" style="left:20.83%"><span>48.5%</span></i><i class="pt on" style="left:80.00%"><span>55.6%</span></i><em class="gap" style="left:50.42%;font-style:normal">+7.1</em></div></div>
       <div class="ax"><span></span><div><s style="left:0.00%">46%</s><s style="left:33.33%">50%</s><s style="left:66.67%">54%</s><s style="left:100.00%">58%</s></div></div>
-      <p class="note">X 軸：流失機率，從 46% 開始以便看清差距；兩點之間的數字＝差距（百分點）；95% 信賴區間約 ±0.2 個百分點，短於圓點</p>
+      <p class="note">X 軸：流失機率，從 46% 開始以便看清差距；兩點之間的數字＝差距（百分點）；誤差範圍（95% 信賴區間）約 ±0.2 個百分點，差距可信</p>
     </div>
     <div class="side">
       <p><b>為什麼要控制購買件數：</b>買得多的顧客本來就不容易流失；網路顧客中買 10 件以上的占 22.0%（實體店 8.0%），直接比較會低估差距，所以用邏輯迴歸把購買件數與年齡拉到相同再比</p>
       <p><b>差距隨購買件數縮小：</b>買 1 件的顧客差 12.0 個百分點，買 10 件以上只差 0.2</p>
-      <p><b>只是關聯，不是因果：</b>迴歸能衡量差距大小，不能證明是「網路」本身造成的；找原因需要網站造訪、配送與退貨資料（第 8 頁）</p>
+      <p><b>只是關聯，不是因果：</b>迴歸能衡量差距大小，不能證明是「網路」本身造成的；找原因需要網站造訪、配送與退貨資料（第 9 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1170,18 +1169,18 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <span class="sub">LightGBM 挑出的 5 萬人中 79.4% 之後半年未再購買，比最好的簡單規則多找到 3,071 位會流失的顧客</span>
   <div class="two">
     <div class="bars">
-      <p class="ct">各方法挑出的 5 萬人中，預測日後 180 天內沒再購買的比例（Precision@50K）</p>
+      <p class="ct">各方法挑出的 5 萬人中，預測日後 180 天內沒再購買的比例</p>
       <p class="lg"><i class="t"></i>模型 <i class="v"></i>簡單規則與隨機　空心外框＝100%</p>
       <div class="r"><div class="nm">模型（LightGBM）<small>機器學習</small></div><div class="b t"><span class="trk" style="width:62%"><i style="width:79.4%"></i></span><b>79.4%</b></div></div>
-      <div class="r"><div class="nm">先挑新顧客<small>再挑距上次購買最久的</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:73.2%"></i></span><b>73.2%</b></div></div>
+      <div class="r"><div class="nm">先挑預測日前半年到一年沒買過的人<small>再挑距上次購買最久的</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:73.2%"></i></span><b>73.2%</b></div></div>
       <div class="r"><div class="nm">距上次購買最久<small>只看距上次購買天數</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:57.5%"></i></span><b>57.5%</b></div></div>
       <div class="r"><div class="nm">隨機抽樣<small>等於整體流失比例</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:35.0%"></i></span><b>35.0%</b></div></div>
-      <p class="note">回測：以 2020-03-26 為預測日，從前半年有購物的 70.2 萬名顧客中各挑 5 萬人；新顧客＝預測日前 181～365 天沒有購買</p>
+      <p class="note">回測：以 2020-03-26 為預測日，從前半年有購物的 70.2 萬名顧客中各挑 5 萬人</p>
     </div>
     <div class="side">
-      <p><b>比較範圍：</b>5 種機器學習模型、1 種統計模型（BG/NBD）與 2 種簡單規則；LightGBM 與 XGBoost 並列最佳、差距在誤差內，依驗證資料選 LightGBM</p>
+      <p><b>比較範圍：</b>5 種機器學習模型、1 種統計模型（BG/NBD，依購買頻率推算回購機率）與 2 種簡單規則；LightGBM 與 XGBoost 並列最佳、差距在誤差內，依驗證資料選 LightGBM（驗證方式見下頁）</p>
       <p><b>為什麼用 Precision@50K：</b>預算固定 5 萬張券，它直接代表券發給真正會流失的人的比例；Accuracy 即使全部猜「不流失」也有 65.0%，無法區分各模型的優劣</p>
-      <p><b>關鍵特徵：前一段半年是否購買：</b>預測日前 181～365 天沒有購買的新顧客流失 60.6%，老顧客 22.3%；補上這個特徵後，Precision@50K 從 68.4% 提升到 79.4%</p>
+      <p><b>關鍵特徵（模型判斷用的欄位）：</b>預測日前半年到一年（181～365 天）沒有購買的顧客流失 60.6%，有購買的 22.3%；補上這個特徵後，Precision@50K 從 68.4% 提升到 79.4%</p>
     </div>
   </div>
 </div></section>
@@ -1190,7 +1189,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>模型驗證方式</h2>
   <span class="sub">依時間切成三份、只用過去預測未來；方法都在驗證資料上選定，測試資料只用來報告成績</span>
   <div class="tl">
-    <p class="lg"><i class="g"></i>算特徵的期間（預測日前一年的購買紀錄） <i class="ol"></i>判斷是否流失的期間（預測日後 180 天）</p>
+    <p class="lg"><i class="g"></i>用來預測的購買紀錄期間（預測日前一年） <i class="ol"></i>判斷是否流失的期間（預測日後 180 天）</p>
     <div class="r"><span>訓練<small>預測日 2019-09-28</small></span><div class="tr"><i class="f" style="left:1.09%;width:49.80%"></i><i class="o" style="left:50.89%;width:24.55%"></i></div></div><div class="r"><span>驗證：選方法<small>預測日 2019-12-26</small></span><div class="tr"><i class="f" style="left:13.23%;width:49.80%"></i><i class="o" style="left:63.03%;width:24.56%"></i></div></div><div class="r"><span>測試：報告成績<small>預測日 2020-03-26</small></span><div class="tr"><i class="f" style="left:25.65%;width:49.79%"></i><i class="o" style="left:75.44%;width:24.56%"></i></div></div>
     <div class="ax"><span></span><div><s style="left:14.05%">2019/1</s><s style="left:38.74%">2019/7</s><s style="left:63.85%">2020/1</s><s style="left:88.68%">2020/7</s></div></div>
   </div>
@@ -1201,39 +1200,49 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
-  <h2>發券效果驗證</h2>
-  <span class="sub">模擬結果：兩份名單回購比例差距的估計值都高於回本門檻；但 A 的信賴區間仍跨過門檻，需累積多輪確認</span>
+  <h2>發券效果的驗證設計（模擬）</h2>
+  <span class="sub">用模擬資料示範驗證設計（券的效果為設定值）：同一模型排出兩份名單；本輪名單二的信賴區間在回本門檻之上，名單一仍跨過門檻，需累積多輪</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">發券組 − 對照組的 180 天回購比例差距（百分點，模擬）</p>
-      <p class="lg"><i class="t"></i>量到的差距與 95% 信賴區間 <i class="thk"></i>回本門檻</p>
-      <div class="r"><div class="nm"><b>A：最可能流失</b><span>信賴區間 +1.08～+3.83</span><span>預期淨賺 +3.4 萬（−6.9～+13.8 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>B：流失損失最大</b><span>信賴區間 +1.37～+4.17</span><span>預期淨賺 +51.4 萬（+17.8～+85.0 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
+      <p class="lg"><i class="t"></i>量到的差距與 95% 信賴區間 <i class="thk"></i>回本門檻（券成本 ÷ 每位回購顧客毛利）</p>
+      <div class="r"><div class="nm"><b>名單一：依流失機率</b><span>信賴區間 +1.08～+3.83</span><span>預期淨利 +3.4 萬（−6.9～+13.8 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
+      <div class="r"><div class="nm"><b>名單二：依流失損失</b><span>信賴區間 +1.37～+4.17</span><span>預期淨利 +51.4 萬（+17.8～+85.0 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
-      <p class="note">B 名單依「流失機率 × 過去半年消費」排序。回本門檻＝券成本 ÷ 每位回購顧客毛利，B 的顧客消費較高、門檻較低。對照組回購是真實資料，券的效果為事先設定的模擬值；金額為假設單位</p>
+      <p class="note">名單二依「流失機率 × 過去半年消費」排序，顧客消費較高、門檻較低。對照組回購是真實資料，券的效果為事先設定的模擬值；金額為假設單位</p>
     </div>
     <div class="side">
-      <p><b>對照組必須隨機分配：</b>挑「最不會流失的 2,500 人」當對照組，沒發券就比其他人多 2.7 個百分點會回來，比回本門檻還大</p>
-      <p><b>人數用檢定力分析決定：</b>檢定力＝效果剛好等於回本門檻時看得出來的機率；原訂對照組 10%（2,500 人）的檢定力只有 54%，依 A 的門檻計算需 3,500 人（80%）。B 門檻只有 0.63，6,050 人的單輪檢定力僅 14%，要靠多輪累積</p>
-      <p><b>看 180 天、累積多輪：</b>A 第 30 天量到 +3.75，到第 180 天降為 +2.46，只看 30 天會高估；先前用舊模型名單做同樣模擬時，B 名單因隨機分組造成的差異，估計值落在門檻以下而被誤判為無效。單一輪結果不足以決定停發或加碼</p>
+      <p><b>對照組必須隨機分配：</b>若改挑「最不會流失的 2,500 人」當對照組，即使不發券也會多 2.7 個百分點回來，超過回本門檻，會誤判券有效</p>
+      <p><b>人數用檢定力分析決定：</b>檢定力＝效果剛好等於回本門檻時看得出來的機率；對照組 2,500 人時只有 54%，名單一需 3,500 人才達 80%</p>
+      <p><b>看 180 天、累積多輪：</b>名單一第 30 天量到 +3.75，到第 180 天降為 +2.46，只看 30 天會高估；單一輪結果不足以決定停發或加碼</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
+  <h2>結論</h2>
+  <span class="sub">業績下滑主要來自童裝與部分款式；模型名單比簡單規則準；發券效果要靠隨機對照組、累積多輪確認</span>
+  <div class="checks">
+    <div><b>業績為什麼下滑</b><span>FY2020 Q1 件數比去年同季少 10.3%：54% 來自童裝，46% 來自成人服飾（主要是深藍、條紋、蕾絲款式減少）。童裝自 2019 年 3 月起驟降，可能是資料收錄範圍改變，需先確認</span></div>
+    <div><b>挽留券該發給誰</b><span>用 LightGBM 名單：挑出的 5 萬人中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則多找到 3,071 位會流失的顧客</span></div>
+    <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，看 180 天結果；模擬中兩份名單的效果估計都高於回本門檻，但單一輪人數不足以下定論，需累積多輪</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 9 頁"><div class="sl">
   <h2>建議的下一步</h2>
-  <span class="sub">每一項都對應前面頁面尚未回答的問題，以及需要的資料</span>
+  <span class="sub">先向資料提供單位確認童裝資料，成本最低；其餘三項需要新資料或實際發券</span>
   <div class="nexts">
     <div><b>向資料提供單位確認童裝收錄範圍</b><span><i class="pg">第 3 頁</i>確認 2019 年 3 月起童裝交易的收錄範圍有沒有改變；若是資料問題，排除童裝重算業績，否則才投入人力調查童裝業務</span></div>
     <div><b>向商品企劃確認款式減少原因</b><span><i class="pg">第 2 頁</i>深藍、條紋、蕾絲款式少了 48.4%：確認是款式決策還是顧客偏好改變，再決定下一季選品</span></div>
     <div><b>取得網站與物流資料，找出網路顧客流失原因</b><span><i class="pg">第 4 頁</i>網路顧客流失機率高 7.1 個百分點：用網站造訪、轉換率、配送與退貨資料，判斷是引流、結帳流程還是購物後體驗的問題</span></div>
-    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">第 7 頁</i>A、B 名單都發、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
+    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">第 7 頁</i>兩份名單都發、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
   </div>
   <p class="note">限制：資料為部分顧客樣本，不代表 H&amp;M 真實業績；資料只到 2020 年 9 月（疫情期間）；發券效果為模擬，需實際發券後驗證</p>
 </div></section>
 
 </div>
-<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 8</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
+<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 9</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
 </div>
 
 <!-- 簡報英文版（2026-11-02）：對應上方中文 9 頁；改中文要同步改這裡 -->
@@ -1244,16 +1253,16 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <p class="lead">Using H&amp;M transaction data to answer: <b>why sales fell, who should get retention coupons, and how to prove the coupons work</b></p>
   <div class="chips"><span>Python (pandas)</span><span>Logistic regression</span><span>LightGBM</span><span>Time-based backtesting</span><span>A/B testing (power analysis)</span></div>
   <div class="roles">
-    <div><b>−10.3%</b><span>Change in FY2020 Q1 units sold vs the same quarter last year</span></div>
-    <div><b>54%</b><span>Share of the lost units that came from kidswear</span></div>
+    <div><b>54%</b><span>Share of the sales decline (units −10.3% year over year) that came from kidswear; possibly a data coverage change, to be confirmed</span></div>
     <div><b>79.4%</b><span>Share of the 50,000 customers picked by the model who did not buy again in the next six months (35.0% for a random sample)</span></div>
+    <div><b>3,500</b><span>Random no-coupon control group needed per round to test coupon impact (list 1), judged on 180-day results</span></div>
   </div>
   <p class="foot">Data: a partial customer sample of transactions H&amp;M released on Kaggle (2018-09 to 2020-09); results do not represent H&amp;M's actual sales; prices are rescaled relative values; coupon effects are simulated. Code written with help from Claude Code; analysis direction and conclusions are my own</p>
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>Sources of the Sales Decline</h2>
-  <span class="sub">FY2020 Q1 sold 10.3% fewer units (368K) than the same quarter last year, made up of two unrelated changes</span>
+  <span class="sub">Kidswear was only 7.9% of units in the same quarter last year but 54% of this quarter's lost units; adult dark blue, striped, and lace styles fell 236K, partly offset by +67K in other styles</span>
   <div class="two">
     <div class="dv" aria-label="Change in FY2020 Q1 units vs the same quarter last year">
       <p class="ct">Change in FY2020 Q1 units vs the same quarter last year (K units)</p>
@@ -1266,7 +1275,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">FY2020 Q1 = December 2019 to February 2020 (H&amp;M's fiscal year starts in December); 54% in brackets = kidswear's lost units ÷ all 368K lost units</p>
     </div>
     <div class="side">
-      <p><b>Comparison baseline:</b> the quarterly "revenue −23.5% vs the previous quarter" computed from this data is exaggerated by seasonality (autumn normally sells better than winter); compared with the same quarter last year, units fell 10.3% while the average price per unit actually rose 1.7%, so the problem is the number of units sold</p>
+      <p><b>Comparison baseline:</b> compared with the same quarter last year to avoid seasonality, units fell 10.3% while the average price per unit actually rose 1.7%, so the problem is the number of units sold</p>
       <p><b>Breaking down all 15 categories:</b> comparing each category's share of this quarter's lost units with its share of units in the same quarter last year, kidswear had the biggest gap: kidswear was 7.9% of units in the same quarter last year, but 54% of this quarter's lost units (Slide 3); an AI analyst that had not seen the earlier analysis redid it from the raw data alone and got the same result</p>
       <p><b>Dark blue, striped, and lace styles fell by 236K units:</b> 48.4% below the same quarter last year; they declined in all four adult apparel groups (Divided, Ladieswear, Menswear, Sport), a change in product mix; whether it was a styling decision or a change in customer taste needs to be confirmed with merchandising</p>
     </div>
@@ -1274,7 +1283,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 </div></section>
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
-  <h2>Kidswear Sales Cliff</h2>
+  <h2>Kidswear Sales Plunge</h2>
   <span class="sub">From March 2019, kidswear's share of monthly units dropped from 7.5% to 3.8% and never recovered; transaction data cannot tell a business change from a change in data coverage</span>
   <div class="two p3 top">
     <div>
@@ -1282,7 +1291,6 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <div class="mb"><div class="ya"><s style="bottom:0.0%">0%</s><s style="bottom:26.7%">4%</s><s style="bottom:53.3%">8%</s><s style="bottom:80.0%">12%</s></div><div style="position:relative"><div class="plot"><div><b>10.2</b><i style="height:85.0%"></i></div><div><b>8.9</b><i style="height:74.2%"></i></div><div><b>8.8</b><i style="height:73.3%"></i></div><div><b>7.4</b><i style="height:61.7%"></i></div><div class="hi"><b>7.5</b><i style="height:62.5%"></i></div><div class="hi"><b>3.8</b><i style="height:31.7%"></i></div><div><b>3.6</b><i style="height:30.0%"></i></div><div><b>2.5</b><i style="height:20.8%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.4</b><i style="height:28.3%"></i></div><div><b>3.1</b><i style="height:25.8%"></i></div><div><b>2.8</b><i style="height:23.3%"></i></div><div><b>3.0</b><i style="height:25.0%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div><div><b>2.2</b><i style="height:18.3%"></i></div><div><b>2.0</b><i style="height:16.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.6</b><i style="height:13.3%"></i></div><div><b>1.4</b><i style="height:11.7%"></i></div><div><b>1.8</b><i style="height:15.0%"></i></div><div><b>1.7</b><i style="height:14.2%"></i></div><div><b>2.4</b><i style="height:20.0%"></i></div></div><div class="brk"><span>around 2019-03-03</span></div></div><div class="xa"><span>2018/10</span><span></span><span></span><span>2019/1</span><span></span><span></span><span></span><span></span><span></span><span>2019/7</span><span></span><span></span><span></span><span></span><span></span><span>2020/1</span><span></span><span></span><span></span><span></span><span></span><span>2020/7</span><span></span><span></span></div></div>
       <p class="note">Blue = February and March 2019, either side of the break</p>
       <p><b>Why it surfaced only in FY2020 Q1:</b> spring 2019 had no same quarter last year to compare with (data starts in September 2018), and the quarter-on-quarter view was masked by the spring peak; FY2020 Q1 was the first quarter with a same-quarter-last-year comparison</p>
-      <p><b>Data coverage:</b> the data was prepared for a product recommendation competition, so a change in coverage cannot be ruled out</p>
     </div>
     <div>
       <p class="ct">Other possible causes, checked one by one</p>
@@ -1295,7 +1303,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
         <tr><td>One channel's problem<small class="res">Ruled out</small></td><td>In-store and online kidswear fell together</td></tr>
         <tr><td>Mass delisting<small class="res">Explains only part</small></td><td>Kidswear items with sales −16%, units −43%</td></tr>
       </table>
-      <p class="callout">Two possibilities remain: a change in the kidswear business itself, or a change in data coverage; asking the data provider is the cheapest check (Slide 8)</p>
+      <p class="callout">Two possibilities remain: a change in the kidswear business itself, or a change in data coverage; asking the data provider is the cheapest check (Slide 9)</p>
     </div>
   </div>
 </div></section>
@@ -1310,12 +1318,12 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <div class="r"><span>Direct comparison<small>actual rate per group</small></span><div class="tr" style="--a:53.33%;--b:83.33%"><i class="pt" style="left:53.33%"><span>52.4%</span></i><i class="pt on" style="left:83.33%"><span>56.0%</span></i><em class="gap" style="left:68.33%;font-style:normal">+3.6</em></div></div>
       <div class="r"><span>Same items bought and age<small>adjusted by logistic regression</small></span><div class="tr" style="--a:20.83%;--b:80.00%"><i class="pt" style="left:20.83%"><span>48.5%</span></i><i class="pt on" style="left:80.00%"><span>55.6%</span></i><em class="gap" style="left:50.42%;font-style:normal">+7.1</em></div></div>
       <div class="ax"><span></span><div><s style="left:0.00%">46%</s><s style="left:33.33%">50%</s><s style="left:66.67%">54%</s><s style="left:100.00%">58%</s></div></div>
-      <p class="note">X axis: churn probability, starting at 46% to show the gap; the number between the dots = the gap (pp); the 95% confidence intervals are about ±0.2 pp, shorter than the dots</p>
+      <p class="note">X axis: churn probability, starting at 46% to show the gap; the number between the dots = the gap (pp); the margin of error (95% confidence interval) is about ±0.2 pp, so the gap is reliable</p>
     </div>
     <div class="side">
       <p><b>Why adjust for items bought:</b> customers who buy more are less likely to churn anyway; 22.0% of online customers bought 10+ items (8.0% in-store), so a direct comparison understates the gap; logistic regression compares them at the same items bought and age</p>
       <p><b>The gap shrinks with items bought:</b> 12.0 pp for customers who bought 1 item, only 0.2 pp at 10+ items</p>
-      <p><b>Association, not causation:</b> the regression measures the size of the gap but cannot prove that "online" itself causes it; finding the cause needs website visit, delivery, and return data (Slide 8)</p>
+      <p><b>Association, not causation:</b> the regression measures the size of the gap but cannot prove that "online" itself causes it; finding the cause needs website visit, delivery, and return data (Slide 9)</p>
     </div>
   </div>
 </div></section>
@@ -1325,18 +1333,18 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <span class="sub">79.4% of the 50,000 customers picked by LightGBM did not buy again in six months, finding 3,071 more future churners than the best simple rule</span>
   <div class="two">
     <div class="bars">
-      <p class="ct">Share of each method's 50,000 picks who did not buy again within 180 days of the prediction date (Precision@50K)</p>
+      <p class="ct">Share of each method's 50,000 picks who did not buy again within 180 days of the prediction date</p>
       <p class="lg"><i class="t"></i>Model <i class="v"></i>Simple rules and random　Hollow outline = 100%</p>
       <div class="r"><div class="nm">Model (LightGBM)<small>machine learning</small></div><div class="b t"><span class="trk" style="width:62%"><i style="width:79.4%"></i></span><b>79.4%</b></div></div>
-      <div class="r"><div class="nm">New customers first<small>then longest since last purchase</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:73.2%"></i></span><b>73.2%</b></div></div>
+      <div class="r"><div class="nm">No purchase 6–12 months before the prediction date first<small>then longest since last purchase</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:73.2%"></i></span><b>73.2%</b></div></div>
       <div class="r"><div class="nm">Longest since last purchase<small>time since last purchase only</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:57.5%"></i></span><b>57.5%</b></div></div>
       <div class="r"><div class="nm">Random sample<small>equals overall churn rate</small></div><div class="b v"><span class="trk" style="width:62%"><i style="width:35.0%"></i></span><b>35.0%</b></div></div>
-      <p class="note">Backtest: prediction date 2020-03-26; each method picks 50,000 of the 702K customers who shopped in the prior six months; new customer = no purchase 181–365 days before the prediction date</p>
+      <p class="note">Backtest: prediction date 2020-03-26; each method picks 50,000 of the 702K customers who shopped in the prior six months</p>
     </div>
     <div class="side">
-      <p><b>What was compared:</b> 5 machine learning models, 1 statistical model (BG/NBD), and 2 simple rules; LightGBM and XGBoost tied for best within the margin of error, and LightGBM was chosen on validation data</p>
+      <p><b>What was compared:</b> 5 machine learning models, 1 statistical model (BG/NBD, which estimates repurchase from purchase frequency), and 2 simple rules; LightGBM and XGBoost tied for best within the margin of error, and LightGBM was chosen on validation data (see next slide)</p>
       <p><b>Why Precision@50K:</b> the budget is fixed at 50,000 coupons, so it directly measures the share of coupons going to customers who would really churn; Accuracy is 65.0% even when predicting "no churn" for everyone, so it cannot separate the models</p>
-      <p><b>Key feature: purchases in the earlier six months:</b> new customers (no purchase 181–365 days before the prediction date) churned 60.6% vs 22.3% for existing customers; adding this feature raised Precision@50K from 68.4% to 79.4%</p>
+      <p><b>Key feature (an input the model uses):</b> customers with no purchase 6–12 months (181–365 days) before the prediction date churned 60.6% vs 22.3% for those with one; adding this feature raised Precision@50K from 68.4% to 79.4%</p>
     </div>
   </div>
 </div></section>
@@ -1345,7 +1353,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>Model Validation Design</h2>
   <span class="sub">Split into three parts by time, always predicting the future from the past; every method choice was made on validation data, and test data was used only to report results</span>
   <div class="tl">
-    <p class="lg"><i class="g"></i>Feature period (purchases in the year before the prediction date) <i class="ol"></i>Churn outcome period (180 days after the prediction date)</p>
+    <p class="lg"><i class="g"></i>Purchase history used to predict (the year before the prediction date) <i class="ol"></i>Churn outcome period (180 days after the prediction date)</p>
     <div class="r"><span>Training<small>prediction date 2019-09-28</small></span><div class="tr"><i class="f" style="left:1.09%;width:49.80%"></i><i class="o" style="left:50.89%;width:24.55%"></i></div></div><div class="r"><span>Validation: choose<small>prediction date 2019-12-26</small></span><div class="tr"><i class="f" style="left:13.23%;width:49.80%"></i><i class="o" style="left:63.03%;width:24.56%"></i></div></div><div class="r"><span>Test: report<small>prediction date 2020-03-26</small></span><div class="tr"><i class="f" style="left:25.65%;width:49.79%"></i><i class="o" style="left:75.44%;width:24.56%"></i></div></div>
     <div class="ax"><span></span><div><s style="left:14.05%">2019/1</s><s style="left:38.74%">2019/7</s><s style="left:63.85%">2020/1</s><s style="left:88.68%">2020/7</s></div></div>
   </div>
@@ -1356,28 +1364,38 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 </div></section>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
-  <h2>Measuring Coupon Impact</h2>
-  <span class="sub">In simulation, both lists' estimated repurchase-rate gaps are above break-even; but List A's confidence interval still crosses it, so more rounds are needed</span>
+  <h2>Coupon Impact: Test Design (Simulated)</h2>
+  <span class="sub">A test design shown with simulated data (the coupon effect is preset): the same model ranks two lists; this round, list 2's confidence interval is above break-even, while list 1's still crosses it, so rounds must be pooled</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">Treatment − control 180-day repurchase rate difference (pp, simulated)</p>
-      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="thk"></i>Break-even threshold</p>
-      <div class="r"><div class="nm"><b>A: most likely to churn</b><span>95% CI +1.08 to +3.83</span><span>expected net profit +34K (−69K to +138K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">break-even 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>B: largest churn loss</b><span>95% CI +1.37 to +4.17</span><span>expected net profit +514K (+178K to +850K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
+      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="thk"></i>Break-even threshold (coupon cost ÷ gross profit per returning customer)</p>
+      <div class="r"><div class="nm"><b>List 1: by churn probability</b><span>95% CI +1.08 to +3.83</span><span>expected net profit +34K (−69K to +138K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">break-even 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
+      <div class="r"><div class="nm"><b>List 2: by churn loss</b><span>95% CI +1.37 to +4.17</span><span>expected net profit +514K (+178K to +850K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
-      <p class="note">List B is ranked by "churn probability × spend in the past six months". Break-even threshold = coupon cost ÷ gross profit per returning customer; List B customers spend more, so its threshold is lower. Control-group repurchases are real data; the coupon effect is a preset simulated value; amounts are in hypothetical units</p>
+      <p class="note">List 2 is ranked by "churn probability × spend in the past six months"; its customers spend more, so its threshold is lower. Control-group repurchases are real data; the coupon effect is a preset simulated value; amounts are in hypothetical units</p>
     </div>
     <div class="side">
-      <p><b>Assign the control group at random:</b> picking the "2,500 least likely to churn" as controls makes them 2.7 pp more likely to return even without a coupon, above the break-even threshold</p>
-      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; the planned 10% control group (2,500) has only 54% power, while List A needs 3,500 for 80%. With List B's threshold at just 0.63, its 6,050-person control group has 14% power per round, so it relies on pooled rounds</p>
-      <p><b>Wait 180 days and pool rounds:</b> A measured +3.75 at day 30 but +2.46 at day 180, so day 30 overstates the effect; in an earlier simulation with the old model's list, random-assignment differences pushed List B's estimate below the threshold, wrongly judging it ineffective. One round is not enough to stop or scale up</p>
+      <p><b>Assign the control group at random:</b> if the "2,500 least likely to churn" were picked as controls, they would return 2.7 pp more even without a coupon, above break-even, wrongly making the coupon look effective</p>
+      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; a 2,500-person control group has only 54%, and list 1 needs 3,500 to reach 80%</p>
+      <p><b>Wait 180 days and pool rounds:</b> List 1 measured +3.75 at day 30 but +2.46 at day 180, so day 30 overstates the effect; one round is not enough to stop or scale up</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
+  <h2>Conclusions</h2>
+  <span class="sub">The decline mainly came from kidswear and certain styles; the model's list beats simple rules; coupon impact must be confirmed with random control groups over several rounds</span>
+  <div class="checks">
+    <div><b>Why sales fell</b><span>FY2020 Q1 units fell 10.3% vs the same quarter last year: 54% from kidswear, 46% from adult apparel (mainly fewer dark blue, striped, and lace styles). Kidswear dropped sharply from March 2019, possibly a change in data coverage, which needs confirming first</span></div>
+    <div><b>Who should get coupons</b><span>Use the LightGBM list: 79.4% of the 50,000 customers it picks did not buy again in six months (35.0% for a random sample), finding 3,071 more future churners than the best simple rule</span></div>
+    <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and judge on 180-day results; in simulation both lists' estimates are above break-even, but one round is too small to decide, so rounds must be pooled</span></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 9"><div class="sl">
   <h2>Recommended Next Steps</h2>
-  <span class="sub">Each item maps to an open question from an earlier slide and the data it needs</span>
+  <span class="sub">Confirming the kidswear data with the provider costs least; the other three need new data or a real coupon send</span>
   <div class="nexts">
     <div><b>Ask the data provider about kidswear coverage</b><span><i class="pg">Slide 3</i>Confirm whether coverage of kidswear transactions changed from March 2019; if it is a data issue, exclude kidswear and recompute sales, only otherwise commit staff to investigating the kidswear business</span></div>
     <div><b>Ask merchandising why styles declined</b><span><i class="pg">Slide 2</i>Dark blue, striped, and lace styles fell 48.4%: confirm whether the drop was a styling decision or a change in customer taste, then plan next season's range</span></div>

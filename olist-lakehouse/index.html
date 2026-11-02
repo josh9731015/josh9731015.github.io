@@ -353,10 +353,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     #deck .sc.dual .r, #deck .sc.dual .ax { grid-template-columns: 6.5em 1fr; }
   }
   /* ===== 2026-11-02 第 4、6、7、8 頁改版 ===== */
-  /* 第 4 頁：100% 堆疊長條（左到右 1～5 星）；2026-11-03 由兩張長條圖改版（試過發散堆疊，Josh 覺得太少見） */
-  #deck .s1 { background: var(--neg); } #deck .s2 { background: color-mix(in srgb, var(--neg) 60%, var(--card)); }
-  #deck .s3 { background: var(--mute); }
-  #deck .s4 { background: color-mix(in srgb, var(--accent) 60%, var(--card)); } #deck .s5 { background: var(--accent); }
+  /* 第 4 頁：100% 堆疊長條（左到右 1～5 星，低分藍色、3～5 星灰階）；2026-11-03 由兩張長條圖改版（試過發散堆疊，Josh 覺得太少見） */
+  /* 顏色與第 5 頁一致：藍＝重點（低分／晚到），其餘灰階（3→5 星由淺到深） */
+  #deck .s1 { background: var(--accent); } #deck .s2 { background: color-mix(in srgb, var(--accent) 60%, var(--card)); }
+  #deck .s3 { background: color-mix(in srgb, var(--mute) 60%, var(--ink-3)); } #deck .s4 { background: var(--ink-3); } #deck .s5 { background: var(--ink-2); }  /* 灰階已用 dataviz 驗證腳本驗過淺／深色模式 */
   #deck .two.lkw { grid-template-columns: 1.75fr 1fr; }
   #deck .lk .r { display: grid; grid-template-columns: 7em 3.4em 3.6em 1fr; gap: .7em; align-items: center; padding: .2em 0; }
   #deck .lk .r > em { font-style: normal; text-align: right; font-size: .88em; font-variant-numeric: tabular-nums; color: var(--ink-2); }
@@ -966,26 +966,26 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
-  <h1>電商資料湖倉分析</h1>
-  <p class="lead">把 9 個原始檔整理成可分析的表，再回答：<b>配送延遲會不會拉低顧客的評論分數？</b></p>
-  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構</span><span>資料品質規則</span></div>
+  <h1>電商資料湖倉與配送延遲分析</h1>
+  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可回溯版本的分析資料庫），發現<b>配送晚到會明顯拉低顧客評分</b></p>
+  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構（原始→清洗→分析）</span><span>資料品質規則</span></div>
   <div class="roles">
+    <div><b>62.42% vs 9.27%</b><span>晚到 vs 準時訂單給 1～2 星的比例</span></div>
     <div><b>6.66%</b><span>已送達且有評價的訂單中，晚於預計送達日的比例</span></div>
-    <div><b>62.42%</b><span>晚到訂單中給 1～2 星的比例；準時訂單只有 9.27%</span></div>
-    <div><b>15 條</b><span>資料更新後一次重跑的品質規則；目前沒有一條失敗（含 4 條只要求已知問題不惡化的警告級規則）</span></div>
+    <div><b>15 條</b><span>自動檢查資料錯誤的規則，資料更新後一次重跑，目前全部通過</span></div>
   </div>
-  <p class="foot">資料：巴西電商平台 Olist 公開資料，約 10 萬筆訂單（2016-09～2018-10）。SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並與本機用原始檔計算的答案核對</p>
+  <p class="foot">資料：巴西電商平台 Olist 公開資料，約 10 萬筆訂單（2016-09～2018-10）。SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並另從原始檔獨立計算核對答案</p>
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>資料湖倉架構</h2>
-  <span class="sub">原始檔永遠留著、每一層都能各自檢查：清洗出錯可以從上一層重來</span>
+  <span class="sub">用 Delta Lake（可回溯版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
-    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張未修正的評價表，用來對照列數</em></div>
+    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張原始評價表，用來核對讀取結果</em></div>
     <div class="ar">→</div>
     <div><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
     <div class="ar">→</div>
-    <div><b>gold 分析層</b><span>星狀結構：1 張事實表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張維度表</span><em>5 張表</em></div>
+    <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張對照表（星狀結構）</span><em>5 張表</em></div>
   </div>
   <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
@@ -996,25 +996,24 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>資料品質控管</h2>
-  <span class="sub">寫入後用 15 條規則檢查；寫入時再以限制條件阻擋不合規的資料</span>
+  <span class="sub">15 條規則自動檢查錯誤；Databricks 不會阻擋重複的訂單，未處理會重複計算，因此寫入前先刪除重複資料</span>
   <div class="two top">
     <div>
-      <p class="ct">15 條規則寫成一個 VIEW，每次資料更新後一行查詢全部重跑</p>
+      <p class="ct">15 條規則存成一個 VIEW（存好的查詢），資料更新後可一次重跑全部規則</p>
       <table class="seg">
         <tr><th>唯一性</th><td>例：訂單編號不重複</td><td class="n">4 條</td></tr>
         <tr><th>完整性</th><td>例：每張訂單都有顧客代號</td><td class="n">3 條</td></tr>
         <tr><th>有效性</th><td>例：評分介於 1～5、價格大於 0</td><td class="n">3 條</td></tr>
         <tr><th>一致性</th><td>例：訂單明細的商品都存在商品表</td><td class="n">5 條</td></tr>
       </table>
-      <p><b>ERROR 級（11 條）：</b>一列都不能違反</p>
-      <p><b>WARN 級（4 條）：</b>對應已知、目前不修的問題（例：23 張「送達早於交給物流」），筆數沒有變多就算通過</p>
+      <p><b>ERROR 級（11 條）：</b>一列都不能違反，否則算失敗</p>
+      <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張「送達早於交給物流」），只監控筆數是否增加</p>
     </div>
     <div class="side">
-      <p class="ct">寫入限制：實際測試三種寫法</p>
-      <p><b>CHECK（評分 1～5）：</b>寫入一筆 6 分的評價 → 寫入失敗，不合規的值會被擋下</p>
-      <p><b>CHECK（評分至少 3）：</b>這條是刻意設計的測試，不是業務規則：表裡本來就有 1、2 分的評價，用來確認加規則時會不會檢查舊資料 → 14,575 列違反，規則無法新增，代表 Databricks 會先檢查現有資料</p>
-      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單 → 兩筆都寫入成功；Databricks 的主鍵只是說明用的標示，寫入時不會檢查編號是否重複</p>
-      <p><b>因應做法：</b>既然主鍵擋不住重複，就在寫入流程中處理：先在新資料裡去重，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
+      <p class="ct">寫入限制的測試結果</p>
+      <p><b>CHECK（檢查條件）：</b>寫入 6 分的評價會被擋下；新增規則時也會先檢查舊資料</p>
+      <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單，兩筆都成功；Databricks 的主鍵只是標示，不會擋重複</p>
+      <p><b>因應做法：</b>先在新資料裡去重，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
     </div>
   </div>
 </div></section>
@@ -1027,11 +1026,11 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p class="ct">已送達且有評價的 95,824 張訂單，依晚到天數分組（晚到＝實際送達日晚於預計送達日）</p>
       <p class="lg"><i class="s1"></i>1 星 <i class="s2"></i>2 星 <i class="s3"></i>3 星 <i class="s4"></i>4 星 <i class="s5"></i>5 星</p>
       <div class="lk"><div class="r hd"><span></span><em>平均分數</em><b>1～2 星</b><p class="ct">評分分布（占該組訂單）</p></div><div class="r ok"><span>準時或提早<small>89,443 張</small></span><em>4.29</em><b>9.27%</b><div class="tr"><i class="s1" style="left:0.00%;width:6.62%" title="1 星：6.6%"></i><i class="s2" style="left:6.62%;width:2.64%" title="2 星：2.6%"></i><i class="s3" style="left:9.26%;width:8.08%" title="3 星：8.1%"></i><i class="s4" style="left:17.34%;width:20.40%" title="4 星：20.4%"></i><i class="s5" style="left:37.74%;width:62.26%" title="5 星：62.3%"></i></div></div><div class="r"><span>晚 1～3 天<small>1,852 張</small></span><em>3.29</em><b>32.13%</b><div class="tr"><i class="s1" style="left:0.00%;width:25.10%" title="1 星：25.1%"></i><i class="s2" style="left:25.10%;width:7.02%" title="2 星：7.0%"></i><i class="s3" style="left:32.12%;width:14.68%" title="3 星：14.7%"></i><i class="s4" style="left:46.80%;width:20.04%" title="4 星：20.0%"></i><i class="s5" style="left:66.84%;width:33.16%" title="5 星：33.2%"></i></div></div><div class="r"><span>晚 4～7 天<small>1,748 張</small></span><em>2.10</em><b>67.68%</b><div class="tr"><i class="s1" style="left:0.00%;width:58.58%" title="1 星：58.6%"></i><i class="s2" style="left:58.58%;width:9.10%" title="2 星：9.1%"></i><i class="s3" style="left:67.68%;width:9.84%" title="3 星：9.8%"></i><i class="s4" style="left:77.52%;width:8.40%" title="4 星：8.4%"></i><i class="s5" style="left:85.92%;width:14.08%" title="5 星：14.1%"></i></div></div><div class="r"><span>晚 8～14 天<small>1,446 張</small></span><em>1.67</em><b>80.15%</b><div class="tr"><i class="s1" style="left:0.00%;width:70.60%" title="1 星：70.6%"></i><i class="s2" style="left:70.60%;width:9.54%" title="2 星：9.5%"></i><i class="s3" style="left:80.14%;width:8.86%" title="3 星：8.9%"></i><i class="s4" style="left:89.00%;width:4.14%" title="4 星：4.1%"></i><i class="s5" style="left:93.14%;width:6.84%" title="5 星：6.8%"></i></div></div><div class="r"><span>晚 15 天以上<small>1,335 張</small></span><em>1.72</em><b>78.35%</b><div class="tr"><i class="s1" style="left:0.00%;width:68.98%" title="1 星：69.0%"></i><i class="s2" style="left:68.98%;width:9.36%" title="2 星：9.4%"></i><i class="s3" style="left:78.34%;width:9.14%" title="3 星：9.1%"></i><i class="s4" style="left:87.48%;width:5.32%" title="4 星：5.3%"></i><i class="s5" style="left:92.80%;width:7.20%" title="5 星：7.2%"></i></div></div><div class="r ax"><span></span><span></span><span></span><div><s style="left:0%">0%</s><s style="left:25%">25%</s><s style="left:50%">50%</s><s style="left:75%">75%</s><s style="left:100%">100%</s></div></div></div>
-      <p class="note">每條長條＝該組全部訂單（100%），從左到右依序為 1～5 星；橘色越長，給低分的比例越高</p>
+      <p class="note">每條長條＝該組全部訂單（100%），從左到右依序為 1～5 星；藍色越長，給低分的比例越高</p>
     </div>
     <div class="side">
       <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但其中 62.42% 給 1～2 星，準時的只有 9.27%</p>
-      <p><b>評分下降集中在前幾天：</b>晚到 1～3 天即低 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
+      <p><b>評分下降集中在第一週：</b>晚到 1～3 天即低 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
       <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最後回覆的一則</p>
     </div>
   </div>
@@ -1039,9 +1038,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>排除干擾因素</h2>
-  <span class="sub">換成同一州比、等待天數相同時比，晚到訂單的評分仍明顯較低</span>
+  <span class="sub">換成同一州比、送達天數相同時比，晚到訂單的評分仍明顯較低</span>
   <div class="two">
-    <div class="sc dual" aria-label="等待天數相同時，準時與晚到的平均評分">
+    <div class="sc dual" aria-label="送達天數相同時，準時與晚到的平均評分">
       <p class="ct">送達天數相同時，晚到訂單的平均評分仍較低（依下單到實際送達的天數分組）</p>
       <p class="lg"><i class="v"></i>準時或提早 <i class="t"></i>晚到</p>
       <div class="r"><span>下單後 0～7 天送達</span><div><div class="b v"><span class="trk"><i style="width:88.2%"></i></span>4.41</div><div class="b t"><span class="trk"><i style="width:79.4%"></i></span>3.97</div></div></div>
@@ -1053,8 +1052,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>「是否為偏遠州晚到較多、評分也較低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
-      <p><b>「是否只因送達天數較長？」</b>等待天數相同時，晚到仍低 0.44～1.78 分；而且只看準時的訂單，實際送達天數越長，分數也越低（下一頁）</p>
-      <p><b>尚未證明因果：</b>只排除了地區和等待天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
+      <p><b>「是否只因送達天數較長？」</b>送達天數相同時，晚到仍低 0.44～1.78 分；而且只看準時的訂單，實際送達天數越長，分數也越低（下一頁）</p>
+      <p><b>尚未證明因果：</b>只排除了地區和送達天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1070,9 +1069,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>讀法：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
-      <p><b>為什麼重要：</b>準時率 93.2% 看起來很好，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
-      <p><b>排除其他解釋：</b>實際送達天數較長的訂單分數低，是否另有原因？分別排除以下三種原因後，從 0～7 天送達到 31 天以上，分數仍然下降</p>
-      <p><b>大件商品容易損壞？</b>只看總重 500 克以下：4.44 → 3.79</p>
+      <p><b>為什麼重要：</b>準時率 93.2%（全部已送達訂單）表面上很高，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
+      <p><b>排除其他解釋：</b>實際送達天數較長的訂單分數低，是否另有原因？分別排除以下三種原因後，送達越慢的訂單，分數仍然越低</p>
+      <p><b>大件商品容易損壞？</b>只看總重 500 克以下（送達最快組 → 最慢組）：4.44 → 3.79</p>
       <p><b>多件商品分批送達？</b>只看單件訂單：4.48 → 3.68</p>
       <p><b>出貨慢的賣家服務差？</b>只看賣家 2 天內出貨：4.43 → 3.76</p>
     </div>
@@ -1081,17 +1080,17 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>結論與建議</h2>
-  <span class="sub">每一項都根據前面頁面的發現</span>
+  <span class="sub">優先處理即將晚到的訂單，並用隨機實驗確認能否減少 1～2 星評價</span>
   <div class="nexts n3">
-    <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，請物流加急；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能降低低分</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組給 1～2 星的比例。假設比例能從 62.4% 降到 52.4%（實際效果需由實驗測得），兩組各需約 380 張、共 760 張晚到訂單（顯著水準 5%＝誤判為有效的機率上限；檢定力 80%＝效果存在時能測出的機率）。最近 12 個月平均每月約有 470 張晚到訂單，約 2 個月可收滿</span></div>
+    <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較給 1～2 星的比例。實驗規模：若要能偵測 10 個百分點的差異（62.4%→52.4%，實際效果待實驗測得），共需約 760 張晚到訂單，約 2 個月可收齊</span></div>
     <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>後續分析方向</h2>
-  <span class="sub">前面頁面尚未回答的問題，以及要做的分析</span>
+  <span class="sub">確認低分是否來自商品品類，並找出送貨最慢的環節</span>
   <div class="nexts n2">
     <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
     <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
@@ -1106,26 +1105,26 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <template id="deck-en">
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
-  <h1>E-commerce Data Lakehouse</h1>
-  <p class="lead">Turn 9 raw files into analysis-ready tables, then answer: <b>do delivery delays lower customer review scores?</b></p>
-  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture</span><span>Data quality rules</span></div>
+  <h1>E-commerce Data Lakehouse and Delivery Delay Analysis</h1>
+  <p class="lead">Turned 9 raw files into a lakehouse (a central, versioned analytics store) and found that <b>late deliveries clearly lower customer ratings</b></p>
+  <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture (raw → cleaned → analysis)</span><span>Data quality rules</span></div>
   <div class="roles">
+    <div><b>62.42% vs 9.27%</b><span>share of late vs. on-time orders rated 1–2 stars</span></div>
     <div><b>6.66%</b><span>of delivered, reviewed orders arrived after the estimated delivery date</span></div>
-    <div><b>62.42%</b><span>share of late orders rated 1–2 stars; only 9.27% for on-time orders</span></div>
-    <div><b>15 rules</b><span>quality checks rerun after every update; none currently fail (incl. 4 warning-level rules that only require known issues not to grow)</span></div>
+    <div><b>15 rules</b><span>automatic data-error checks rerun after every update; all currently pass</span></div>
   </div>
-  <p class="foot">Data: public dataset from Brazilian e-commerce platform Olist, about 100,000 orders (2016-09 to 2018-10). SQL written with help from Claude Code; I ran each step in Databricks and checked results against answers computed locally from the raw files</p>
+  <p class="foot">Data: public dataset from Brazilian e-commerce platform Olist, about 100,000 orders (2016-09 to 2018-10). SQL written with help from Claude Code; I ran each step in Databricks and checked results against answers computed independently from the raw files</p>
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>Lakehouse architecture</h2>
-  <span class="sub">Raw files are always kept and every layer can be checked on its own, so a cleaning mistake can be redone from the previous layer</span>
+  <span class="sub">Three layers in Delta Lake (a table format that keeps version history), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
-    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 uncorrected review table kept to compare row counts</em></div>
+    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 original review table kept to verify the load</em></div>
     <div class="ar">→</div>
     <div><b>silver (cleaned)</b><span>Fix load errors, deduplicate, flag suspicious data (flag, never delete)</span><em>Cleaned tables + 15 quality rules</em></div>
     <div class="ar">→</div>
-    <div><b>gold (analysis)</b><span>Star schema: 1 fact table (one row = one item sold) + 4 dimension tables: customer, product, seller, date</span><em>5 tables</em></div>
+    <div><b>gold (analysis)</b><span>1 sales detail table (one row = one item sold) + 4 lookup tables: customer, product, seller, date (star schema)</span><em>5 tables</em></div>
   </div>
   <p class="ct">Row counts in bronze were checked against the raw files on load, catching 2 load errors</p>
   <div class="checks c2">
@@ -1136,25 +1135,24 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality controls</h2>
-  <span class="sub">15 rules check data after it is written; write-time constraints block invalid data</span>
+  <span class="sub">15 rules check for errors automatically; Databricks doesn't block duplicate orders, which would be double-counted, so duplicates are removed before writing</span>
   <div class="two top">
     <div>
-      <p class="ct">The 15 rules live in one VIEW; one query reruns them all after every data update</p>
+      <p class="ct">The 15 rules live in one VIEW (a saved query); all of them can be rerun at once after every data update</p>
       <table class="seg">
         <tr><th>Uniqueness</th><td>e.g. no duplicate order IDs</td><td class="n">4</td></tr>
         <tr><th>Completeness</th><td>e.g. every order has a customer ID</td><td class="n">3</td></tr>
         <tr><th>Validity</th><td>e.g. score between 1 and 5; price above 0</td><td class="n">3</td></tr>
         <tr><th>Consistency</th><td>e.g. every item in order lines exists in the product table</td><td class="n">5</td></tr>
       </table>
-      <p><b>ERROR level (11 rules):</b> no row may violate them</p>
-      <p><b>WARN level (4 rules):</b> track known issues left unfixed for now (e.g. 23 orders "delivered before handed to the carrier") and pass as long as the count doesn't grow</p>
+      <p><b>ERROR level (11 rules):</b> no row may violate them, or the check fails</p>
+      <p><b>WARN level (4 rules):</b> known anomalies in the source data that can't be fixed (e.g. 23 orders "delivered before handed to the carrier"); only whether the count grows is monitored</p>
     </div>
     <div class="side">
-      <p class="ct">Write-time constraints: three approaches tested</p>
-      <p><b>CHECK (score 1–5):</b> inserting a review scored 6 → the write fails, so invalid values are blocked</p>
-      <p><b>CHECK (score at least 3):</b> a deliberate test, not a business rule: the table already has 1- and 2-point reviews, so it checks whether adding a rule validates existing data → 14,575 rows violate it and the rule can't be added, so Databricks does check existing data first</p>
-      <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID → both rows are written; Databricks primary keys are informational labels only, and writes are not checked for duplicate IDs</p>
-      <p><b>How to handle it:</b> since the primary key does not stop duplicates, handle them in the write process: deduplicate the new data first, then write with MERGE (update if the order ID exists, insert if not)</p>
+      <p class="ct">Write-time constraints: test results</p>
+      <p><b>CHECK (a condition on values):</b> a review scored 6 is blocked; adding a new rule also checks existing data first</p>
+      <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID, both succeed; Databricks primary keys are labels only and don't stop duplicates</p>
+      <p><b>How to handle it:</b> deduplicate the new data first, then write with MERGE (update if the order ID exists, insert if not)</p>
     </div>
   </div>
 </div></section>
@@ -1167,11 +1165,11 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p class="ct">95,824 delivered, reviewed orders by days late (late = delivered after the estimated delivery date)</p>
       <p class="lg"><i class="s1"></i>1 star <i class="s2"></i>2 <i class="s3"></i>3 <i class="s4"></i>4 <i class="s5"></i>5 stars</p>
       <div class="lk"><div class="r hd"><span></span><em>Avg score</em><b>1–2 stars</b><p class="ct">Score distribution (share of group)</p></div><div class="r ok"><span>On time or early<small>89,443 orders</small></span><em>4.29</em><b>9.27%</b><div class="tr"><i class="s1" style="left:0.00%;width:6.62%" title="1 star: 6.6%"></i><i class="s2" style="left:6.62%;width:2.64%" title="2 stars: 2.6%"></i><i class="s3" style="left:9.26%;width:8.08%" title="3 stars: 8.1%"></i><i class="s4" style="left:17.34%;width:20.40%" title="4 stars: 20.4%"></i><i class="s5" style="left:37.74%;width:62.26%" title="5 stars: 62.3%"></i></div></div><div class="r"><span>1–3 days late<small>1,852 orders</small></span><em>3.29</em><b>32.13%</b><div class="tr"><i class="s1" style="left:0.00%;width:25.10%" title="1 star: 25.1%"></i><i class="s2" style="left:25.10%;width:7.02%" title="2 stars: 7.0%"></i><i class="s3" style="left:32.12%;width:14.68%" title="3 stars: 14.7%"></i><i class="s4" style="left:46.80%;width:20.04%" title="4 stars: 20.0%"></i><i class="s5" style="left:66.84%;width:33.16%" title="5 stars: 33.2%"></i></div></div><div class="r"><span>4–7 days late<small>1,748 orders</small></span><em>2.10</em><b>67.68%</b><div class="tr"><i class="s1" style="left:0.00%;width:58.58%" title="1 star: 58.6%"></i><i class="s2" style="left:58.58%;width:9.10%" title="2 stars: 9.1%"></i><i class="s3" style="left:67.68%;width:9.84%" title="3 stars: 9.8%"></i><i class="s4" style="left:77.52%;width:8.40%" title="4 stars: 8.4%"></i><i class="s5" style="left:85.92%;width:14.08%" title="5 stars: 14.1%"></i></div></div><div class="r"><span>8–14 days late<small>1,446 orders</small></span><em>1.67</em><b>80.15%</b><div class="tr"><i class="s1" style="left:0.00%;width:70.60%" title="1 star: 70.6%"></i><i class="s2" style="left:70.60%;width:9.54%" title="2 stars: 9.5%"></i><i class="s3" style="left:80.14%;width:8.86%" title="3 stars: 8.9%"></i><i class="s4" style="left:89.00%;width:4.14%" title="4 stars: 4.1%"></i><i class="s5" style="left:93.14%;width:6.84%" title="5 stars: 6.8%"></i></div></div><div class="r"><span>15+ days late<small>1,335 orders</small></span><em>1.72</em><b>78.35%</b><div class="tr"><i class="s1" style="left:0.00%;width:68.98%" title="1 star: 69.0%"></i><i class="s2" style="left:68.98%;width:9.36%" title="2 stars: 9.4%"></i><i class="s3" style="left:78.34%;width:9.14%" title="3 stars: 9.1%"></i><i class="s4" style="left:87.48%;width:5.32%" title="4 stars: 5.3%"></i><i class="s5" style="left:92.80%;width:7.20%" title="5 stars: 7.2%"></i></div></div><div class="r ax"><span></span><span></span><span></span><div><s style="left:0%">0%</s><s style="left:25%">25%</s><s style="left:50%">50%</s><s style="left:75%">75%</s><s style="left:100%">100%</s></div></div></div>
-      <p class="note">Each bar = all orders in the group (100%), 1 to 5 stars from left to right; the longer the orange, the larger the share of low scores</p>
+      <p class="note">Each bar = all orders in the group (100%), 1 to 5 stars from left to right; the longer the blue, the larger the share of low scores</p>
     </div>
     <div class="side">
       <p><b>Late orders are only 6.66%</b> (6,381 orders), but 62.42% of them give 1–2 stars vs. 9.27% of on-time orders</p>
-      <p><b>Scores drop fast:</b> 1–3 days late already scores 1 point lower; beyond a week late, scores stop falling much further (1.67 and 1.72)</p>
+      <p><b>Most of the drop happens in the first week:</b> 1–3 days late already scores 1 point lower; beyond a week late, scores stop falling much further (1.67 and 1.72)</p>
       <p class="note">Average score = sum of scores ÷ orders in the group; for orders with several reviews, only the most recently answered review is used</p>
     </div>
   </div>
@@ -1179,7 +1177,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
   <h2>Controlling for other factors</h2>
-  <span class="sub">Comparing within the same state, or at the same waiting time, late orders still score much lower than on-time ones</span>
+  <span class="sub">Comparing within the same state, or at the same delivery time, late orders still score much lower than on-time ones</span>
   <div class="two">
     <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
       <p class="ct">At the same delivery time, late orders still score lower (grouped by days from purchase to actual delivery)</p>
@@ -1193,8 +1191,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>"Do remote states just have more delays and lower scores?"</b> In each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
-      <p><b>"Is it just waiting too long?"</b> At the same waiting time, late orders still score 0.44–1.78 points lower; and among on-time orders alone, longer waits also score lower (next slide)</p>
-      <p><b>Not yet causal:</b> only region and waiting time are ruled out; proving delays "cause" low scores needs a randomized experiment (slide 7)</p>
+      <p><b>"Is it just waiting too long?"</b> At the same delivery time, late orders still score 0.44–1.78 points lower; and among on-time orders alone, longer waits also score lower (next slide)</p>
+      <p><b>Not yet causal:</b> only region and delivery time are ruled out; proving delays "cause" low scores needs a randomized experiment (slide 7)</p>
     </div>
   </div>
 </div></section>
@@ -1210,9 +1208,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>Reading the table:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
     </div>
     <div class="side">
-      <p><b>Why it matters:</b> a 93.2% on-time rate looks good, but the on-time rate alone hides a rating gap from 4.44 to 3.82 among on-time orders</p>
-      <p><b>Ruling out other explanations:</b> do orders that take longer score lower for some other reason? After excluding each of the three causes below, scores still fall from 0–7 days to 31+ days</p>
-      <p><b>Bulky items get damaged?</b> Total weight 500 g or less: 4.44 → 3.79</p>
+      <p><b>Why it matters:</b> a 93.2% on-time rate (all delivered orders) looks high on the surface, but the on-time rate alone hides a rating gap from 4.44 to 3.82 among on-time orders</p>
+      <p><b>Ruling out other explanations:</b> do orders that take longer score lower for some other reason? After excluding each of the three causes below, slower deliveries still score lower</p>
+      <p><b>Bulky items get damaged?</b> Total weight 500 g or less (fastest group → slowest group): 4.44 → 3.79</p>
       <p><b>Split deliveries?</b> Single-item orders: 4.48 → 3.68</p>
       <p><b>Slow sellers give poor service?</b> Seller shipped within 2 days: 4.43 → 3.76</p>
     </div>
@@ -1221,17 +1219,17 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Conclusions and recommendations</h2>
-  <span class="sub">Each one follows from a finding on an earlier slide</span>
+  <span class="sub">Prioritize orders about to run late, and use a randomized experiment to confirm it reduces 1–2 star ratings</span>
   <div class="nexts n3">
-    <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to expedite; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces low ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Assuming the share drops from 62.4% to 52.4% (the real effect is what the test measures), each group needs about 380 late orders, 760 in total (5% significance level = the maximum chance of wrongly calling it effective; 80% power = the chance of detecting a real effect). The last 12 months averaged about 470 late orders a month, so about 2 months to collect them</span></div>
+    <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Experiment size: to detect a 10-point difference (62.4% → 52.4%; the real effect is what the test measures), it needs about 760 late orders in total, about 2 months to collect</span></div>
     <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Further analysis</h2>
-  <span class="sub">Open questions from earlier slides and the analyses to answer them</span>
+  <span class="sub">Check whether low scores come from product categories, and find the slowest step in delivery</span>
   <div class="nexts n2">
     <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
     <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; use the carrier hand-off date in the data to split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
