@@ -510,7 +510,7 @@
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>有趣的發現</h2>
+  <h2>發現</h2>
   <span class="sub">差評最常抱怨的是「缺件或寄錯」28.2%，比「送貨太慢」18.8% 還多</span>
   <div class="two">
     <div class="hb" aria-label="各抱怨類別占差評的比例">
@@ -530,8 +530,8 @@
     </div>
     <div class="side">
       <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 讀隨機 500 則差評，歸到 10 個類別（Agent 調查各州時，也拿這份結果當全國對照）</p>
-      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，排名站得住；但分類準確率 88%，占比是估計值</p>
-      <p><b>彩蛋：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會把滿意的顧客算成不滿</p>
+      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%，18.8% 約 15%～22%，兩個範圍不重疊，排名成立；但分類準確率 88%，占比是估計值</p>
+      <p><b>補充：</b>最後一類「評分與留言矛盾」不是抱怨：1.6% 給 1～2 星、留言卻是好評，例：「Muito bom eu gostei」（很好，我很喜歡）→ 只看星等會把滿意的顧客算成不滿</p>
       <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
     </div>
   </div>
@@ -611,7 +611,7 @@
     <div><b>讓團隊用起來</b><span>第 3 頁的「各州差評」調查每週自動跑一次，結果做成監控報表</span></div>
     <div><b>發現交給負責團隊</b><span>第 5 頁的多件訂單缺件 → 請物流／賣家營運確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
     <div><b>補足測試</b><span>第 8 頁：評論分類先調到約 95%，再標約 140 則新的測試集；第 7 頁：「問資料」補一批開發時沒用過的題目</span></div>
-    <div><b>調查不只問各州差評</b><span>第 3 頁的 4 個假說是寫死的；改成任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
+    <div><b>調查不只問各州差評</b><span>第 3 頁的 4 個假說是固定的；改成任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
   </div>
 </div></section>
 
@@ -673,7 +673,7 @@
 </div></section>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
-  <h2>An interesting finding</h2>
+  <h2>Key finding</h2>
   <span class="sub">The most common complaint in negative reviews is "missing or wrong items" (28.2%), more than "late delivery" (18.8%)</span>
   <div class="two">
     <div class="hb" aria-label="Share of negative reviews by complaint category">
@@ -694,7 +694,7 @@
     <div class="side">
       <p><b>How it was obtained:</b> the "Review classification" feature had the AI read 500 random negative reviews and sort them into 10 categories (the agent also uses these results as the national baseline when investigating states)</p>
       <p><b>Is it reliable?</b> With only 500 reviews, the true share behind 28.2% is likely ~24–32%, and behind 18.8% ~15–22%; the ranges don't overlap, so the ranking holds. But classification accuracy is 88%, so the shares are estimates</p>
-      <p><b>Side note:</b> the last category, "rating contradicts comment", is not a complaint: 1.6% gave 1–2 stars but wrote a positive comment, e.g. "Muito bom eu gostei" (Very good, I liked it) → counting stars alone treats satisfied customers as unhappy</p>
+      <p><b>Note:</b> the last category, "rating contradicts comment", is not a complaint: 1.6% gave 1–2 stars but wrote a positive comment, e.g. "Muito bom eu gostei" (Very good, I liked it) → counting stars alone treats satisfied customers as unhappy</p>
       <p class="note">"Late delivery" and "Not received": the AI only judges whether the comment complains about delivery; code picks the category by comparing actual delivery dates</p>
     </div>
   </div>
@@ -774,7 +774,7 @@
     <div><b>Put it in the team's hands</b><span>Run slide 3's "negative reviews by state" investigation automatically every week and turn the results into a monitoring report</span></div>
     <div><b>Hand findings to the owning teams</b><span>Slide 5's missing items in multi-item orders → ask logistics / seller operations whether it's split shipments or missing items; test any fix (e.g. telling customers at shipping that the order comes in N packages) with an experiment first</span></div>
     <div><b>Fill the testing gaps</b><span>Slide 8: tune review classification to about 95%, then label a new test set of about 140 reviews; slide 7: add "Ask the data" questions that weren't used during development</span></div>
-    <div><b>Investigate more than states</b><span>The 4 hypotheses on slide 3 are hard-coded; extend to any "why" question: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
+    <div><b>Investigate more than states</b><span>The 4 hypotheses on slide 3 are fixed; extend to any "why" question: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
   </div>
 </div></section>
 </template>
