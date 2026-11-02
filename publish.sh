@@ -1,10 +1,10 @@
 #!/bin/zsh
-# 把作品頁從工作資料夾複製到發布資料夾（只複製要公開的 index.html，不含審查截圖與規格文件；hm-retail（含 brief 主管簡報）、ga4-funnel、olist-lakehouse），再推上 GitHub Pages
+# 把作品頁從工作資料夾複製到發布資料夾（只複製要公開的 index.html，不含審查截圖與規格文件；hm-retail（brief/ 只剩轉址頁）、ga4-funnel、olist-lakehouse），再推上 GitHub Pages
 set -e
 cd "$(dirname "$0")"
 cp ../portfolio/hm-retail/index.html hm-retail/index.html
 mkdir -p hm-retail/brief
-cp ../portfolio/hm-retail/brief/index.html hm-retail/brief/index.html   # 主管簡報版（2026-10-13 新增）
+cp ../portfolio/hm-retail/brief/index.html hm-retail/brief/index.html   # 舊主管簡報網址：2026-11-02 起改成轉到 ../（作品頁預設就是簡報），保留讓舊連結不壞
 mkdir -p ga4-funnel
 cp ../portfolio/ga4-funnel/index.html ga4-funnel/index.html
 mkdir -p olist-lakehouse
