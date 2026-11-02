@@ -255,7 +255,7 @@
   #deck .bars .nm { text-align: right; font-weight: 600; }
   #deck .bars .nm small { display: block; font-weight: 400; color: var(--ink-3); font-size: .78em; line-height: 1.35; }
   #deck .bars .b { display: flex; align-items: center; gap: .7em; font-variant-numeric: tabular-nums; font-size: .88em; min-height: 1.7em; }
-  #deck .bars .trk { position: relative; flex: none; width: 45%; height: 1em; background: var(--line); border-radius: .25em; }
+  #deck .bars .trk { position: relative; flex: none; width: 45%; height: 1em; background: var(--card); border: 1px solid var(--ink-3); border-radius: .25em; }  /* 空心外框＝100%，不用淺灰底（會跟驗證集的灰色混淆） */
   #deck .bars .trk i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .25em; }
   #deck .bars .trk u { position: absolute; left: 90%; top: -.3em; bottom: -.3em; border-left: 2px dashed var(--neg); }
   #deck .bars .b.v i { background: var(--ink-3); }
@@ -575,7 +575,7 @@
   <h2>各功能測試成績</h2>
   <span class="sub">各功能的評分方式見左欄；驗證集＝開發時調整用，測試集＝開發時沒看過的新題目</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　灰色底條＝100%，紅色虛線＝90% 門檻</p>
+    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻</p>
     <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 題＝100%</div><div class="b none">沒有測試集：19 題開發時都拿來調整過，成績可能偏高</div></div></div>
     <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
@@ -738,7 +738,7 @@
   <h2>Test scores by feature</h2>
   <span class="sub">Scoring method for each feature is in the left column; validation set = used for tuning during development, test set = new questions not seen during development</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Gray track = 100%, red dashed line = 90% threshold</p>
+    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold</p>
     <div class="r"><div class="nm">Ask the data<small>19 questions; numbers must match the reference SQL</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 questions = 100%</div><div class="b none">No test set: all 19 questions were used for tuning, so the score may be inflated</div></div></div>
     <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
