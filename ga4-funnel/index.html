@@ -752,7 +752,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
       <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數自然最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
       <p><b>不同算法下結論一致：</b>限定每步 30 分鐘、1 天、7 天內完成，或把「看完商品直接結帳、沒有加購紀錄」的人當成漏記補回（最多升到 29.2%），它都還是最低</p>
-      <p class="bridge"><b>接下來：</b>只看整段期間的 26.6% 無法判斷高低，所以第 4 頁把它拆成每週，跟這個網站自己的不同時間比較</p>
+      <p class="bridge"><b>26.6% 偏低嗎：</b>要用同樣算法跟上一季或去年同期比；這份範例資料只有 67 天，做不到（見第 7 頁）。所以先比同一段期間內的不同族群（第 4 頁）</p>
     </div>
   </div>
 </div></section>
@@ -768,30 +768,6 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>轉換率比較基準</h2>
-  <span class="sub">為了判斷 26.6% 的高低，把整段期間拆成每週比較（沒有同業基準，只能與自身比較）：年底購物季每週約 34%～37%，1 月下旬約 18%</span>
-  <div class="two">
-    <div>
-      <p class="ct">每週「看商品→加購」比例（當週看過商品的人中，1 天內加購的比例；10 週合計 26.5%，跟 26.6% 幾乎相同；第一週只有 11/26～11/29 四天）</p>
-      <svg class="lc" viewBox="0 0 600 250" role="img" aria-label="每週看商品後加購的比例，從 36.8% 降到 17.7%">
-        <g class="grid"><line x1="50" x2="590" y1="210" y2="210"/><line x1="50" x2="590" y1="160" y2="160"/><line x1="50" x2="590" y1="110" y2="110"/><line x1="50" x2="590" y1="60" y2="60"/><line x1="50" x2="590" y1="10" y2="10"/></g>
-        <g class="ylab"><text x="42" y="214">0%</text><text x="42" y="164">10%</text><text x="42" y="114">20%</text><text x="42" y="64">30%</text><text x="42" y="14">40%</text></g>
-        <line class="avg" x1="50" x2="590" y1="77.5" y2="77.5"/><text class="avgt" x="588" y="72">合計 26.5%</text>
-        <polyline class="ln" points="75,26 130,37 185,41 240,61 295,89.5 350,104 405,100 460,96.5 515,119.5 570,121.5"/>
-        <g class="pt"><circle cx="75" cy="26" r="4"/><circle cx="130" cy="37" r="4"/><circle cx="185" cy="41" r="4"/><circle cx="240" cy="61" r="4"/><circle cx="295" cy="89.5" r="4"/><circle cx="350" cy="104" r="4"/><circle cx="405" cy="100" r="4"/><circle cx="460" cy="96.5" r="4"/><circle cx="515" cy="119.5" r="4"/><circle cx="570" cy="121.5" r="4"/></g>
-        <g class="val"><text x="75" y="18">36.8</text><text x="130" y="29">34.6</text><text x="185" y="33">33.8</text><text x="240" y="53">29.8</text><text x="295" y="108">24.1</text><text x="350" y="122">21.2</text><text x="405" y="118">22.0</text><text x="460" y="88">22.7</text><text x="515" y="137">18.1</text><text x="570" y="139">17.7</text></g>
-        <g class="xlab"><text x="75" y="232">11/26</text><text x="130" y="232">11/30</text><text x="185" y="232">12/7</text><text x="240" y="232">12/14</text><text x="295" y="232">12/21</text><text x="350" y="232">12/28</text><text x="405" y="232">1/4</text><text x="460" y="232">1/11</text><text x="515" y="232">1/18</text><text x="570" y="232">1/25</text></g>
-        <text class="xt" x="320" y="248">每週第一天（2020/11/26～2021/1/31）</text>
-      </svg>
-    </div>
-    <div class="side">
-      <p><b>時間差異很大：</b>「看商品→加購」比例在年底購物季每週約 34%～37%，1 月下旬只剩約 18%，相差將近一半；原因見第 6 頁</p>
-      <p><b>分群差異：</b>裝置、進站來源之間差異不大，見第 5 頁</p>
-    </div>
-  </div>
-</div></section>
-
-<section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>分群轉換率比較</h2>
   <span class="sub">「看商品→加購」比例在裝置、進站來源之間差不到 3 個百分點；只有新舊訪客之間差異明顯</span>
   <div class="two">
@@ -819,45 +795,18 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   </div>
 </div></section>
 
-<section class="slide" aria-label="第 6 頁"><div class="sl">
-  <h2>1 月加購比例下滑原因</h2>
-  <span class="sub">1 月下旬「加購→結帳」「結帳→購買」兩步的轉換率已回到年底水準，唯獨「看商品→加購」比例沒有回升；加購漏記也沒有增加，較可能是訪客購買意願下降</span>
-  <div class="two">
-    <div>
-      <p class="ct">每週後兩步的轉換率（當週人數相除）</p>
-      <p class="lg"><i class="t"></i>加購→結帳 <i class="v"></i>結帳→購買</p>
-      <svg class="lc" viewBox="0 0 600 236" role="img" aria-label="每週加購到結帳、結帳到購買的轉換率，沒有一路下滑">
-        <g class="grid"><line x1="50" x2="590" y1="200" y2="200"/><line x1="50" x2="590" y1="152" y2="152"/><line x1="50" x2="590" y1="104" y2="104"/><line x1="50" x2="590" y1="56" y2="56"/></g>
-        <g class="ylab"><text x="42" y="204">0%</text><text x="42" y="156">20%</text><text x="42" y="108">40%</text><text x="42" y="60">60%</text></g>
-        <polyline class="ln" points="75,58.3 130,66.3 185,54.6 240,79.8 295,94.0 350,101.8 405,111.4 460,96.3 515,58.1 570,68.7"/>
-        <polyline class="ln2" points="75,108.7 130,99.4 185,82.6 240,65.8 295,64.6 350,73.2 405,86.7 460,84.5 515,67.7"/>
-        <g class="val"><text x="75" y="48">59.0</text><text x="405" y="130">36.9</text><text x="515" y="48">59.1</text><text class="v2" x="75" y="128">38.0</text><text class="v2" x="295" y="56">56.4</text><text class="v2" x="515" y="86">55.1</text></g>
-        <g class="xlab"><text x="75" y="222">11/26</text><text x="185" y="222">12/7</text><text x="295" y="222">12/21</text><text x="405" y="222">1/4</text><text x="515" y="222">1/18</text></g>
-      </svg>
-      <p class="note">橫軸是每週第一天；最後一週（1/25 起）購買紀錄異常少（99 人），原因不明，「結帳→購買」未畫入</p>
-    </div>
-    <div class="side">
-      <p><b>加購之後的兩步：</b>「加購→結帳」從年底約 60% 降到 1 月初 37%，1 月下旬回到 55%～59%；「結帳→購買」每週都在 38%～56%</p>
-      <p><b>加購漏記沒有變多：</b>「開始結帳、但之前沒有加購紀錄」的人，1 月下旬佔 23%～26%，沒有比年底的 26%～34% 高</p>
-      <p><b>瀏覽量下降：</b>每人每天看的商品頁從 12 月初約 6 頁，降到 1 月下旬約 3.5～4 頁；1 月下旬看商品的人比上旬多約 35%，加購的人只多約 8%，新增訪客的加購比例較低</p>
-      <p><b>裝置、進站來源的組成沒變</b>（自然搜尋每週都佔 34%～36%），各裝置、各來源都一起下滑；新增訪客的來源，這份資料無法判斷</p>
-      <p><b>推測：</b>年底送禮需求結束。資料只有一個年底，無法跟去年同期比，未證實</p>
-    </div>
-  </div>
-</div></section>
-
-<section class="slide" aria-label="第 7 頁"><div class="sl">
+<section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>建議</h2>
-  <span class="sub">改善重點 → 優先族群 → 驗證方式 → 資料監控</span>
+  <span class="sub">確認問題 → 鎖定族群 → 驗證改版 → 資料監控</span>
   <div class="nexts">
-    <div><b>① 先改善「看商品→加購」</b><span>三步中只有這一步在 1 月下滑後沒有回升（年底每週約 37%，1 月下旬約 18%）；加購之後的兩步都已回到年底水準</span></div>
+    <div><b>① 先確認 26.6% 是否偏低</b><span>「看商品→加購」轉換率是三步中最低，但最低本身不代表有問題（很多人看商品只是在比較、還沒打算買）；要用同樣算法算出上一季、去年同期的數字比較，才知道是不是問題</span></div>
     <div><b>② 先從新訪客下手</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；他們看過商品後加入購物車的比例，比同一時期第一次出現的舊訪客低 7～12 個百分點；但舊訪客本身購買意願較高，改版對新訪客的成效需以 ③ 驗證</span></div>
     <div><b>③ 改版前先做 A/B 測試</b><span>網站同時保留兩個版本，依新訪客的瀏覽器代號隨機分組（同一瀏覽器每次看到同一版）：對照組看現在的商品頁，實驗組看改版後的，比較兩組的「看商品→加購」轉換率。要偵測新訪客的轉換率從 25.8% 升到 27.8%，每組約需 7,700 人（顯著水準 5%、檢定力 80%）；兩組合計約 15,400 人，以資料期間平均每天約 630 位新訪客計，實驗約需跑 25 天，淡季流量較少時會更久</span></div>
     <div><b>④ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
 </div></section>
 
-<section class="slide" aria-label="第 8 頁"><div class="sl">
+<section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>查詢成本控制</h2>
   <span class="sub">BigQuery 依處理量計費：篩選條件用哪個欄位，就用那個欄位分區或叢集，處理量可減少約 90%；資料到 TB 級時，少讀 90% 就等於費用少 90%</span>
   <div class="two">
@@ -876,14 +825,14 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   </div>
 </div></section>
 
-<section class="slide" aria-label="第 9 頁"><div class="sl">
+<section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>下一步</h2>
   <span class="sub">要再往下追，需要的資料</span>
   <div class="nexts">
-    <div><b>1 月加購比例下滑是季節還是網站問題</b><span>第 6 頁：拿去年同期資料比較（這份資料只有 3 個月）；同時對照 1 月有沒有改版或行銷活動</span></div>
+    <div><b>跟歷史比較 26.6%</b><span>第 2 頁：取得上一季與去年同期資料，用同樣算法（照順序、同樣長度的期間）算「看商品→加購」轉換率比較；這份範例資料只有 2020/11/26～2021/1/31</span></div>
     <div><b>33,091 人的流失環節</b><span>第 2 頁：需要商品頁的互動事件（選尺寸、查庫存、看評價），找出看了沒加購的人停在哪個環節</span></div>
     <div><b>哪類商品最需要改善</b><span>商品類別標籤不一致（808 件商品中有 739 件在不同事件裡被標成不同類別），要先用商品編號整理類別，再按類別比較</span></div>
-    <div><b>舊訪客為什麼加購比較多</b><span>第 5 頁：同一時期比較仍高 7～12 個百分點；比較新舊訪客看的商品和進站來源，找出新訪客可以學的地方</span></div>
+    <div><b>舊訪客為什麼加購比較多</b><span>第 4 頁：同一時期比較仍高 7～12 個百分點；比較新舊訪客看的商品和進站來源，找出新訪客可以學的地方</span></div>
   </div>
 </div></section>
 
@@ -924,7 +873,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>Conversion rate</b> = users reaching this step ÷ users reaching the previous step; each step must happen after the previous one</p>
       <p><b>Judged by conversion rate, not users lost:</b> the first step has the most users, so it naturally loses the most; but its 26.6% rate is also far below the next two steps' 40.0% and 57.4%</p>
       <p><b>Holds under other definitions:</b> limiting each step to 30 minutes, 1 day or 7 days, or adding back users who checked out with no add-to-cart record as untracked (max 29.2%), it stays the lowest</p>
-      <p class="bridge"><b>Next:</b> the whole-period 26.6% alone can't be judged high or low, so slide 4 splits it by week and compares the site against itself</p>
+      <p class="bridge"><b>Is 26.6% low?</b> That needs the same metric for the previous quarter or the same period last year; this sample covers only 67 days, so it can't be done (slide 7). Instead, compare groups within the same period (slide 4)</p>
     </div>
   </div>
 </div></section>
@@ -940,30 +889,6 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 </div></section>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
-  <h2>Benchmarking the 26.6%</h2>
-  <span class="sub">To judge whether 26.6% is high or low, the period is split by week (no industry benchmark, so the site is compared against itself): about 34%–37% weekly in the holiday season, only about 18% in late January</span>
-  <div class="two">
-    <div>
-      <p class="ct">Weekly "view item → add to cart" rate (share of the week's item viewers who added to cart within 1 day; 26.5% over all 10 weeks, almost the same as 26.6%; the first week has only 4 days, 11/26–11/29)</p>
-      <svg class="lc" viewBox="0 0 600 250" role="img" aria-label="Weekly view-to-cart rate falling from 36.8% to 17.7%">
-        <g class="grid"><line x1="50" x2="590" y1="210" y2="210"/><line x1="50" x2="590" y1="160" y2="160"/><line x1="50" x2="590" y1="110" y2="110"/><line x1="50" x2="590" y1="60" y2="60"/><line x1="50" x2="590" y1="10" y2="10"/></g>
-        <g class="ylab"><text x="42" y="214">0%</text><text x="42" y="164">10%</text><text x="42" y="114">20%</text><text x="42" y="64">30%</text><text x="42" y="14">40%</text></g>
-        <line class="avg" x1="50" x2="590" y1="77.5" y2="77.5"/><text class="avgt" x="588" y="72">All weeks 26.5%</text>
-        <polyline class="ln" points="75,26 130,37 185,41 240,61 295,89.5 350,104 405,100 460,96.5 515,119.5 570,121.5"/>
-        <g class="pt"><circle cx="75" cy="26" r="4"/><circle cx="130" cy="37" r="4"/><circle cx="185" cy="41" r="4"/><circle cx="240" cy="61" r="4"/><circle cx="295" cy="89.5" r="4"/><circle cx="350" cy="104" r="4"/><circle cx="405" cy="100" r="4"/><circle cx="460" cy="96.5" r="4"/><circle cx="515" cy="119.5" r="4"/><circle cx="570" cy="121.5" r="4"/></g>
-        <g class="val"><text x="75" y="18">36.8</text><text x="130" y="29">34.6</text><text x="185" y="33">33.8</text><text x="240" y="53">29.8</text><text x="295" y="108">24.1</text><text x="350" y="122">21.2</text><text x="405" y="118">22.0</text><text x="460" y="88">22.7</text><text x="515" y="137">18.1</text><text x="570" y="139">17.7</text></g>
-        <g class="xlab"><text x="75" y="232">11/26</text><text x="130" y="232">11/30</text><text x="185" y="232">12/7</text><text x="240" y="232">12/14</text><text x="295" y="232">12/21</text><text x="350" y="232">12/28</text><text x="405" y="232">1/4</text><text x="460" y="232">1/11</text><text x="515" y="232">1/18</text><text x="570" y="232">1/25</text></g>
-        <text class="xt" x="320" y="248">First day of each week (2020/11/26 – 2021/1/31)</text>
-      </svg>
-    </div>
-    <div class="side">
-      <p><b>Big differences over time:</b> the view-to-cart rate is about 34%–37% a week in the holiday season vs. about 18% in late January, nearly half; causes on slide 6</p>
-      <p><b>By segment:</b> little difference across devices and traffic sources; see slide 5</p>
-    </div>
-  </div>
-</div></section>
-
-<section class="slide" aria-label="Slide 5"><div class="sl">
   <h2>Conversion by segment</h2>
   <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and traffic sources; only new vs. returning visitors differ clearly</span>
   <div class="two">
@@ -991,45 +916,18 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   </div>
 </div></section>
 
-<section class="slide" aria-label="Slide 6"><div class="sl">
-  <h2>Why add-to-cart fell in January</h2>
-  <span class="sub">By late January the "add to cart → begin checkout" and "begin checkout → purchase" rates were back to holiday levels, but the "view item → add to cart" rate was not; with no sign of more untracked add-to-carts, visitors seem less inclined to buy</span>
-  <div class="two">
-    <div>
-      <p class="ct">Weekly conversion of the last two steps (weekly user counts divided)</p>
-      <p class="lg"><i class="t"></i>Add to cart → begin checkout <i class="v"></i>Begin checkout → purchase</p>
-      <svg class="lc" viewBox="0 0 600 236" role="img" aria-label="Weekly add-to-cart-to-checkout and checkout-to-purchase rates, which did not keep falling">
-        <g class="grid"><line x1="50" x2="590" y1="200" y2="200"/><line x1="50" x2="590" y1="152" y2="152"/><line x1="50" x2="590" y1="104" y2="104"/><line x1="50" x2="590" y1="56" y2="56"/></g>
-        <g class="ylab"><text x="42" y="204">0%</text><text x="42" y="156">20%</text><text x="42" y="108">40%</text><text x="42" y="60">60%</text></g>
-        <polyline class="ln" points="75,58.3 130,66.3 185,54.6 240,79.8 295,94.0 350,101.8 405,111.4 460,96.3 515,58.1 570,68.7"/>
-        <polyline class="ln2" points="75,108.7 130,99.4 185,82.6 240,65.8 295,64.6 350,73.2 405,86.7 460,84.5 515,67.7"/>
-        <g class="val"><text x="75" y="48">59.0</text><text x="405" y="130">36.9</text><text x="515" y="48">59.1</text><text class="v2" x="75" y="128">38.0</text><text class="v2" x="295" y="56">56.4</text><text class="v2" x="515" y="86">55.1</text></g>
-        <g class="xlab"><text x="75" y="222">11/26</text><text x="185" y="222">12/7</text><text x="295" y="222">12/21</text><text x="405" y="222">1/4</text><text x="515" y="222">1/18</text></g>
-      </svg>
-      <p class="note">X-axis: first day of each week; the last week (from 1/25) has unusually few purchases (99 users), cause unknown, so checkout → purchase is not plotted</p>
-    </div>
-    <div class="side">
-      <p><b>Steps after add to cart:</b> "add to cart → begin checkout" fell from about 60% to 37% by early January, then back to 55%–59%; "begin checkout → purchase" stays at 38%–56%</p>
-      <p><b>No rise in untracked add-to-carts:</b> checkout users with no prior add-to-cart were 23%–26% in late January, no higher than the 26%–34% around the holidays</p>
-      <p><b>Less browsing:</b> item pages per person per day fell from about 6 (early Dec.) to about 3.5–4 (late Jan.); late January had about 35% more item viewers than early January but only about 8% more add-to-cart users</p>
-      <p><b>Device and traffic-source mix didn't change</b> (organic search is 34%–36% every week), and every device and source fell together; this data can't show where the extra visitors came from</p>
-      <p><b>Hypothesis:</b> holiday gift demand ended. The data covers only one holiday season, so it can't be compared with the prior year; unproven</p>
-    </div>
-  </div>
-</div></section>
-
-<section class="slide" aria-label="Slide 7"><div class="sl">
+<section class="slide" aria-label="Slide 5"><div class="sl">
   <h2>Recommendations</h2>
-  <span class="sub">Focus → priority segment → validation → data monitoring</span>
+  <span class="sub">Confirm the problem → target group → validate changes → monitor data</span>
   <div class="nexts">
-    <div><b>① Improve "view item → add to cart" first</b><span>The only step that fell in January and didn't recover (about 37% a week in the holidays vs. about 18% in late January); both steps after add to cart are back to holiday levels</span></div>
+    <div><b>① Confirm whether 26.6% is low</b><span>"View item → add to cart" converts lowest of the three steps, but lowest doesn't by itself mean a problem (many viewers are only comparing, not yet planning to buy); compute the same metric for the previous quarter and the same period last year to know whether it's a problem</span></div>
     <div><b>② Start with new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; their view-to-cart rate is 7–12 points below returning visitors first seen in the same period; but returning visitors already lean toward buying, so whether a change helps new visitors needs ③</span></div>
     <div><b>③ A/B test before rolling out</b><span>The site serves both versions, assigning new visitors at random by browser ID (same browser, same version): control sees the current product page, treatment the redesign; compare their view-to-cart rates. Detecting new visitors' rate rising from 25.8% to 27.8% needs about 7,700 users per group (5% significance, 80% power); about 15,400 in total at the period's average of ~630 new visitors a day means about 25 days, longer in slow seasons</span></div>
     <div><b>④ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
 </div></section>
 
-<section class="slide" aria-label="Slide 8"><div class="sl">
+<section class="slide" aria-label="Slide 6"><div class="sl">
   <h2>Controlling query cost</h2>
   <span class="sub">BigQuery bills by data processed: partitioning or clustering on the filter column can cut processing by about 90%; at terabyte scale, reading 90% less means paying 90% less</span>
   <div class="two">
@@ -1048,14 +946,14 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   </div>
 </div></section>
 
-<section class="slide" aria-label="Slide 9"><div class="sl">
+<section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Next steps</h2>
   <span class="sub">Data needed to dig further</span>
   <div class="nexts">
-    <div><b>Is January's drop seasonal or a site issue?</b><span>Slide 6: compare with the same period last year (this data covers only 3 months), and check for site changes or campaigns in January</span></div>
+    <div><b>Compare 26.6% with history</b><span>Slide 2: get the previous quarter and the same period last year, and compute the view-to-cart rate the same way (in order, same-length period); this sample covers only 2020/11/26–2021/1/31</span></div>
     <div><b>Where on the product page do 33,091 users stall?</b><span>Slide 2: product-page interaction events (choosing a size, checking stock, reading reviews) would show where viewers who didn't add to cart stopped</span></div>
     <div><b>Which product categories need work?</b><span>Category labels are inconsistent (739 of 808 items carry different categories in different events); categories must first be rebuilt from item IDs before comparing</span></div>
-    <div><b>Why do returning visitors add to cart more?</b><span>Slide 5: still 7–12 points higher in the same period; compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
+    <div><b>Why do returning visitors add to cart more?</b><span>Slide 4: still 7–12 points higher in the same period; compare the items new and returning visitors view and where they come from, to find what could work for new visitors</span></div>
   </div>
 </div></section>
 </template>
