@@ -978,7 +978,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
-  <h2>資料湖倉架構</h2>
+  <h2>資料湖倉架構與讀取檢查</h2>
   <span class="sub">用 Delta Lake（可回溯版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張原始評價表，用來核對讀取結果</em></div>
@@ -996,7 +996,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>資料品質控管</h2>
-  <span class="sub">15 條規則自動檢查錯誤；Databricks 不會阻擋重複的訂單，未處理會重複計算，因此寫入前先刪除重複資料</span>
+  <span class="sub">15 條規則自動檢查錯誤；測試發現 CHECK 擋得下錯誤值、主鍵擋不下重複訂單（未處理會重複計算），因此寫入前先刪除重複資料</span>
   <div class="two top">
     <div>
       <p class="ct">15 條規則存成一個 VIEW（存好的查詢），資料更新後可一次重跑全部規則</p>
@@ -1019,7 +1019,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>配送延遲與評分</h2>
+  <h2>晚到天數與評分</h2>
   <span class="sub">只晚 1～3 天，平均評分即從 4.29 降至 3.29；晚一週以上，約八成給 1～2 星</span>
   <div class="two lkw">
     <div>
@@ -1037,8 +1037,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
-  <h2>排除干擾因素</h2>
-  <span class="sub">換成同一州比、送達天數相同時比，晚到訂單的評分仍明顯較低</span>
+  <h2>排除等待時間的影響</h2>
+  <span class="sub">低分不只是因為等得久：送達天數相同時，晚到訂單的評分仍明顯較低</span>
   <div class="two">
     <div class="sc dual" aria-label="送達天數相同時，準時與晚到的平均評分">
       <p class="ct">送達天數相同時，晚到訂單的平均評分仍較低（依下單到實際送達的天數分組）</p>
@@ -1051,8 +1051,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 分</s></div></div>
     </div>
     <div class="side">
-      <p><b>「是否為偏遠州晚到較多、評分也較低？」</b>在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
-      <p><b>「是否只因送達天數較長？」</b>送達天數相同時，晚到仍低 0.44～1.78 分；而且只看準時的訂單，實際送達天數越長，分數也越低（下一頁）</p>
+      <p><b>和上一頁的差別：</b>上一頁依「晚了幾天」分組；這頁依「下單到送達共幾天」分組，在等一樣久的訂單裡比較準時與晚到</p>
+      <p><b>結果（左圖）：</b>送達天數相同時，晚到仍低 0.44～1.78 分</p>
+      <p><b>補充（未畫圖）：</b>地區也不是原因，在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
       <p><b>尚未證明因果：</b>只排除了地區和送達天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
   </div>
@@ -1060,7 +1061,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>準時訂單的評分落差</h2>
-  <span class="sub">即使準時送達，實際送達天數越長，評分越低；預計送達天數本身的影響很小</span>
+  <span class="sub">沒有晚到也會因等得久而扣分：準時訂單中，實際送達天數越長評分越低，排除重量、件數、賣家出貨速度後仍成立</span>
   <div class="two">
     <div>
       <p class="ct">準時送達的 89,443 張訂單，依實際與預計送達天數交叉分組的平均評分</p>
@@ -1080,7 +1081,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>結論與建議</h2>
-  <span class="sub">優先處理即將晚到的訂單，並用隨機實驗確認能否減少 1～2 星評價</span>
+  <span class="sub">優先處理即將晚到的訂單並用隨機實驗驗證效果；物流指標加入實際送達天數</span>
   <div class="nexts n3">
     <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
     <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較給 1～2 星的比例。實驗規模：若要能偵測 10 個百分點的差異（62.4%→52.4%，實際效果待實驗測得），共需約 760 張晚到訂單，約 2 個月可收齊</span></div>
@@ -1117,7 +1118,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
-  <h2>Lakehouse architecture</h2>
+  <h2>Lakehouse architecture and load checks</h2>
   <span class="sub">Three layers in Delta Lake (a table format that keeps version history), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
     <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 original review table kept to verify the load</em></div>
@@ -1135,7 +1136,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality controls</h2>
-  <span class="sub">15 rules check for errors automatically; Databricks doesn't block duplicate orders, which would be double-counted, so duplicates are removed before writing</span>
+  <span class="sub">15 rules check for errors automatically; tests showed CHECK blocks invalid values but the primary key doesn't block duplicate orders (which would be double-counted), so duplicates are removed before writing</span>
   <div class="two top">
     <div>
       <p class="ct">The 15 rules live in one VIEW (a saved query); all of them can be rerun at once after every data update</p>
@@ -1158,7 +1159,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
-  <h2>Delivery delays and ratings</h2>
+  <h2>Days late and ratings</h2>
   <span class="sub">Just 1–3 days late drops the average score from 4.29 to 3.29; at a week or more late, about 80% give 1–2 stars</span>
   <div class="two lkw">
     <div>
@@ -1176,8 +1177,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 </div></section>
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
-  <h2>Controlling for other factors</h2>
-  <span class="sub">Comparing within the same state, or at the same delivery time, late orders still score much lower than on-time ones</span>
+  <h2>Ruling out waiting time</h2>
+  <span class="sub">Low scores aren't just about waiting long: at the same delivery time, late orders still score much lower</span>
   <div class="two">
     <div class="sc dual" aria-label="Average score of on-time vs late orders with the same waiting time">
       <p class="ct">At the same delivery time, late orders still score lower (grouped by days from purchase to actual delivery)</p>
@@ -1190,8 +1191,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:20%">1</s><s style="left:40%">2</s><s style="left:60%">3</s><s style="left:80%">4</s><s style="left:100%">5 pts</s></div></div>
     </div>
     <div class="side">
-      <p><b>"Do remote states just have more delays and lower scores?"</b> In each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
-      <p><b>"Is it just waiting too long?"</b> At the same delivery time, late orders still score 0.44–1.78 points lower; and among on-time orders alone, longer waits also score lower (next slide)</p>
+      <p><b>How this differs from the previous slide:</b> that slide grouped orders by how many days late they were; this one groups them by total days from purchase to delivery, comparing on-time and late orders that waited equally long</p>
+      <p><b>Result (chart on the left):</b> at the same delivery time, late orders still score 0.44–1.78 points lower</p>
+      <p><b>Also (not charted):</b> region isn't the cause either; in each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
       <p><b>Not yet causal:</b> only region and delivery time are ruled out; proving delays "cause" low scores needs a randomized experiment (slide 7)</p>
     </div>
   </div>
@@ -1199,7 +1201,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
   <h2>Rating gap among on-time orders</h2>
-  <span class="sub">Even when delivered on time, the longer an order actually takes, the lower its rating; the estimated delivery time itself matters little</span>
+  <span class="sub">Even without being late, long waits cost points: among on-time orders, the longer the actual delivery, the lower the rating, even after ruling out weight, item count, and seller shipping speed</span>
   <div class="two">
     <div>
       <p class="ct">Average score of 89,443 on-time orders, grouped by actual and estimated delivery time</p>
@@ -1219,7 +1221,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Conclusions and recommendations</h2>
-  <span class="sub">Prioritize orders about to run late, and use a randomized experiment to confirm it reduces 1–2 star ratings</span>
+  <span class="sub">Prioritize orders about to run late and test the effect with a randomized experiment; add actual delivery time to logistics metrics</span>
   <div class="nexts n3">
     <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
     <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Experiment size: to detect a 10-point difference (62.4% → 52.4%; the real effect is what the test measures), it needs about 760 late orders in total, about 2 months to collect</span></div>
