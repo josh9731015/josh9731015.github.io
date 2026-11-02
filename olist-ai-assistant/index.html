@@ -163,23 +163,22 @@
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr) !important; } main table { display: block; overflow-x: auto; } }
   /* i18n:end */
   .shot { display: block; width: 100%; border: 1px solid var(--line); border-radius: 8px; margin: 4px 0 20px; }
-  /* ===== 報告／簡報 切換（2026-11-02 新增；簡報只有中文版） ===== */
+  /* ===== 報告／簡報 切換（2026-11-02 新增；中英文都有，英文投影片在 template#deck-en） ===== */
   .top-ctrls { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; gap: 8px; align-items: center; }
   .top-ctrls .lang-switch { position: static; }
   .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
   .view-switch button { font: inherit; font-size: 15px; line-height: 1.3; padding: 5px 12px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; min-height: 36px; }
   .view-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
-  html[lang="en"] .view-switch { display: none; }
   @media (max-width: 600px) { main { padding-top: 64px; } }  /* 手機：右上兩個切換鈕下方留空，不貼到標籤 */
   html.view-slides body { overflow: hidden; }
   html.view-slides main { display: none; }
   html.view-slides .top-ctrls { position: fixed; }
-  html.view-slides .lang-switch { display: none; }
   #deck[hidden] { display: none; }
   #deck .stage { position: fixed; inset: 0 0 56px 0; display: grid; place-items: center; padding-top: 52px; }
   #deck .slide { display: none; width: min(94vw, calc((100vh - 128px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size;
     background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.06); overflow: hidden; }
   #deck .slide.on { display: block; }
+  html[lang="en"] #deck .sl { font-size: 1.45cqw; line-height: 1.5; }  /* 英文句子較長，字級小一點才放得下 */
   /* 投影片內尺寸一律用 em，跟著 .sl 的字級（＝投影片寬度的 1.6%）等比例縮放 */
   #deck .sl { height: 100%; display: flex; flex-direction: column; padding: 2.4em 3em; font-size: 1.6cqw; line-height: 1.55; }
   #deck h2 { font-size: 1.9em; line-height: 1.3; margin: 0 0 .2em; padding: 0; border: 0; }
@@ -233,6 +232,8 @@
   #deck .hb .ax div { position: relative; height: 1.5em; border-top: 1px solid var(--ink-3); }
   #deck .hb .ax s { position: absolute; top: .15em; transform: translateX(-50%); text-decoration: none; font-size: .85em; color: var(--ink-3); }
   #deck .hb .axt { text-align: center; font-size: .78em; color: var(--ink-3); margin: 0; padding-left: 8.5em; }
+  html[lang="en"] #deck .hb .r, html[lang="en"] #deck .hb .ax { grid-template-columns: 12.5em 1fr 3.4em; }  /* 英文類別名稱較長，不要擠成兩行 */
+  html[lang="en"] #deck .hb .axt { padding-left: 12.5em; }
   #deck .vb .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2em; }
   #deck .vb .cols > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
   #deck .vb .area { height: 12em; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--ink-3); font-style: normal; }
@@ -617,6 +618,166 @@
 </div>
 <nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count" aria-live="polite">1 / 9</span><button type="button" class="next" aria-label="下一頁">›</button></nav>
 </div>
+<!-- 簡報英文版（2026-11-02）：內容對應上方中文 9 頁，術語沿用英文報告（Ask the data、Review classification…）；改中文要同步改這裡 -->
+<template id="deck-en">
+<section class="slide" aria-label="Slide 1"><div class="sl cover">
+  <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
+  <h1>AI Data Assistant</h1>
+  <p class="lead">Ask e-commerce data questions in Chinese; <b>every number in the AI's answer is checked by code</b></p>
+  <div class="chips"><span>LLM (Gemini API)</span><span>Text-to-SQL</span><span>RAG</span><span>AI Agent</span></div>
+  <div class="roles">
+    <div><b>Me</b><span>Requirements, metric definitions, acceptance</span></div>
+    <div><b>Claude Code</b><span>Writes the code (reviewed by me)</span></div>
+    <div><b>Gemini</b><span>The AI that answers questions inside the system</span></div>
+  </div>
+  <p class="foot">Data: Olist Brazilian e-commerce public dataset, about 100,000 orders (2016-09 to 2018-10)</p>
+</div></section>
+
+<section class="slide" aria-label="Slide 2"><div class="sl">
+  <h2>System architecture</h2>
+  <span class="sub">The AI understands the question and writes SQL and text; code checks the numbers</span>
+  <p class="fnline"><b>4 features:</b> Ask the data (Text-to-SQL) ｜ Review classification (structured output) ｜ Find relevant reviews (RAG) ｜ Investigation (AI agent)</p>
+  <div class="shotrow">
+    <div class="imgbox"><img src="slide-ask.jpg" alt="Ask the data screen: above the answer, a note says every number was found in the query results"></div>
+    <div>
+      <p class="lg">Example: "Ask the data"　<i class="ai"></i>Blue = done by AI <i class="code"></i>Gray = done by code</p>
+      <div class="vpipe">
+        <div class="st io">Question (in Chinese): Which month had the highest revenue in 2018?</div>
+        <div class="st ai">AI writes SQL</div>
+        <div class="st code">SQL guardrails<small>read-only, timeout, row limit</small></div>
+        <div class="st code">DuckDB runs the query</div>
+        <div class="st ai">AI writes a plain-language answer</div>
+        <div class="st code">Check each number in the answer<small>✅ if in the query results; ⚠️ if not (the AI may have made it up)</small></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 3"><div class="sl">
+  <h2>Agent investigation flow</h2>
+  <span class="sub">Question: "Why do some states have more negative reviews?" 6 pre-built analysis tools calculate and judge; the AI picks tools and writes the report</span>
+  <div class="shotrow">
+    <div class="imgbox"><img src="slide-agent.jpg" alt="Investigation screen: the AI's conclusion, with notes added by code based on the tools' verdicts"></div>
+    <div>
+      <p class="lg"><i class="ai"></i>Blue = done by AI <i class="code"></i>Gray = done by code</p>
+      <div class="vpipe">
+        <div class="st code">Compare states' negative-review rates, pick states to dig into<small>2 states with the most excess negative reviews + 1 state with the highest rate</small></div>
+        <div class="st code">Test 4 hypotheses per state<small>delivery delays, concentrated in certain quarters, product mix, a few problem sellers</small></div>
+        <div class="st code">Apply pre-written rules<small>supported / partly supported / not supported</small></div>
+        <div class="st ai">AI decides the order of tool calls and writes the report</div>
+        <div class="st code">Check numbers and quotes, add verdict notes<small>rewrite if checks fail</small></div>
+      </div>
+      <p class="callout">Screenshot: the AI wrote logistics "explains most of the gap" (excess negative reviews vs. national); code's note corrects it to "only part of the gap"</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 4"><div class="sl">
+  <h2>An interesting finding</h2>
+  <span class="sub">The most common complaint in negative reviews is "missing or wrong items" (28.2%), more than "late delivery" (18.8%)</span>
+  <div class="two">
+    <div class="hb" aria-label="Share of negative reviews by complaint category">
+      <p class="ct">500 random 1–2 star reviews with comments: share by complaint category (multiple allowed)</p>
+      <div class="r hi"><span>Missing or wrong items</span><i style="width:94%"></i><b>28.2%</b></div>
+      <div class="r"><span>Customer service</span><i style="width:68.7%"></i><b>20.6%</b></div>
+      <div class="r"><span>Product quality</span><i style="width:64%"></i><b>19.2%</b></div>
+      <div class="r"><span>Late delivery</span><i style="width:62.7%"></i><b>18.8%</b></div>
+      <div class="r"><span>Not received</span><i style="width:59.3%"></i><b>17.8%</b></div>
+      <div class="r"><span>Refund or return handling</span><i style="width:32.7%"></i><b>9.8%</b></div>
+      <div class="r"><span>Other</span><i style="width:28%"></i><b>8.4%</b></div>
+      <div class="r"><span>Order canceled or out of stock</span><i style="width:24.7%"></i><b>7.4%</b></div>
+      <div class="r"><span>Not as described</span><i style="width:21.3%"></i><b>6.4%</b></div>
+      <div class="r"><span>Rating contradicts comment</span><i style="width:5.3%"></i><b>1.6%</b></div>
+      <div class="ax"><span></span><div><s style="left:0">0%</s><s style="left:33.3%">10%</s><s style="left:66.7%">20%</s><s style="left:100%">30%</s></div><span></span></div>
+      <p class="axt">Bar length = share of the 500 negative reviews</p>
+    </div>
+    <div class="side">
+      <p><b>How it was obtained:</b> the "Review classification" feature had the AI read 500 random negative reviews and sort them into 10 categories (the agent also uses these results as the national baseline when investigating states)</p>
+      <p><b>Is it reliable?</b> With only 500 reviews, the true share behind 28.2% is likely ~24–32%, and behind 18.8% ~15–22%; the ranges don't overlap, so the ranking holds. But classification accuracy is 88%, so the shares are estimates</p>
+      <p><b>Side note:</b> the last category, "rating contradicts comment", is not a complaint: 1.6% gave 1–2 stars but wrote a positive comment, e.g. "Muito bom eu gostei" (Very good, I liked it) → counting stars alone treats satisfied customers as unhappy</p>
+      <p class="note">"Late delivery" and "Not received": the AI only judges whether the comment complains about delivery; code picks the category by comparing actual delivery dates</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 5"><div class="sl">
+  <h2>Deeper analysis</h2>
+  <span class="sub">Hypothesis: missing items mostly happen in orders with several items → two signs support it (not yet proof)</span>
+  <div class="two">
+    <div class="vb" aria-label="Negative-review rate for three order types">
+      <p class="ct">Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders (share of reviews with 1–2 stars, about 98,000 reviews in total)</p>
+      <div class="cols">
+        <div><em class="area"><b>12.71%</b><i style="height:26.9%"></i></em><span>Single item<small>88,227 reviews</small></span></div>
+        <div><em class="area"><b>24.72%</b><i style="height:52.3%"></i></em><span>Several items, one seller<small>8,426 reviews</small></span></div>
+        <div class="hi"><em class="area"><b>47.31%</b><i style="height:100%"></i></em><span>Several items, several sellers<small>1,264 reviews</small></span></div>
+      </div>
+    </div>
+    <div class="side">
+      <p><b>How sign 1 was obtained: follow-up via "Ask the data"</b>: the AI wrote its own SQL to calculate the 3 groups, and every number in its answer appears in the query results (the check on slide 2)</p>
+      <p><b>Sign 2: follow-up via "Find relevant reviews"</b>: "Customers bought several items but received only some of them?" → it found the 10 closest matches among 10,784 negative reviews with comments, and the AI judged all 10 to be about this, e.g.:</p>
+      <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>I bought two pendant lamps and paid for two, but received only 1. I need to receive the other one.</span></blockquote>
+      <p class="note">Not yet proof: negative reviews on multi-item orders may have other causes; telling split shipments from missing items needs per-package shipping and delivery records (not in the public dataset)</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 6"><div class="sl">
+  <h2>Verifying the AI's answers</h2>
+  <span class="sub">6 checks, and the real errors each one caught</span>
+  <div class="checks">
+    <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Caught: a review date 11/09 copied as 09/09 → code now pastes the original text</em></div>
+    <div><b>Is the SQL correct?</b><span>"Ask the data" 19-question test: 17 compare the AI's numbers with answers from a separate SQL query; 2 ask for data that doesn't exist, so only "not found" is correct</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
+    <div><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: unseen during development, used only for final scoring</span><em class="lim">So the AI isn't just tuned to answer these specific questions</em></div>
+    <div><b>Prevent answer leakage</b><span>The instructions given to the AI (prompt) must not contain reference answers; code scans them automatically</span><em>Caught: instruction examples held answers to 11 of 19 questions → replaced with placeholders (e.g. &lt;state&gt;); still 19/19 on rerun</em></div>
+    <div><b>Blind labeling</b><span>I labeled the reference answers for "Review classification" and "Find relevant reviews" without seeing the AI's; slide 7 scores against these labels</span><em class="lim">So the AI's answers don't bias the labels</em></div>
+    <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Caught: the AI called a cause that explains only part of the gap the main cause</em></div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 7"><div class="sl">
+  <h2>Test scores by feature</h2>
+  <span class="sub">Scoring method for each feature is in the left column; validation set = used for tuning during development, test set = new questions not seen during development</span>
+  <div class="bars">
+    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Gray track = 100%, red dashed line = 90% threshold</p>
+    <div class="r"><div class="nm">Ask the data<small>19 questions; numbers must match the reference SQL</small></div>
+      <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 questions = 100%</div><div class="b none">No test set: all 19 questions were used for tuning, so the score may be inflated</div></div></div>
+    <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 reviews = 90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100%</div></div></div>
+    <div class="r"><div class="nm">Review classification<small>Categories exactly match my labels</small></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (definitions changed later; current version not re-tested)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span>22/25 reviews = 88% (below the 90% threshold)</div></div></div>
+    <div class="r"><div class="nm">Investigation (agent)<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
+      <div class="txt">Validation: 4 runs, all 4 passed all 17 checks<br>Test: asked about state CE instead; 2 runs, both passed (only 6 of the checks apply)</div></div>
+    <p class="note">The test sets have only 20–25 reviews, so even 100% could be luck; the likely range of true accuracy is on the next slide</p>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 8"><div class="sl">
+  <h2>Is the classification sample big enough?</h2>
+  <span class="sub">Only 25 reviews tested, so true accuracy is likely 70%–96%; to show 90%, first reach about 95%, then test about 140 reviews</span>
+  <div class="ci">
+    <p class="ct">Likely range of true accuracy (Wilson 95% confidence interval); red dashed line = 90% threshold</p>
+    <div class="r"><div class="nm"><b>Now</b><span>22 of 25 correct (88%)</span></div>
+      <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:25%;width:64.5%"></i><i class="pt" style="left:70%"></i>
+        <span class="lab lo" style="left:25%">70.0%</span><span class="lab hi" style="left:89.5%">95.8%</span></div></div>
+    <div class="r"><div class="nm"><b>If it reaches 95%</b><span>about 140 reviews (133 correct)</span></div>
+      <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
+        <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
+    <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
+    <p class="take">So review classification can't yet be said to reach 90%, and the shares on slide 4 are estimates too. Next: tune to 95% on the validation set, then score on a new test set of about 140 reviews</p>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 9"><div class="sl">
+  <h2>Next steps</h2>
+  <span class="sub">From self-directed project to team use</span>
+  <div class="nexts">
+    <div><b>Put it in the team's hands</b><span>Run slide 3's "negative reviews by state" investigation automatically every week and turn the results into a monitoring report</span></div>
+    <div><b>Hand findings to the owning teams</b><span>Slide 5's missing items in multi-item orders → ask logistics / seller operations whether it's split shipments or missing items; test any fix (e.g. telling customers at shipping that the order comes in N packages) with an experiment first</span></div>
+    <div><b>Fill the testing gaps</b><span>Slide 8: tune review classification to about 95%, then label a new test set of about 140 reviews; slide 7: add "Ask the data" questions that weren't used during development</span></div>
+    <div><b>Investigate more than states</b><span>The 4 hypotheses on slide 3 are hard-coded; extend to any "why" question: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
+  </div>
+</div></section>
+</template>
 
 
 <!-- i18n:start --><template id="main-en" data-title="AI Data Assistant" data-desc="Jia Cheng Yu's self-directed project: a Chinese-language data assistant built on the Gemini API (AI-written SQL, review classification, RAG, agent investigation). Every feature has re-runnable automated scoring, three of them are also tested on unseen questions, and the numbers and quotes the AI writes are checked by code.">
@@ -791,10 +952,24 @@
 // 報告／簡報切換：網址 ?view=slides 直接開簡報、#3 停在第 3 頁；鍵盤左右鍵、手機左右滑換頁；Esc 回報告
 (function () {
   const html = document.documentElement, deck = document.getElementById('deck');
-  const slides = [...deck.querySelectorAll('.slide')], stage = deck.querySelector('.stage');
+  const stage = deck.querySelector('.stage');
+  let slides = [];
   const prev = deck.querySelector('.prev'), next = deck.querySelector('.next'), count = deck.querySelector('.count');
   const btns = document.querySelectorAll('.view-switch button');
   let i = 0;
+  // 中英文兩組投影片：中文寫在 .stage 裡，英文在 template#deck-en；切換語言時整組替換，停在同一頁
+  const zhSlides = stage.innerHTML, enSlides = document.getElementById('deck-en').innerHTML;
+  const T = { zh: { report: '報告', slides: '簡報', group: '檢視模式', prev: '上一頁', next: '下一頁', nav: '簡報導覽' },
+              en: { report: 'Report', slides: 'Slides', group: 'View', prev: 'Previous slide', next: 'Next slide', nav: 'Slide navigation' } };
+  function render() {
+    const en = html.lang === 'en', w = T[en ? 'en' : 'zh'];
+    stage.innerHTML = en ? enSlides : zhSlides;
+    slides = [...stage.querySelectorAll('.slide')];
+    btns.forEach(b => { b.textContent = w[b.dataset.view]; });
+    document.querySelector('.view-switch').setAttribute('aria-label', w.group);
+    prev.setAttribute('aria-label', w.prev); next.setAttribute('aria-label', w.next);
+    deck.querySelector('.deck-nav').setAttribute('aria-label', w.nav);
+  }
   function go(n) {
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach((s, k) => s.classList.toggle('on', k === i));
@@ -804,7 +979,7 @@
     history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
   }
   function setView(v, init) {
-    const on = v === 'slides' && html.lang !== 'en';   // 簡報只有中文版
+    const on = v === 'slides';
     html.classList.toggle('view-slides', on); deck.hidden = !on;
     btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === (on ? 'slides' : 'report'))));
     if (init && !on) return;
@@ -835,7 +1010,8 @@
   });
   // 網址的 #頁碼被改（手動輸入、貼上指定頁的連結）也要跟著換頁
   window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (!deck.hidden && n) go(n - 1); });
-  document.addEventListener('langchange', () => { if (html.lang === 'en') setView('report'); });
+  document.addEventListener('langchange', () => { render(); if (!deck.hidden) go(i); });
+  render();
   setView(new URLSearchParams(location.search).get('view') === 'slides' ? 'slides' : 'report', true);
 })();
 </script>
