@@ -729,12 +729,12 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>電商轉換漏斗分析</h1>
-  <p class="lead">網站訪客最大的流失點在<b>「看商品→加入購物車」</b>；用 BigQuery SQL 找出答案，並先確認資料是否可信</p>
+  <p class="lead">網站訪客轉換率最低的一步是<b>「看商品→加入購物車（加購）」</b>，新訪客又明顯低於舊訪客；用 BigQuery SQL 找出答案，並先確認資料是否可信</p>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>非等值 JOIN</span><span>分區／叢集</span></div>
   <div class="roles">
     <div><b>26.6%</b><span>看過商品的人中，之後加入購物車的比例，是三個轉換中最低</span></div>
     <div><b>約 90%</b><span>依篩選欄位分區或叢集後，查詢處理量（＝費用）減少的幅度</span></div>
-    <div><b>6.11%</b><span>依序完成看商品→加入購物車（加購）→結帳→購買的比例（2,755 ÷ 45,107）</span></div>
+    <div><b>25.8% vs 38.2%</b><span>新訪客 vs 舊訪客看過商品後加購的比例；新訪客佔看過商品的人 93%，是改善重點</span></div>
   </div>
   <p class="foot">資料：Google 公開的 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-01～2021-01-31，分析採 11-26 起的 67 天，原因見第 3 頁）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
 </div></section>
@@ -764,7 +764,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>資料品質檢查</h2>
-  <span class="sub">這個結果可信嗎：3 個資料問題，以及算法怎麼因應</span>
+  <span class="sub">3 個資料問題，以及算法怎麼因應</span>
   <div class="checks c3">
     <div><b>加購有 18 天沒有紀錄</b><span>2020 年 11 月有 18 天「加入購物車」是 0 筆，同一時間「開始結帳」每天仍有 132～605 筆，不太可能是實際無人加入購物車</span><em>做法：原始資料從 11-01 開始，分析改從 11-26 開始（共 67 天）</em></div>
     <div><b>不照步驟先後算，後兩個轉換率的高低會顛倒</b><span>只看「期間內有沒有做過」，會把後兩步轉換率的高低算反；規定每一步都要在上一步之後才算</span><em>做法：照順序算（CTE：把查詢拆成依序的步驟；非等值 JOIN：用「時間在後」配對兩筆紀錄）；1,639 人看完商品直接結帳、沒有加購紀錄，可能是漏記，後兩步的高低僅為初步結果</em></div>
@@ -849,12 +849,12 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
   <h1>E-commerce Conversion Funnel</h1>
-  <p class="lead">Site visitors drop off most at <b>"view item → add to cart"</b>; found with BigQuery SQL, after first checking whether the data can be trusted</p>
+  <p class="lead">The step with the lowest conversion rate is <b>"view item → add to cart"</b>, and new visitors convert clearly worse than returning ones; found with BigQuery SQL, after first checking whether the data can be trusted</p>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>Non-equi JOIN</span><span>Partitioning / clustering</span></div>
   <div class="roles">
     <div><b>26.6%</b><span>of item viewers then added to cart, the lowest of the three conversions</span></div>
     <div><b>~90%</b><span>less data processed per query (= cost) after partitioning or clustering on the filter column</span></div>
-    <div><b>6.11%</b><span>went view item → add to cart → begin checkout → purchase in order (2,755 ÷ 45,107)</span></div>
+    <div><b>25.8% vs 38.2%</b><span>share of new vs returning visitors who added to cart after viewing an item; new visitors are 93% of item viewers, so they are the focus</span></div>
   </div>
   <p class="foot">Data: Google's public GA4 e-commerce sample dataset (Google Merchandise Store, 2020-11-01 to 2021-01-31; the analysis uses the 67 days from Nov 26, see slide 3); partly obfuscated, so the numbers are not real business results. SQL written with help from Claude Code; scope and presentation decided by me, every query reviewed step by step</p>
 </div></section>
@@ -884,7 +884,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality checks</h2>
-  <span class="sub">Can this result be trusted? 3 data issues and how the calculation handles them</span>
+  <span class="sub">3 data issues and how the calculation handles them</span>
   <div class="checks c3">
     <div><b>18 days without add-to-cart</b><span>In November 2020, "add to cart" had 0 events on 18 days while "begin checkout" still had 132–605 a day, so add-to-carts weren't being tracked</span><em>Action: the raw data starts Nov 1; the analysis starts Nov 26 (67 days)</em></div>
     <div><b>Without order, the last two steps flip</b><span>Counting anyone who did a step at some point reverses which of the last two conversion rates is higher; each step must follow the previous one</span><em>Action: count in order (CTE: a query split into sequential steps; non-equi JOIN: matching records where one comes later in time); 1,639 users checked out with no add-to-cart record, possibly untracked, so the order of the last two steps is only preliminary</em></div>

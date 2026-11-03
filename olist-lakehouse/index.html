@@ -967,7 +967,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>電商資料湖倉與配送延遲分析</h1>
-  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可查回舊版本的分析資料庫），發現<b>配送晚到會明顯拉低顧客評分</b></p>
+  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可查回舊版本的分析資料庫），發現<b>晚到訂單的評分明顯較低</b></p>
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構（原始→清洗→分析）</span><span>資料品質規則</span></div>
   <div class="roles">
     <div><b>62.42% vs 9.27%</b><span>晚到 vs 準時訂單給 1～2 星的比例</span></div>
@@ -1070,7 +1070,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>讀法：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
-      <p><b>為什麼重要：</b>準時率 93.2%（全部已送達訂單）表面上很高，但只看準時率，看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
+      <p><b>為什麼重要：</b>晚到只占 6.66%，只看準時與否會覺得配送沒問題，但看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
       <p><b>排除其他解釋：</b>實際送達天數較長的訂單分數低，是否另有原因？分別排除以下三種原因後，送達越慢的訂單，分數仍然越低</p>
       <p><b>大件商品容易損壞？</b>只看總重 500 克以下（送達最快組 → 最慢組）：4.44 → 3.79</p>
       <p><b>多件商品分批送達？</b>只看單件訂單：4.48 → 3.68</p>
@@ -1107,7 +1107,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
   <h1>E-commerce Data Lakehouse and Delivery Delay Analysis</h1>
-  <p class="lead">Turned 9 raw files into a lakehouse (a central, versioned analytics store) and found that <b>late deliveries clearly lower customer ratings</b></p>
+  <p class="lead">Turned 9 raw files into a lakehouse (a central, versioned analytics store) and found that <b>late orders get clearly lower ratings</b></p>
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture (raw → cleaned → analysis)</span><span>Data quality rules</span></div>
   <div class="roles">
     <div><b>62.42% vs 9.27%</b><span>share of late vs. on-time orders rated 1–2 stars</span></div>
@@ -1210,7 +1210,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>Reading the table:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
     </div>
     <div class="side">
-      <p><b>Why it matters:</b> a 93.2% on-time rate (all delivered orders) looks high on the surface, but the on-time rate alone hides a rating gap from 4.44 to 3.82 among on-time orders</p>
+      <p><b>Why it matters:</b> late orders are only 6.66%, so looking only at on-time vs late makes delivery seem fine, yet it hides a rating gap from 4.44 to 3.82 among on-time orders</p>
       <p><b>Ruling out other explanations:</b> do orders that take longer score lower for some other reason? After excluding each of the three causes below, slower deliveries still score lower</p>
       <p><b>Bulky items get damaged?</b> Total weight 500 g or less (fastest group → slowest group): 4.44 → 3.79</p>
       <p><b>Split deliveries?</b> Single-item orders: 4.48 → 3.68</p>
