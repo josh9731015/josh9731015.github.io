@@ -477,7 +477,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>系統架構</h2>
   <span class="sub">AI 負責理解問題、寫 SQL 和文字；數字核對交給程式</span>
-  <p class="fnline"><b>4 個功能：</b>問資料（Text-to-SQL）｜評論分類（結構化輸出）｜找相關評論（RAG）｜調查（AI Agent）</p>
+  <p class="fnline"><b>4 個功能：</b>問資料＝AI 寫 SQL 回答數據問題（Text-to-SQL）｜評論分類＝AI 把評論歸到抱怨類別（結構化輸出）｜找相關評論＝AI 找出意思相近的評論（RAG）｜調查＝AI 自己決定查什麼、連續查出原因（AI Agent）</p>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-ask.jpg" alt="問資料畫面：回答上方顯示每個數字都能在查詢結果找到"></div>
     <div>
@@ -519,32 +519,32 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="checks">
     <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>實例：AI 引用評論時把日期 11/09 抄成 09/09 → 改由程式貼原文</em></div>
     <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>實例：AI 把只能解釋部分差距的原因寫成主因</em></div>
-    <div><b>SQL 正確性比對</b><span>「問資料」19 題：17 題用另一段 SQL 算好標準答案來比對；2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
+    <div><b>SQL 正確性比對</b><span>AI 寫 SQL 回答數據問題，19 題：17 題用另一段 SQL 算好標準答案來比對；2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
     <div><b>驗證集／測試集分開</b><span>驗證集：開發時找錯、調整用；測試集：開發時不看，留到最後評分，避免只對練過的題目表現好</span></div>
     <div><b>範例不放標準答案</b><span>給 AI 的指示（prompt）裡不能出現標準答案，避免 AI 直接照抄、成績虛高；程式自動掃描</span><em>實例：範例寫出了 11 題的答案 → 拿掉後重跑，19 題仍全對</em></div>
-    <div><b>標準答案由本人先標</b><span>「評論分類」「找相關評論」的標準答案由本人標，標的時候看不到 AI 的答案，避免被 AI 帶著走</span></div>
+    <div><b>標準答案由本人先標</b><span>AI 把評論歸類、AI 找相近評論這兩項，標準答案由本人標，標的時候看不到 AI 的答案，避免被 AI 帶著走</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>各功能評估結果</h2>
-  <span class="sub">問資料、找相關評論達到 90% 門檻；評論分類的測試集 88%，略低於門檻</span>
+  <span class="sub">AI 寫 SQL 答數據問題、AI 找相近評論達到 90% 門檻；AI 把評論歸類的測試集 88%，略低於門檻</span>
   <div class="bars">
     <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻</p>
-    <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
+    <div class="r"><div class="nm">AI 寫 SQL 答數據問題<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 題＝100%</div><div class="b none">沒有測試集：19 題開發時都拿來調整過，成績可能偏高</div></div></div>
-    <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
+    <div class="r"><div class="nm">AI 找相近評論<small>判斷評論相不相關，跟本人一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 則＝90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%</div></div></div>
-    <div class="r"><div class="nm">評論分類<small>選的類別跟本人標的完全一致</small></div>
+    <div class="r"><div class="nm">AI 把評論歸類<small>選的類別跟本人標的完全一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（分類項目修改前的結果）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 則＝88%<em>（未達 90% 門檻）</em></span></div></div></div>
-    <div class="r"><div class="nm">調查（AI Agent）<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
+    <div class="r"><div class="nm">AI 自動調查原因（AI Agent）<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
       <div class="txt">驗證集：跑 4 次，4 次都通過全部檢查<br>測試集：換一個開發時沒用過的州，跑 2 次都通過適用的檢查</div></div>
     <p class="note">測試集只有 20～25 則，100% 也可能是運氣好；真實準確率的可能範圍見下一頁</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
-  <h2>評論分類樣本數評估</h2>
+  <h2>評論歸類準確率的樣本數評估</h2>
   <span class="sub">只測了 25 則，真實準確率可能落在 70%～96%；要證明有 90%，需先提升到約 95%，再測約 140 則</span>
   <div class="ci">
     <p class="ct">真實準確率的可能範圍（Wilson 95% 信賴區間）；紅色虛線＝90% 門檻</p>
@@ -555,7 +555,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
         <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
     <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
-    <p class="take">因此目前不能說評論分類有 90%。下一步：先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
+    <p class="take">因此目前不能說 AI 把評論歸類的準確率有 90%。下一步：先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
   </div>
 </div></section>
 
@@ -564,7 +564,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <span class="sub">用這個助理分析差評：最常見的抱怨是「缺件或寄錯」，占 28.2%</span>
   <div class="two">
     <div class="hb" aria-label="各抱怨類別占差評的比例">
-      <p class="ct">「評論分類」功能把隨機 500 則有留言的 1～2 星評論歸到 10 類：各類占比（可複選）</p>
+      <p class="ct">AI 把隨機 500 則有留言的 1～2 星評論歸到 10 類：各類占比（可複選）</p>
       <div class="r hi"><span>缺件或寄錯</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>客服問題</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>商品品質問題</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -579,16 +579,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">長條長度＝占 500 則差評的比例</p>
     </div>
     <div class="side">
-      <p><b>只抽 500 則對排名的影響：</b>只看抽樣誤差，第一名可信，第 2～5 名分不出先後。「缺件或寄錯」比第二名「客服問題」多 7.6 個百分點；算進抽樣誤差（95% 信賴區間），差距在 2.5～12.7 個百分點之間，都大於 0，所以換一批 500 則，它仍會排第一。第 2 名（20.6%）和第 5 名（17.8%）只差 2.8 個百分點，誤差範圍 −2.0～7.6 個百分點，名次可能互換，所以這四類視為同一級</p>
-      <p><b>沒算進去的誤差：</b>AI 分類準確率 88%（第 5 頁），分錯的評論也會讓占比偏差；第一名領先的 7.6 個百分點能否抵過分類錯誤，還沒有驗證</p>
-      <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
+      <p><b>看到什麼：</b>最常見的抱怨是「缺件或寄錯」（28.2%），高於第二名「客服問題」（20.6%）</p>
+      <p><b>下一步：</b>進一步分析第一名「缺件或寄錯」，找出它集中在哪一種訂單（下一頁）</p>
+      <p class="note">占比是估計值（只抽 500 則；AI 分類準確率 88%），但第一名領先第二名的差距大於抽樣誤差</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>應用實例：多件訂單與缺件</h2>
-  <span class="sub">推測一次買多件的訂單比較容易缺件：多件訂單的差評率是只買 1 件的 2～4 倍，抱怨只收到一部分的差評也幾乎都來自多件訂單（還不是證明）</span>
+  <span class="sub">推測一次買多件的訂單比較容易缺件：多件訂單的差評率是只買 1 件的 2～4 倍，差評也更常在抱怨沒拿到訂的東西（還不是證明）</span>
   <div class="two">
     <div class="vb" aria-label="三種訂單的差評率">
       <p class="ct">三種訂單的差評率（1～2 星占評論的比例，全部約 9.8 萬則評論）</p>
@@ -599,8 +599,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>跡象①：多件訂單的差評率是只買 1 件的 2～4 倍</b>：只買 1 件 12.71%；多件、同一賣家 24.72%（1.9 倍）；多件、多個賣家 47.31%（3.7 倍）（用「問資料」查出）</p>
-      <p><b>跡象②：抱怨「只收到一部分」的差評，10 則有 9 則來自多件訂單</b>（全部評論中多件訂單只占 9.9%）：用「找相關評論」從 10,784 則有留言的差評中找出最相近的 10 則，AI 判斷 10 則都在抱怨這件事，例：</p>
+      <p><b>跡象①：多件訂單的差評率是只買 1 件的 2～4 倍</b>：只買 1 件 12.71%；多件、同一賣家 24.72%（1.9 倍）；多件、多個賣家 47.31%（3.7 倍）（AI 寫 SQL 查出）</p>
+      <p><b>跡象②：多件訂單的差評，76.3% 在抱怨沒拿到訂的東西；單件訂單只有 35.2%</b>。AI 找出意思相近的實際留言，例：</p>
       <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞，我需要收到另一盞。</span></blockquote>
       <p class="note">還不是證明：多件訂單的差評也可能來自其他原因；是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
     </div>
@@ -613,7 +613,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="nexts">
     <div><b>導入團隊日常使用</b><span>第 3 頁的「各州差評」調查每週自動跑一次，結果做成監控報表</span></div>
     <div><b>把發現交給負責團隊</b><span>第 8 頁的多件訂單缺件 → 請物流與賣家確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
-    <div><b>補足測試</b><span>第 6 頁：評論分類先調到約 95%，再標約 140 則新的測試集；第 5 頁：「問資料」補一批開發時沒用過的題目</span></div>
+    <div><b>補足測試</b><span>第 6 頁：AI 把評論歸類的準確率先調到約 95%，再標約 140 則新的測試集；第 5 頁：AI 寫 SQL 答數據問題，補一批開發時沒用過的題目</span></div>
     <div><b>調查不只問各州差評</b><span>第 3 頁的 4 個假說是固定的；改成任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
   </div>
 </div></section>
@@ -639,7 +639,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>System architecture</h2>
   <span class="sub">The AI understands the question and writes SQL and text; code checks the numbers</span>
-  <p class="fnline"><b>4 features:</b> Ask the data (Text-to-SQL) ｜ Review classification (structured output) ｜ Find relevant reviews (RAG) ｜ Investigation (AI agent)</p>
+  <p class="fnline"><b>4 features:</b> Ask the data = the AI writes SQL to answer data questions (Text-to-SQL) ｜ Review classification = the AI sorts reviews into complaint categories (structured output) ｜ Find relevant reviews = the AI finds reviews with similar meaning (RAG) ｜ Investigation = the AI decides what to check and digs out causes step by step (AI agent)</p>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-ask.jpg" alt="Ask the data screen: above the answer, a note says every number was found in the query results"></div>
     <div>
@@ -681,32 +681,32 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="checks">
     <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Example: the AI copied a review date 11/09 as 09/09 → code now pastes the original text</em></div>
     <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Example: the AI called a cause that explains only part of the gap the main cause</em></div>
-    <div><b>SQL accuracy check</b><span>"Ask the data" 19 questions: 17 are checked against answers from a separate SQL query; 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
+    <div><b>SQL accuracy check</b><span>AI writing SQL to answer data questions, 19 questions: 17 are checked against answers from a separate SQL query; 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
     <div><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: unseen during development and used only for final scoring, so results don't just reflect practiced questions</span></div>
     <div><b>No answers in the examples</b><span>The instructions given to the AI (prompt) must not contain reference answers, so the AI can't simply copy them and inflate its score; code scans them automatically</span><em>Example: examples held the answers to 11 questions → removed them; still 19/19 on rerun</em></div>
-    <div><b>I label the answers first</b><span>I labeled the reference answers for "Review classification" and "Find relevant reviews" without seeing the AI's, so its answers can't sway mine</span></div>
+    <div><b>I label the answers first</b><span>For the AI sorting reviews into categories and finding similar reviews, I labeled the reference answers without seeing the AI's, so its answers can't sway mine</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
   <h2>Evaluation results by feature</h2>
-  <span class="sub">"Ask the data" and "Find relevant reviews" reach the 90% threshold; review classification scores 88% on the test set, just below it</span>
+  <span class="sub">AI answering data questions with SQL and AI finding similar reviews reach the 90% threshold; AI sorting reviews into categories scores 88% on the test set, just below it</span>
   <div class="bars">
     <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold</p>
-    <div class="r"><div class="nm">Ask the data<small>19 questions; numbers must match the reference SQL</small></div>
+    <div class="r"><div class="nm">AI answers data questions with SQL<small>19 questions; numbers must match the reference SQL</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 questions = 100%</div><div class="b none">No test set: all 19 questions were used for tuning, so the score may be inflated</div></div></div>
-    <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
+    <div class="r"><div class="nm">AI finds similar reviews<small>Relevance calls match my labels</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 reviews = 90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100%</div></div></div>
-    <div class="r"><div class="nm">Review classification<small>Categories exactly match my labels</small></div>
+    <div class="r"><div class="nm">AI sorts reviews into categories<small>Categories exactly match my labels</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (result before the categories were revised)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 reviews = 88%<em> (below the 90% threshold)</em></span></div></div></div>
-    <div class="r"><div class="nm">Investigation (AI agent)<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
+    <div class="r"><div class="nm">AI investigates causes (AI agent)<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
       <div class="txt">Validation: 4 runs, all 4 passed every check<br>Test: a state not used during development; 2 runs, both passed the applicable checks</div></div>
     <p class="note">The test sets have only 20–25 reviews, so even 100% could be luck; the likely range of true accuracy is on the next slide</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
-  <h2>Classification sample size</h2>
+  <h2>Sample size for review-categorization accuracy</h2>
   <span class="sub">Only 25 reviews tested, so true accuracy is likely 70%–96%; to show 90%, first raise it to about 95%, then test about 140 reviews</span>
   <div class="ci">
     <p class="ct">Likely range of true accuracy (Wilson 95% confidence interval); red dashed line = 90% threshold</p>
@@ -717,7 +717,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
         <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
     <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
-    <p class="take">Therefore review classification can't yet be said to reach 90%. Next: tune to 95% on the validation set, then score on a new test set of about 140 reviews</p>
+    <p class="take">Therefore the AI's review categorization can't yet be said to reach 90% accuracy. Next: tune to 95% on the validation set, then score on a new test set of about 140 reviews</p>
   </div>
 </div></section>
 
@@ -726,7 +726,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <span class="sub">Using the assistant on negative reviews: the most common complaint is "missing or wrong items", at 28.2%</span>
   <div class="two">
     <div class="hb" aria-label="Share of negative reviews by complaint category">
-      <p class="ct">"Review classification" sorted 500 random 1–2 star reviews with comments into 10 categories: share by category (multiple allowed)</p>
+      <p class="ct">The AI sorted 500 random 1–2 star reviews with comments into 10 categories: share by category (multiple allowed)</p>
       <div class="r hi"><span>Missing or wrong items</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>Customer service</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>Product quality</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -741,16 +741,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">Bar length = share of the 500 negative reviews</p>
     </div>
     <div class="side">
-      <p><b>Effect of sampling only 500 reviews on the ranking:</b> Counting sampling error only, the top spot is reliable, while ranks 2–5 are too close to call. "Missing or wrong items" leads second-place "Customer service" by 7.6 percentage points; with sampling error included (95% confidence interval), the gap is 2.5–12.7 points, always above 0, so another 500 random reviews would still put it first. Rank 2 (20.6%) and rank 5 (17.8%) differ by only 2.8 points, with an error range of −2.0 to 7.6 points, so their order could flip and these four categories are treated as a tie</p>
-      <p><b>Error not counted:</b> AI classification accuracy is 88% (slide 5), and misclassified reviews also bias the shares; whether the 7.6-point lead survives classification errors has not been verified</p>
-      <p class="note">"Late delivery" and "Not received": the AI only judges whether the comment complains about delivery; code picks the category by comparing actual delivery dates</p>
+      <p><b>What we see:</b> the most common complaint is "missing or wrong items" (28.2%), ahead of second-place "customer service" (20.6%)</p>
+      <p><b>Next step:</b> dig into the top category, "missing or wrong items", to find which orders it concentrates in (next slide)</p>
+      <p class="note">Shares are estimates (only 500 reviews; AI classification accuracy 88%), but the lead of #1 over #2 is larger than the sampling error</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Application: multi-item orders and missing items</h2>
-  <span class="sub">Hypothesis: orders with several items are more prone to missing items. Their negative-review rate is 2–4× that of single-item orders, and nearly all reviews complaining of receiving only part of the order come from them (not yet proof)</span>
+  <span class="sub">Hypothesis: orders with several items are more prone to missing items. Their negative-review rate is 2–4× that of single-item orders, and their negative reviews more often say the order did not fully arrive (not yet proof)</span>
   <div class="two">
     <div class="vb" aria-label="Negative-review rate for three order types">
       <p class="ct">Negative-review rate for three order types (share of reviews with 1–2 stars, about 98,000 reviews in total)</p>
@@ -761,8 +761,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders</b>: single item 12.71%; one seller 24.72% (1.9×); several sellers 47.31% (3.7×) (via "Ask the data")</p>
-      <p><b>Sign 2: of 10 reviews complaining of receiving only part of the order, 9 come from orders with several items</b> (such orders are only 9.9% of all reviews): "Find relevant reviews" pulled the 10 closest of 10,784 negative reviews with comments; the AI judged all 10 on topic, e.g.:</p>
+      <p><b>Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders</b>: single item 12.71%; one seller 24.72% (1.9×); several sellers 47.31% (3.7×) (AI-written SQL)</p>
+      <p><b>Sign 2: 76.3% of negative reviews on multi-item orders say they did not get what was ordered, versus 35.2% for single-item orders</b>. A real comment the AI found by similar meaning, e.g.:</p>
       <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>I bought two pendant lamps and paid for two, but received only 1. I need to receive the other one.</span></blockquote>
       <p class="note">Not yet proof: negative reviews on multi-item orders may have other causes; telling split shipments from missing items needs per-package shipping and delivery records (not in the public dataset)</p>
     </div>
@@ -775,7 +775,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="nexts">
     <div><b>Bring it into the team's daily work</b><span>Run slide 3's "negative reviews by state" investigation automatically every week and turn the results into a monitoring report</span></div>
     <div><b>Hand findings to the owning teams</b><span>Slide 8's missing items in multi-item orders → ask logistics and sellers whether it's split shipments or missing items; test any fix (e.g. telling customers at shipping that the order comes in N packages) with an experiment first</span></div>
-    <div><b>Fill the testing gaps</b><span>Slide 6: tune review classification to about 95%, then label a new test set of about 140 reviews; slide 5: add "Ask the data" questions that weren't used during development</span></div>
+    <div><b>Fill the testing gaps</b><span>Slide 6: tune the AI's review categorization to about 95% accuracy, then label a new test set of about 140 reviews; slide 5: add data questions for the AI's SQL answers that weren't used during development</span></div>
     <div><b>Investigate more than states</b><span>The 4 hypotheses on slide 3 are fixed; extend to any "why" question: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
   </div>
 </div></section>
