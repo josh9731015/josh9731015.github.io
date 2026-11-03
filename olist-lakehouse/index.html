@@ -454,7 +454,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <tr><td><code>order_<wbr>id</code>、<code>customer_<wbr>id</code></td><td>串接用的代號：order_id 接訂單明細、評價；customer_id 接顧客</td></tr>
   <tr><td><code>order_<wbr>status</code></td><td>訂單狀態，分析只取「已送達」（delivered）</td></tr>
   <tr><td><code>order_<wbr>purchase_<wbr>timestamp</code></td><td>下單時間</td></tr>
-  <tr><td><code>order_<wbr>delivered_<wbr>carrier_<wbr>date</code></td><td>賣家把貨交給物流的時間</td></tr>
+  <tr><td><code>order_<wbr>delivered_<wbr>carrier_<wbr>date</code></td><td>賣家出貨的時間（貨交給物流公司）</td></tr>
   <tr><td><code>order_<wbr>delivered_<wbr>customer_<wbr>date</code></td><td>實際送達顧客的時間</td></tr>
   <tr><td><code>order_<wbr>estimated_<wbr>delivery_<wbr>date</code></td><td>下單時告訴顧客的預計送達日</td></tr>
   <tr class="file"><td colspan="2">order_items</td></tr>
@@ -463,7 +463,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <tr class="file"><td colspan="2">order_reviews</td></tr>
   <tr><td><code>order_<wbr>id</code></td><td>串接用的代號：接訂單</td></tr>
   <tr><td><code>review_<wbr>score</code></td><td>顧客給的評分，1～5 分</td></tr>
-  <tr><td><code>review_<wbr>answer_<wbr>timestamp</code></td><td>評價回覆時間；silver 層依此標出每張訂單最後回覆的一則（<code>is_latest_for_order</code>），分析只取這一則</td></tr>
+  <tr><td><code>review_<wbr>answer_<wbr>timestamp</code></td><td>評價回覆時間；silver 層依此標出每張訂單最新的一則（<code>is_latest_for_order</code>），分析只取這一則</td></tr>
   <tr><td><code>review_<wbr>comment_<wbr>message</code></td><td>評價留言，附錄找抱怨慢的留言</td></tr>
   <tr class="file"><td colspan="2">customers</td></tr>
   <tr><td><code>customer_<wbr>id</code></td><td>串接用的代號：接訂單</td></tr>
@@ -480,7 +480,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <div class="flow">
   <div class="layer"><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另加「何時讀入、來自哪個檔案」兩個欄位</span><em>10 張表（含 1 張用預設設定讀評價檔的對照表）</em></div>
   <div class="arrow">→</div>
-  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料、翻譯品類</span><em>8 張表＋15 條品質規則</em></div>
+  <div class="layer"><b>silver 清洗層</b><span>修正讀取錯誤、刪除重複資料、標記可疑資料、翻譯品類</span><em>8 張表＋15 條品質規則</em></div>
   <div class="arrow">→</div>
   <div class="layer"><b>gold 分析層</b><span>依分析需求組成星狀結構（1 張事實表＋4 張維度表）</span><em>5 張表</em></div>
 </div>
@@ -489,7 +489,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <p>bronze 層的原則是「不修改內容」，之後清洗出錯時，隨時可以從這一層重來。讀進來後立刻比對每張表的列數與原始檔，發現兩個讀取問題：</p>
 <ul>
   <li><b>評價留言含換行，一則評價被切成好幾列：</b>用預設設定讀取（存成對照表 <code>bronze_reviews_naive</code>），評價表有 104,162 列，比原始檔的 99,224 則多出 4,938 列。加上「一筆資料可以跨好幾行」與「引號內的符號照原樣讀」兩項設定後，列數與原始檔一致。</li>
-  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上座標表。讀取時指定郵遞區號欄位以文字讀入，顧客、賣家、座標 3 張 bronze 表都重建，重建後所有郵遞區號都是 5 碼。</li>
+  <li><b>郵遞區號開頭的 0 不見了：</b>系統把郵遞區號猜成數字，顧客表有 23,995 筆開頭的 0 被刪掉（例如 01310 變成 1310），會對不上郵遞區號的經緯度對照表。讀取時指定郵遞區號欄位以文字讀入，顧客、賣家、經緯度對照 3 張 bronze 表都重建，重建後所有郵遞區號都是 5 碼。</li>
 </ul>
 <details><summary>SQL：讀取原始檔（以評價表為例）</summary>
 <div class="sqltags"><span class="tag">read_files</span><span class="tag">multiLine／escape</span><span class="tag">_metadata 來源欄位</span></div>
@@ -506,13 +506,13 @@ FROM read_files('/Volumes/workspace/olist/raw/olist_order_reviews_dataset.csv',
 <p>建 silver 層前，先在 bronze 層數出每一種問題有幾列，再決定處理方式。可疑但可能是真實情況的資料（例如送達時間早於出貨時間）只加一個標記欄，不刪除，讓之後的分析自己決定要不要排除。</p>
 <table>
   <tr><th>清洗的表</th><th>發現的問題</th><th class="num">數量</th><th>處理方式</th></tr>
-  <tr><td><code>silver_order_reviews</code></td><td>同一張訂單有多則評價（547 張訂單有 2 則以上評價，比一張一則多出的則數）</td><td class="num">551 則</td><td>保留全部，標出每張訂單「最後回覆的那一則」，分析時每張訂單只取這一則</td></tr>
-  <tr><td><code>silver_geolocation</code></td><td>座標表同一個郵遞區號、同一組經緯度重複出現</td><td class="num">280,009 列</td><td>重複的只留一筆，再刪除巴西國境外的 27 筆，最後每個郵遞區號取平均座標（1,000,163 列 → 19,011 個郵遞區號）</td></tr>
+  <tr><td><code>silver_order_reviews</code></td><td>同一張訂單有多則評價（547 張訂單有 2 則以上評價，比一張一則多出的則數）</td><td class="num">551 則</td><td>保留全部，標出每張訂單「最新的那一則」，分析時每張訂單只取這一則</td></tr>
+  <tr><td><code>silver_geolocation</code></td><td>經緯度對照表同一個郵遞區號、同一組經緯度重複出現</td><td class="num">280,009 列</td><td>重複的只留一筆，再刪除巴西國境外的 27 筆，最後每個郵遞區號取平均座標（1,000,163 列 → 19,011 個郵遞區號）</td></tr>
   <tr><td><code>silver_products</code></td><td>商品沒有品類</td><td class="num">610 個</td><td>品類填「unknown」；有對照的品類翻成英文（13 個商品的品類沒有對照，保留葡萄牙文）</td></tr>
   <tr><td><code>silver_orders</code></td><td>狀態是「已送達」卻沒有送達日</td><td class="num">8 張</td><td>加標記欄；配送分析排除</td></tr>
-  <tr><td><code>silver_orders</code></td><td>送達時間早於交給物流的時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
+  <tr><td><code>silver_orders</code></td><td>送達時間早於出貨時間</td><td class="num">23 張</td><td>加標記欄，不刪除</td></tr>
 </table>
-<p class="howto">座標表的重複列中，261,831 列連城市寫法等所有欄位都相同。數量是 Databricks 的查詢結果，並與本機用 Python 讀原始檔算出的數字逐項核對一致。</p>
+<p class="howto">經緯度對照表的重複列中，261,831 列連城市寫法等所有欄位都相同。數量是 Databricks 的查詢結果，並與本機用 Python 讀原始檔算出的數字逐項核對一致。</p>
 <details><summary>SQL：清洗規則怎麼寫（摘錄訂單、商品、評價 3 張表）</summary>
 <div class="sqltags"><span class="tag">標記欄</span><span class="tag">COALESCE</span><span class="tag">ROW_NUMBER 視窗函數</span></div>
 <pre><code>-- 訂單：一列都不刪，可疑的加標記欄
@@ -522,7 +522,7 @@ SELECT order_id, customer_id, order_status,
   order_delivered_customer_date, order_estimated_delivery_date,
   -- 已送達卻沒有送達日
   (order_status = 'delivered' AND order_delivered_customer_date IS NULL) AS flag_delivered_no_date,
-  -- 送達早於交給物流（任一日期是空值時記為 false）
+  -- 送達早於出貨（任一日期是空值時記為 false）
   COALESCE(order_delivered_customer_date &lt; order_delivered_carrier_date, false) AS flag_date_anomaly
 FROM workspace.olist.bronze_orders;
 
@@ -535,7 +535,7 @@ FROM workspace.olist.bronze_products AS p
 LEFT JOIN workspace.olist.bronze_category_translation AS t
   ON p.product_category_name = t.product_category_name;
 
--- 評價：一列都不刪，每張訂單標出最後回覆的那一則
+-- 評價：一列都不刪，每張訂單標出最新的那一則
 CREATE OR REPLACE TABLE workspace.olist.silver_order_reviews AS
 SELECT review_id, order_id, review_score, review_comment_message, review_answer_timestamp,
   -- 同一張訂單依回覆時間排序，最新的一則為 true
@@ -609,13 +609,13 @@ LIMIT 5;</code></pre>
 <p>品質規則寫成一個 VIEW（存起來的查詢，名稱 <code>silver_quality_checks</code>），每次資料更新後只要執行一行查詢，15 條規則就會全部重跑一次。規則檢查的都是 silver 層的表。規則依常見的四個面向分類：</p>
 <table>
   <tr><th>面向</th><th>例子</th><th class="num">規則數</th></tr>
-  <tr><td>唯一性：該唯一的代號有沒有重複</td><td>訂單編號不重複；每張有評價的訂單剛好一則「最後回覆」</td><td class="num">4</td></tr>
+  <tr><td>唯一性：該唯一的代號有沒有重複</td><td>訂單編號不重複；每張有評價的訂單剛好一則「最新評價」</td><td class="num">4</td></tr>
   <tr><td>完整性：必填欄位有沒有空值</td><td>每張訂單都有顧客代號</td><td class="num">3</td></tr>
   <tr><td>有效性：值是否在合理範圍</td><td>評分介於 1～5；價格大於 0</td><td class="num">3</td></tr>
   <tr><td>一致性：表與表對不對得上</td><td>訂單明細裡的商品都存在商品表</td><td class="num">5</td></tr>
   <tr class="total"><td>合計</td><td></td><td class="num">15</td></tr>
 </table>
-<p>規則分兩級：11 條是 <b>ERROR</b>（錯誤），一列都不能違反；4 條是 <b>WARN</b>（警告），對應已知、目前不修的問題，例如上一節的 23 張「送達早於交貨」，只要筆數沒有比現在多就算通過，用來發現問題是否變嚴重。目前 15 條全部通過。</p>
+<p>規則分兩級：11 條是 <b>ERROR</b>（錯誤），一列都不能違反；4 條是 <b>WARN</b>（警告），對應已知、目前不修的問題，例如上一節的 23 張「送達早於出貨」，只要筆數沒有比現在多就算通過，用來發現問題是否變嚴重。目前 15 條全部通過。</p>
 <p>WARN 中有一條是「付款總額與商品＋運費不符（差超過 1 雷亞爾）」（比對 <code>silver_order_payments</code> 與 <code>silver_order_items</code>），共 249 張訂單，其中 232 張是付款多於商品＋運費。這 232 張有 98.7% 選擇分期付款（期數大於 1），金額相符的訂單用分期付款的只有 51.4%，多付的部分可能是分期利息，但資料無法證實；另外 17 張付款少於商品＋運費，原因不明。因此兩者都列為已知問題、不修改金額。</p>
 
 <h3>寫入限制：哪些規則會在寫入時阻擋不合規的資料</h3>
@@ -626,8 +626,8 @@ LIMIT 5;</code></pre>
   <tr><td>CHECK 條件（評分至少 3）</td><td><code>silver_order_reviews</code></td><td>對已有 1、2 分評價的表加上這條規則</td><td>加不上去：系統會先檢查現有資料，14,575 列違反</td></tr>
   <tr><td>PRIMARY KEY 主鍵（宣告訂單編號不可重複）</td><td><code>silver_orders</code></td><td>寫入 2 筆相同編號的測試訂單</td><td>沒有被擋，2 筆都寫入；Databricks 的主鍵只是說明用的標示，寫入時不會檢查編號是否重複。品質 VIEW 的唯一性規則因此顯示 FAIL，測試資料隨後刪除</td></tr>
 </table>
-<p>因此「不准重複」不能靠主鍵，要在寫入時處理：新資料用 <code>MERGE</code>（合併寫入）指令寫入，同一張訂單已存在就更新、不存在才新增。測試時也發現，如果同一批新資料裡同一張新訂單出現兩次，<code>MERGE</code> 會新增兩列，所以寫入前要先在新資料裡去重。</p>
-<details><summary>SQL：先去重再 MERGE</summary>
+<p>因此「不准重複」不能靠主鍵，要在寫入時處理：新資料用 <code>MERGE</code>（合併寫入）指令寫入，同一張訂單已存在就更新、不存在才新增。測試時也發現，如果同一批新資料裡同一張新訂單出現兩次，<code>MERGE</code> 會新增兩列，所以寫入前要先刪除新資料裡的重複列。</p>
+<details><summary>SQL：先刪除重複再 MERGE</summary>
 <div class="sqltags"><span class="tag">MERGE INTO</span><span class="tag">QUALIFY ROW_NUMBER</span></div>
 <pre><code>MERGE INTO workspace.olist.silver_orders AS t
 USING (
@@ -648,7 +648,7 @@ WHEN NOT MATCHED THEN INSERT (order_id, customer_id, order_status)
 
 <details class="sec" open>
 <summary><h2>分析：配送延遲會不會拉低評論分數？</h2></summary>
-<p>分析對象是狀態為「已送達」且有送達日的 96,470 張訂單（已送達 96,478 張，扣掉 8 張沒有送達日），其中有評價的 95,824 張（另 646 張沒有評價；同一張訂單有多則評價時只取最後回覆的一則）。定義：</p>
+<p>分析對象是狀態為「已送達」且有送達日的 96,470 張訂單（已送達 96,478 張，扣掉 8 張沒有送達日），其中有評價的 95,824 張（另 646 張沒有評價；同一張訂單有多則評價時只取最新的一則）。定義：</p>
 <ul>
   <li><b>晚到天數</b>＝實際送達日 − 預計送達日（只比日期，不比時間；0 或負數＝準時）</li>
   <li><b>平均分數</b>＝該組評分加總 ÷ 該組訂單數；<b>1～2 星比例</b>＝給 1 或 2 星的訂單 ÷ 該組訂單數</li>
@@ -828,7 +828,7 @@ ORDER BY wait_bucket;</code></pre>
   <tr><th>可能的解釋</th><th>如果成立，資料應該看到</th><th>結果</th></tr>
   <tr><td>送達天數長的多是大件、重的商品，運送中較易損壞</td><td>只看輕的商品，分數不再隨等待天數下降</td><td>不成立：總重 500 克以下的訂單一樣從 4.44 降到 3.79</td></tr>
   <tr><td>多件商品分批送達，顧客不滿意</td><td>只看單件訂單，分數不再下降</td><td>不成立：單件訂單一樣從 4.48 降到 3.68</td></tr>
-  <tr><td>出貨慢的賣家整體服務較差</td><td>只看賣家 2 天內就交給物流的訂單，分數不再下降</td><td>不成立：一樣從 4.43 降到 3.76</td></tr>
+  <tr><td>出貨慢的賣家整體服務較差</td><td>只看賣家 2 天內就出貨的訂單，分數不再下降</td><td>不成立：一樣從 4.43 降到 3.76</td></tr>
   <tr class="hi"><td>預計送達日給得很寬，顧客的實際期待是「平常幾天會到」</td><td>承諾天數明顯長於實際天數；準時但送達天數長的顧客仍抱怨慢</td><td>資料支持，但無法直接證實（見下方）</td></tr>
 </table>
 <table>
@@ -836,7 +836,7 @@ ORDER BY wait_bucket;</code></pre>
   <tr><td>全部（89,443 張）</td><td class="num">4.41</td><td class="num">4.31</td><td class="num">4.16</td><td class="num">3.94</td><td class="num">3.62</td></tr>
   <tr><td>單件訂單（80,407 張）</td><td class="num">4.48</td><td class="num">4.38</td><td class="num">4.23</td><td class="num">3.99</td><td class="num">3.68</td></tr>
   <tr><td>總重 500 克以下（36,134 張）</td><td class="num">4.44</td><td class="num">4.33</td><td class="num">4.19</td><td class="num">3.93</td><td class="num">3.79</td></tr>
-  <tr><td>賣家 2 天內交給物流（49,594 張）</td><td class="num">4.43</td><td class="num">4.34</td><td class="num">4.21</td><td class="num">3.95</td><td class="num">3.76</td></tr>
+  <tr><td>賣家 2 天內出貨（49,594 張）</td><td class="num">4.43</td><td class="num">4.34</td><td class="num">4.21</td><td class="num">3.95</td><td class="num">3.76</td></tr>
 </table>
 <p class="howto">表中數字為平均分數。總重是訂單內商品重量加總；有 16 張訂單的商品都缺少重量，無法計算總重，不列入「總重 500 克以下」；其他訂單的每件商品都有重量。</p>
 <table>
@@ -899,7 +899,7 @@ groups AS (                        -- 同一張訂單可以同時屬於好幾組
   SELECT '全部' AS grp, * FROM ontime
   UNION ALL SELECT '單件訂單',          * FROM ontime WHERE n_items = 1
   UNION ALL SELECT '總重 500 克以下',   * FROM ontime WHERE total_weight_g &lt;= 500
-  UNION ALL SELECT '賣家 2 天內交貨',   * FROM ontime WHERE seller_days &lt;= 2
+  UNION ALL SELECT '賣家 2 天內出貨',   * FROM ontime WHERE seller_days &lt;= 2
   UNION ALL SELECT '多賣家訂單',        * FROM ontime WHERE n_sellers &gt; 1
 )
 SELECT grp, COUNT(*) AS orders,
@@ -967,7 +967,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>電商資料湖倉與配送延遲分析</h1>
-  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可回溯版本的分析資料庫），發現<b>配送晚到會明顯拉低顧客評分</b></p>
+  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可查回舊版本的分析資料庫），發現<b>配送晚到會明顯拉低顧客評分</b></p>
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構（原始→清洗→分析）</span><span>資料品質規則</span></div>
   <div class="roles">
     <div><b>62.42% vs 9.27%</b><span>晚到 vs 準時訂單給 1～2 星的比例</span></div>
@@ -979,18 +979,18 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>資料湖倉架構與讀取檢查</h2>
-  <span class="sub">用 Delta Lake（可回溯版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
+  <span class="sub">用 Delta Lake（可查回舊版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張原始評價表，用來核對讀取結果</em></div>
     <div class="ar">→</div>
-    <div><b>silver 清洗層</b><span>修正讀取錯誤、去重、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
+    <div><b>silver 清洗層</b><span>修正讀取錯誤、刪除重複資料、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
     <div class="ar">→</div>
     <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張對照表（星狀結構）</span><em>5 張表</em></div>
   </div>
   <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
     <div><b>評價留言含換行，一則評價被拆成多列</b><span>評價表變成 104,162 列，比原始檔 99,224 則多出 4,938 列</span><em>做法：加上「一筆資料可跨行」的讀取設定，列數與原始檔一致</em></div>
-    <div><b>郵遞區號開頭的 0 被刪除</b><span>系統把郵遞區號當成數字，23,995 筆被改動（例：01310 變 1310），會對不上座標表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
+    <div><b>郵遞區號開頭的 0 被刪除</b><span>系統把郵遞區號當成數字，23,995 筆被改動（例：01310 變 1310），會對不上郵遞區號的經緯度對照表</span><em>做法：郵遞區號改用文字讀入，3 張表重建，全部恢復成 5 碼</em></div>
   </div>
 </div></section>
 
@@ -1007,13 +1007,13 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
         <tr><th>一致性</th><td>例：訂單明細的商品都存在商品表</td><td class="n">5 條</td></tr>
       </table>
       <p><b>ERROR 級（11 條）：</b>一列都不能違反，否則算失敗</p>
-      <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張「送達早於交給物流」），只監控筆數是否增加</p>
+      <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張「送達早於出貨」），只監控筆數是否增加</p>
     </div>
     <div class="side">
       <p class="ct">寫入限制的測試結果</p>
       <p><b>CHECK（檢查條件）：</b>寫入 6 分的評價會被擋下；新增規則時也會先檢查舊資料</p>
       <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單，兩筆都成功；Databricks 的主鍵只是標示，不會擋重複</p>
-      <p><b>因應做法：</b>先在新資料裡去重，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
+      <p><b>因應做法：</b>先刪除新資料裡的重複列，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
     </div>
   </div>
 </div></section>
@@ -1031,7 +1031,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     <div class="side">
       <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但其中 62.42% 給 1～2 星，準時的只有 9.27%</p>
       <p><b>評分下降集中在第一週：</b>晚到 1～3 天即低 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
-      <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最後回覆的一則</p>
+      <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最新的一則</p>
     </div>
   </div>
 </div></section>
@@ -1094,7 +1094,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">確認低分是否來自商品品類，並找出送貨最慢的環節</span>
   <div class="nexts n2">
     <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
-    <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；用資料中的「交給物流日」把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
+    <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；資料有記錄賣家出貨的日期，可把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
   </div>
 </div></section>
 
@@ -1234,7 +1234,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Check whether low scores come from product categories, and find the slowest step in delivery</span>
   <div class="nexts n2">
     <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
-    <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; use the carrier hand-off date in the data to split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
+    <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; the data records when the seller shipped, so split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
   </div>
 </div></section>
 </template>

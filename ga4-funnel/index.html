@@ -380,7 +380,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <p class="meta">余家丞 ｜ Google 官方 GA4 電商範例資料 ｜ BigQuery SQL、Claude Code</p>
 </header>
 
-<p>本專案以 SQL 回答電商常見的問題：「<b>網站訪客在購買流程的哪一步流失最多？</b>」購買流程分成「看商品 → 加入購物車 → 開始結帳 → 購買」四步，每往下一步人數就變少，形狀像漏斗，因此稱為轉換漏斗。資料是 Google 官方周邊商品網路商店的網站行為紀錄，由 Google 的網站分析工具 GA4（Google Analytics 4）記錄。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，分析範圍與頁面呈現由本人決定，並逐段檢視每個查詢的邏輯與中間結果。</p>
+<p>本專案以 SQL 回答電商常見的問題：「<b>網站訪客在購買流程的哪一步流失最多？</b>」購買流程分成「看商品 → 加入購物車 → 開始結帳 → 購買」四步（加入購物車以下簡稱「加購」），每往下一步人數就變少，形狀像漏斗，因此稱為轉換漏斗。資料是 Google 官方周邊商品網路商店的網站行為紀錄，由 Google 的網站分析工具 GA4（Google Analytics 4）記錄。本專案以 AI 協作方式進行：SQL 由 Claude Code 協助撰寫，分析範圍與頁面呈現由本人決定，並逐段檢視每個查詢的邏輯與中間結果。</p>
 
 <div class="caveat">
   <p><b>先說明資料的限制：</b>為保護隱私，Google 把這份資料的部分內容改成替代值（例如「(not set)」），官方也說明資料前後可能對不上，因此人數與金額<b>不能當成真實業績</b>；期間涵蓋黑色星期五與聖誕節，不代表平常月份。本頁的重點是示範「如何用 SQL 建立漏斗，並在過程中檢查資料品質」。</p>
@@ -455,7 +455,7 @@ ORDER BY event_date;</code></pre>
 <h3>2. 15.9% 的購買事件沒有訂單編號 → 計算營收時排除，計算人數時保留</h3>
 <p>全部 5,692 筆購買事件中，訂單編號為 <code>(not set)</code> 的有 883 筆、空值（NULL）的有 23 筆，合計 906 筆（15.9%）。其中 456 筆仍有大於 0 的購買金額，編號被替代值取代不代表沒有購買；漏斗計算人數用不到訂單編號，因此保留這些事件；計算營收時則需要依訂單編號合併重複紀錄，才排除這些事件（見下一項），因此下一項的營收是下限。若漏斗也排除這些事件，購買人數會從 2,755 變成 2,489，「開始結帳→購買」從 57.4% 變成 51.8%。</p>
 
-<h3>3. 同一張訂單被記錄多次 → 計算營收前要去重（重複的紀錄只留一筆）</h3>
+<h3>3. 同一張訂單被記錄多次 → 計算營收前要刪除重複紀錄（只留一筆）</h3>
 <table>
   <tr><th>訂單編號的情況（全部 92 天，不含上一項的 906 筆）</th><th class="num">訂單數（使用者＋編號）</th><th class="num">被記錄的次數</th><th class="num">多出的重複紀錄</th></tr>
   <tr><td>只出現一次</td><td class="num">4,125</td><td class="num">4,125</td><td class="num">0</td></tr>
@@ -472,10 +472,10 @@ ORDER BY event_date;</code></pre>
   <tr class="hi"><td>70837463…</td><td>2020-11-23 20:40:09.606</td><td class="num">13</td><td>A 重複送出（多出的 1 筆）</td></tr>
   <tr><td>86949711…</td><td>2020-12-18 15:28:10.972</td><td class="num">27</td><td>B 的另一張訂單</td></tr>
 </table>
-<p>因此去重時以「使用者＋訂單編號」為單位：刪掉 A 重複的那一筆，但保留 B 的訂單。</p>
+<p>因此刪除重複時以「使用者＋訂單編號」為單位：刪掉 A 重複的那一筆，但保留 B 的訂單。</p>
 </details>
 <p>同一使用者、同一訂單編號的重複紀錄只保留一筆（同一使用者重複送出的 314 組紀錄〔表中 311 組，加上「不同使用者出現同一個編號」中的 3 組〕，每組各筆金額都相同，保留哪一筆不影響營收），刪掉多出的 320 筆後剩 4,466 筆，營收從 330,348 美元變成 308,830 美元；不處理會多算 7.0%（330,348 ÷ 308,830 − 1）。這 15 個編號中，每個編號的兩位使用者購買日期與金額都不同，較可能是替代值造成的編號重複，因此視為不同訂單、不合併。漏斗計算的是人數，不受這一項影響。</p>
-<details><summary>SQL：以「使用者＋訂單編號」去重</summary>
+<details><summary>SQL：以「使用者＋訂單編號」刪除重複</summary>
 <div class="sqltags"><span class="tag">視窗函數 ROW_NUMBER</span><span class="tag">QUALIFY</span><span class="tag">CTE</span></div>
 <pre><code>WITH p AS (
   SELECT ecommerce.transaction_id AS tx, user_pseudo_id, event_timestamp,
@@ -734,7 +734,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <div class="roles">
     <div><b>26.6%</b><span>看過商品的人中，之後加入購物車的比例，是三個轉換中最低</span></div>
     <div><b>約 90%</b><span>依篩選欄位分區或叢集後，查詢處理量（＝費用）減少的幅度</span></div>
-    <div><b>6.11%</b><span>依序完成看商品→加購→結帳→購買的比例（2,755 ÷ 45,107）</span></div>
+    <div><b>6.11%</b><span>依序完成看商品→加入購物車（加購）→結帳→購買的比例（2,755 ÷ 45,107）</span></div>
   </div>
   <p class="foot">資料：Google 公開的 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-01～2021-01-31，分析採 11-26 起的 67 天，原因見第 3 頁）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
 </div></section>
@@ -834,8 +834,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <div class="ax"><span></span><div><s style="left:0">0</s><s style="left:33.3%">50</s><s style="left:66.7%">100</s><s style="left:100%">150 MB</s></div></div>
     </div>
     <div class="side">
-      <p><b>叢集要執行後才看得到：</b>查詢 B 執行前報價仍是 138.05 MB，實際只處理 13.76 MB</p>
-      <p><b>習慣：</b>每次先報價（dry run）再執行，並設定單次處理上限 2 GB，避免一次掃描整個資料集</p>
+      <p><b>叢集要執行後才看得到：</b>查詢 B 執行前預估仍是 138.05 MB，實際只處理 13.76 MB</p>
+      <p><b>習慣：</b>每次先預估處理量（dry run）再執行，並設定單次處理上限 2 GB，避免一次掃描整個資料集</p>
     </div>
   </div>
 </div></section>
