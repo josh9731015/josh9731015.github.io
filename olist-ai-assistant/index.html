@@ -564,7 +564,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <span class="sub">用這個助理分析差評：最常見的抱怨是「缺件或寄錯」，占 28.2%</span>
   <div class="two">
     <div class="hb" aria-label="各抱怨類別占差評的比例">
-      <p class="ct">隨機 500 則有留言的 1～2 星評論，各抱怨類別占比（可複選）</p>
+      <p class="ct">「評論分類」功能把隨機 500 則有留言的 1～2 星評論歸到 10 類：各類占比（可複選）</p>
       <div class="r hi"><span>缺件或寄錯</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>客服問題</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>商品品質問題</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -579,8 +579,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">長條長度＝占 500 則差評的比例</p>
     </div>
     <div class="side">
-      <p><b>怎麼得到的：</b>用「評論分類」功能，讓 AI 讀隨機 500 則差評，歸到 10 個類別</p>
-      <p><b>可信嗎：</b>只抽 500 則，28.2% 的可能範圍約 24%～32%；分類準確率 88%（第 5 頁），占比是估計值</p>
+      <p><b>只抽 500 則對排名的影響：</b>只看抽樣誤差，第一名可信，第 2～5 名分不出先後。「缺件或寄錯」比第二名「客服問題」多 7.6 個百分點；算進抽樣誤差（95% 信賴區間），差距在 2.5～12.7 個百分點之間，都大於 0，所以換一批 500 則，它仍會排第一。第 2 名（20.6%）和第 5 名（17.8%）只差 2.8 個百分點，誤差範圍 −2.0～7.6 個百分點，名次可能互換，所以這四類視為同一級</p>
+      <p><b>沒算進去的誤差：</b>AI 分類準確率 88%（第 5 頁），分錯的評論也會讓占比偏差；第一名領先的 7.6 個百分點能否抵過分類錯誤，還沒有驗證</p>
       <p class="note">「送貨太慢」「沒收到貨」：AI 只判斷留言有沒有抱怨送貨，歸哪一類由程式比對實際送達日決定</p>
     </div>
   </div>
@@ -588,10 +588,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>應用實例：多件訂單與缺件</h2>
-  <span class="sub">推測缺件多半發生在一次買多件的訂單：多件訂單差評率高 2～4 倍，相似差評都在講只收到一部分（還不是證明）</span>
+  <span class="sub">推測一次買多件的訂單比較容易缺件：多件訂單的差評率是只買 1 件的 2～4 倍，抱怨只收到一部分的差評也幾乎都來自多件訂單（還不是證明）</span>
   <div class="two">
     <div class="vb" aria-label="三種訂單的差評率">
-      <p class="ct">跡象①：多件訂單的差評率是只買 1 件的 2～4 倍（1～2 星占評論的比例，全部約 9.8 萬則評論）</p>
+      <p class="ct">三種訂單的差評率（1～2 星占評論的比例，全部約 9.8 萬則評論）</p>
       <div class="cols">
         <div><em class="area"><b>12.71%</b><i style="height:26.9%"></i></em><span>只買 1 件<small>88,227 則</small></span></div>
         <div><em class="area"><b>24.72%</b><i style="height:52.3%"></i></em><span>多件、同一賣家<small>8,426 則</small></span></div>
@@ -599,8 +599,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>跡象① 怎麼得到的：追問「問資料」</b>，AI 自己寫 SQL 算出這 3 組；回答裡的數字都在查詢結果裡找得到（第 2 頁的核對）</p>
-      <p><b>跡象②：追問「找相關評論」</b>：「顧客買了好幾件商品，卻只收到其中一部分？」→ 從 10,784 則有留言的差評中找出最相近的 10 則，AI 判斷 10 則都在講這件事，例：</p>
+      <p><b>跡象①：多件訂單的差評率是只買 1 件的 2～4 倍</b>：只買 1 件 12.71%；多件、同一賣家 24.72%（1.9 倍）；多件、多個賣家 47.31%（3.7 倍）（用「問資料」查出）</p>
+      <p><b>跡象②：抱怨「只收到一部分」的差評，10 則有 9 則來自多件訂單</b>（全部評論中多件訂單只占 9.9%）：用「找相關評論」從 10,784 則有留言的差評中找出最相近的 10 則，AI 判斷 10 則都在抱怨這件事，例：</p>
       <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞，我需要收到另一盞。</span></blockquote>
       <p class="note">還不是證明：多件訂單的差評也可能來自其他原因；是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
     </div>
@@ -726,7 +726,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <span class="sub">Using the assistant on negative reviews: the most common complaint is "missing or wrong items", at 28.2%</span>
   <div class="two">
     <div class="hb" aria-label="Share of negative reviews by complaint category">
-      <p class="ct">500 random 1–2 star reviews with comments: share by complaint category (multiple allowed)</p>
+      <p class="ct">"Review classification" sorted 500 random 1–2 star reviews with comments into 10 categories: share by category (multiple allowed)</p>
       <div class="r hi"><span>Missing or wrong items</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>Customer service</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>Product quality</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -741,8 +741,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">Bar length = share of the 500 negative reviews</p>
     </div>
     <div class="side">
-      <p><b>How it was obtained:</b> the "Review classification" feature had the AI read 500 random negative reviews and sort them into 10 categories</p>
-      <p><b>Is it reliable?</b> With 500 reviews, the likely range behind 28.2% is ~24–32%; classification accuracy is 88% (slide 5), so the shares are estimates</p>
+      <p><b>Effect of sampling only 500 reviews on the ranking:</b> Counting sampling error only, the top spot is reliable, while ranks 2–5 are too close to call. "Missing or wrong items" leads second-place "Customer service" by 7.6 percentage points; with sampling error included (95% confidence interval), the gap is 2.5–12.7 points, always above 0, so another 500 random reviews would still put it first. Rank 2 (20.6%) and rank 5 (17.8%) differ by only 2.8 points, with an error range of −2.0 to 7.6 points, so their order could flip and these four categories are treated as a tie</p>
+      <p><b>Error not counted:</b> AI classification accuracy is 88% (slide 5), and misclassified reviews also bias the shares; whether the 7.6-point lead survives classification errors has not been verified</p>
       <p class="note">"Late delivery" and "Not received": the AI only judges whether the comment complains about delivery; code picks the category by comparing actual delivery dates</p>
     </div>
   </div>
@@ -750,10 +750,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Application: multi-item orders and missing items</h2>
-  <span class="sub">Hypothesis: missing items mostly happen in multi-item orders: their negative-review rate is 2–4× higher, and similar reviews all describe receiving only part of the order (not yet proof)</span>
+  <span class="sub">Hypothesis: orders with several items are more prone to missing items. Their negative-review rate is 2–4× that of single-item orders, and nearly all reviews complaining of receiving only part of the order come from them (not yet proof)</span>
   <div class="two">
     <div class="vb" aria-label="Negative-review rate for three order types">
-      <p class="ct">Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders (share of reviews with 1–2 stars, about 98,000 reviews in total)</p>
+      <p class="ct">Negative-review rate for three order types (share of reviews with 1–2 stars, about 98,000 reviews in total)</p>
       <div class="cols">
         <div><em class="area"><b>12.71%</b><i style="height:26.9%"></i></em><span>Single item<small>88,227 reviews</small></span></div>
         <div><em class="area"><b>24.72%</b><i style="height:52.3%"></i></em><span>Several items, one seller<small>8,426 reviews</small></span></div>
@@ -761,8 +761,8 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>How sign 1 was obtained: follow-up via "Ask the data"</b>: the AI wrote its own SQL to calculate the 3 groups, and every number in its answer appears in the query results (the check on slide 2)</p>
-      <p><b>Sign 2: follow-up via "Find relevant reviews"</b>: "Customers bought several items but received only some of them?" → it found the 10 closest matches among 10,784 negative reviews with comments, and the AI judged all 10 to be about this, e.g.:</p>
+      <p><b>Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders</b>: single item 12.71%; one seller 24.72% (1.9×); several sellers 47.31% (3.7×) (via "Ask the data")</p>
+      <p><b>Sign 2: of 10 reviews complaining of receiving only part of the order, 9 come from orders with several items</b> (such orders are only 9.9% of all reviews): "Find relevant reviews" pulled the 10 closest of 10,784 negative reviews with comments; the AI judged all 10 on topic, e.g.:</p>
       <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>I bought two pendant lamps and paid for two, but received only 1. I need to receive the other one.</span></blockquote>
       <p class="note">Not yet proof: negative reviews on multi-item orders may have other causes; telling split shipments from missing items needs per-package shipping and delivery records (not in the public dataset)</p>
     </div>

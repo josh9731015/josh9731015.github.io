@@ -937,10 +937,10 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <table>
   <tr><th>項目</th><th class="num">數值</th></tr>
   <tr><td>假設的 1～2 星比例變化（實際效果要實驗才知道）</td><td class="num">62.4% → 52.4%</td></tr>
-  <tr><td>每組需要的晚到訂單（顯著水準 5%、檢定力 80%）</td><td class="num">380 張</td></tr>
+  <tr><td>每組需要的晚到訂單（顯著水準 5%、檢定力 80%）</td><td class="num">383 張</td></tr>
   <tr><td>最近 12 個月（2017-09～2018-08）平均每月晚到訂單</td><td class="num">470 張（各月 71～1,296 張）</td></tr>
-  <tr><td>兩組合計需要的晚到訂單</td><td class="num">760 張</td></tr>
-  <tr><td>收集完所需時間（760 ÷ 470）</td><td class="num">約 1.6 個月</td></tr>
+  <tr><td>兩組合計需要的晚到訂單</td><td class="num">766 張</td></tr>
+  <tr><td>收集完所需時間（766 ÷ 470）</td><td class="num">約 1.6 個月</td></tr>
 </table>
 </details>
 
@@ -1084,7 +1084,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">優先處理即將晚到的訂單並用隨機實驗驗證效果；物流指標加入實際送達天數</span>
   <div class="nexts n3">
     <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較給 1～2 星的比例。實驗規模：若要能偵測 10 個百分點的差異（62.4%→52.4%，實際效果待實驗測得），共需約 760 張晚到訂單，約 2 個月可收齊</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較給 1～2 星的比例。實驗規模：假設提前處理能讓 1～2 星比例從 62.4% 降到 52.4%（假設值，實際效果由實驗測得），要在統計上確認這個差異，兩組共需 766 張晚到訂單，收集這些訂單約需 2 個月</span></div>
     <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
@@ -1224,7 +1224,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Prioritize orders about to run late and test the effect with a randomized experiment; add actual delivery time to logistics metrics</span>
   <div class="nexts n3">
     <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Experiment size: to detect a 10-point difference (62.4% → 52.4%; the real effect is what the test measures), it needs about 760 late orders in total, about 2 months to collect</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Experiment size: assuming acting early cuts the 1–2 star share from 62.4% to 52.4% (an assumption; the real effect is what the test measures), confirming that difference statistically needs 766 late orders across both groups, which take about 2 months to collect</span></div>
     <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>
@@ -1765,10 +1765,10 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <table>
   <tr><th>Item</th><th class="num">Value</th></tr>
   <tr><td>Assumed change in 1–2 star share (the real effect is what the test measures)</td><td class="num">62.4% → 52.4%</td></tr>
-  <tr><td>Late orders needed per group (5% significance level, 80% power)</td><td class="num">380</td></tr>
+  <tr><td>Late orders needed per group (5% significance level, 80% power)</td><td class="num">383</td></tr>
   <tr><td>Average late orders per month, last 12 months (2017-09 to 2018-08)</td><td class="num">470 (71 to 1,296 by month)</td></tr>
-  <tr><td>Late orders needed for both groups</td><td class="num">760</td></tr>
-  <tr><td>Time to collect them (760 ÷ 470)</td><td class="num">about 1.6 months</td></tr>
+  <tr><td>Late orders needed for both groups</td><td class="num">766</td></tr>
+  <tr><td>Time to collect them (766 ÷ 470)</td><td class="num">about 1.6 months</td></tr>
 </table>
 </details>
 
