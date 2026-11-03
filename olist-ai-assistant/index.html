@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 資料助理</title>
-<meta name="description" content="余家丞的自學專案：用 Gemini API 做一個中文資料助理（AI 寫 SQL、評論分類、RAG、agent 調查），每個功能都有可重跑的自動評分，其中 3 個另用沒練過的新題目測試，AI 輸出的數字與引用由程式核對。">
+<meta name="description" content="余家丞的自學專案：用 Gemini API 做一個中文資料助理（AI 寫 SQL、評論分類、RAG、agent 調查），每個功能都有可重跑的自動評分，其中 3 個另用開發時沒拿來調整的測試集評分；問資料與調查的每個數字都要在查詢結果裡找得到，誇大的結論由程式加註更正。">
 <script>/* 預設顯示簡報（Josh 2026-11-02）；網址 ?view=report 才顯示報告。在這裡先加 class，避免載入時先閃一下報告 */
 if (new URLSearchParams(location.search).get('view') !== 'report') document.documentElement.classList.add('view-slides');</script>
 <style>
@@ -204,9 +204,14 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   #deck .shotrow { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.6em; align-items: center; flex: 1; min-height: 0; }
   #deck .imgbox { min-height: 0; height: 100%; display: flex; align-items: center; }
   #deck .imgbox img { width: 100%; max-height: 100%; object-fit: contain; object-position: top; border: 1px solid var(--line); border-radius: .5em; display: block; }
-  #deck .vpipe { display: flex; flex-direction: column; gap: .6em; }
+  #deck .vpipe { display: flex; flex-direction: column; gap: .5em; }
   #deck .vpipe .st { position: relative; border-radius: .5em; padding: .35em .8em; font-size: .92em; }
-  #deck .vpipe .st + .st::before { content: "↓"; position: absolute; top: -1.15em; left: 1.2em; color: var(--ink-3); font-size: .8em; }
+  #deck .vpipe .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4em; border: 1px dashed var(--ink-3); border-radius: .5em; padding: .4em; }  /* 第 3 頁：可用工具並列（AI 自己呼叫，沒有固定先後） */
+  #deck .vpipe .tools p { grid-column: 1 / -1; margin: 0; font-size: .8em; color: var(--ink-2); }
+  #deck .vpipe .tools .st { font-size: .85em; padding: .3em .5em; }
+  #deck .checks .when { font-style: normal; font-size: .72em; color: var(--ink-3); line-height: 1.2; }  /* 第 4 頁卡片小標：回答時／開發時 */
+  #deck .bars .b.miss em { font-style: normal; color: var(--neg); font-weight: 600; }
+  #deck .vpipe > * + .st::before { content: "↓"; position: absolute; top: -1.15em; left: 1.2em; color: var(--ink-3); font-size: .8em; }
   #deck .vpipe .st small { display: block; color: var(--ink-2); font-size: .85em; line-height: 1.4; }
   #deck .st.ai { background: var(--accent-soft); border: 2px solid var(--accent); }
   #deck .st.code { background: var(--card); border: 2px solid var(--ink-3); }
@@ -334,7 +339,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <p class="meta">余家丞 ｜ Olist 巴西電商公開資料 ｜ Python、Gemini API、DuckDB、Streamlit、Claude Code</p>
 </header>
 
-<p>本專案示範如何讓大型語言模型（LLM，像 ChatGPT、Gemini 這類能讀寫文字的 AI）做成的資料助理<b>輸出可以被驗證</b>：AI 寫出的數字和引用由程式核對，對不上的地方會標出來；每個功能都有可重跑的自動評分。營運主管用中文提問，系統有 4 個功能：</p>
+<p>本專案示範如何讓大型語言模型（LLM，像 ChatGPT、Gemini 這類能讀寫文字的 AI）做成的資料助理<b>輸出可以被驗證</b>：問資料與調查的每個數字都要在查詢結果裡找得到，找不到就標出，誇大的結論由程式加註更正；每個功能都有可重跑的自動評分。營運主管用中文提問，系統有 4 個功能：</p>
 <ul>
   <li><b>問資料：</b>AI 自己寫 SQL（查資料庫用的語言）查資料並回答</li>
   <li><b>評論分類：</b>把每則負評歸到固定的 10 個類別（例：送貨太慢、商品品質問題、跟描述不符）</li>
@@ -344,19 +349,19 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <p>重點不在資料分析的發現，而在 AI 工程：流程、評估、可靠性與成本。資料沿用 Olist 約 10 萬筆訂單（2016-09～2018-10，資料介紹見「<a href="../olist-lakehouse/">電商資料湖倉</a>」頁）。分工：需求、指標定義、驗收標準與驗收由本人決定；程式由 AI 寫程式工具 Claude Code 撰寫，本人審查並以使用者角度驗收。</p>
 
 <div class="caveat">
-  <p><b>先說明兩種題目：</b>「練習題」是開發時反覆拿來調整的題目，分數容易偏高；「新題目」是開發時沒拿來調整的題目，比較能代表真實水準。</p>
-  <p><b>限制：</b>每項只有 19～50 題（則），「調查」練習題、新題目各只有 1 題；題量小，誤差可達十幾個百分點以上（例：評論分類 22/25，真實準確率可能落在 70%～96%）；其他限制見「限制與下一步」。</p>
+  <p><b>先說明兩種題目：</b>「驗證集」是開發時反覆拿來調整的題目，分數容易偏高；「測試集」是開發時沒拿來調整的題目，比較能代表真實水準。</p>
+  <p><b>限制：</b>每項只有 19～50 題（則），「調查」驗證集、測試集各只有 1 題；題量小，誤差可達十幾個百分點以上（例：評論分類 22/25，真實準確率可能落在 70%～96%）；其他限制見「限制與下一步」。</p>
 </div>
 
 <div class="stats">
-  <div class="stat"><b>19/19</b><span>「問資料」練習題通過題數（沒有新題目，成績可能偏高）</span></div>
-  <div class="stat"><b>20/20</b><span>「找相關評論」新題目盲測，AI 判斷相不相關與本人一致的則數</span></div>
-  <div class="stat"><b>22/25</b><span>「評論分類」新題目盲測，與本人完全一致的則數（88%，未達 90% 門檻）</span></div>
-  <div class="stat"><b>4/4</b><span>「調查」最終版跑 4 次，17 項檢查全過的次數（新題目 2 次也全過）</span></div>
+  <div class="stat"><b>19/19</b><span>「問資料」驗證集通過題數（沒有測試集，成績可能偏高）</span></div>
+  <div class="stat"><b>20/20</b><span>「找相關評論」測試集盲測，AI 判斷相不相關與本人一致的則數</span></div>
+  <div class="stat"><b>22/25</b><span>「評論分類」測試集盲測，與本人完全一致的則數（88%，未達 90% 門檻）</span></div>
+  <div class="stat"><b>4/4</b><span>「調查」最終版跑 4 次，17 項檢查全過的次數（測試集 2 次也全過）</span></div>
 </div>
 
 <div class="tldr lead">
-  <p><b>結論：</b>可靠性來自分工：AI 只負責理解問題和寫出文字，數字、日期、規則判定、評論原文由程式產生或核對，對不上就標示出來。4 項成績中只有「評論分類」未達門檻；「問資料」沒有新題目，成績可能偏高。</p>
+  <p><b>結論：</b>可靠性來自分工：AI 只負責理解問題和寫出文字，數字、日期、規則判定、評論原文由程式產生或核對，對不上就標示出來。4 項成績中只有「評論分類」未達門檻；「問資料」沒有測試集，成績可能偏高。</p>
 </div>
 
 <details class="sec" open>
@@ -364,7 +369,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <ol>
   <li><b>先定義成功標準：</b>每個功能動手前先寫需求與驗收門檻；營收、準時、差評等指標的算法寫成一份「資料表說明」文件，AI 與人都照它計算。</li>
   <li><b>評估驅動開發（每次修改都自動重跑評分）：</b>每發現一種錯誤，就變成一條會自動重跑的檢查；修改後重跑，確認沒有退步。</li>
-  <li><b>換題盲測（防止只會背題目）：</b>開發時反覆使用的「練習題」分數會越調越高，因此另外保留開發時沒拿來調整的「新題目」量真實水準：評論分類、找相關評論的新題目由本人先判斷，判斷時看不到 AI 的答案（盲測）；「調查」的新題目是同一題型換一州，由程式評分，開發中也重跑過，只用來確認沒有退步，沒有依它的結果修改程式；「問資料」沒有新題目。標準答案不放進給 AI 的指示，並用程式自動掃描指示裡有沒有答案。</li>
+  <li><b>測試集盲測（防止只會背題目）：</b>開發時反覆使用的「驗證集」分數會越調越高，因此另外保留開發時沒拿來調整的「測試集」量真實水準：評論分類、找相關評論的測試集由本人先判斷，判斷時看不到 AI 的答案（盲測）；「調查」的測試集是同一題型換一州，由程式評分，開發中也重跑過，只用來確認沒有退步，沒有依它的結果修改程式；「問資料」沒有測試集。標準答案不放進給 AI 的指示，並用程式自動掃描指示裡有沒有答案。</li>
   <li><b>本人驗收：</b>評論分類的類別界線、評論相不相關由本人判斷（少數依本人定的規則自動套用），AI 的成績是跟本人的判斷比出來的；問資料、調查的標準答案是 Claude Code 寫的 SQL，由本人審查指標定義。</li>
   <li><b>獨立審查：</b>另開沒看過專案的 AI 審查者，只找「數字算錯」與「會讓使用者做錯決定的結論」，每項附 SQL 與查詢結果，核對後才修改；「調查」共 6 輪，問題從數字錯誤收斂到結論措辭才停止。</li>
   <li><b>以使用者角度試用：</b>本人以營運主管的角度實際操作網頁，找出「程式正確、但主管看不懂或會誤會」的問題，優先改成程式機制或固定測試題，不只靠提醒 AI 注意。</li>
@@ -393,19 +398,30 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <details class="sec">
 <summary><h2>評估方法與成績</h2></summary>
 <table class="eval">
-  <thead><tr><th>功能</th><th class="num">練習題</th><th class="num">新題目</th><th>評估什麼、怎麼評</th></tr></thead>
+  <thead><tr><th>功能</th><th class="num">驗證集</th><th class="num">測試集</th><th>評估什麼、怎麼評</th></tr></thead>
   <tbody>
-    <tr><td>問資料</td><td class="num">19/19 題</td><td class="num">—</td><td>17 題的標準答案用另一段 SQL 現算（由 Claude Code 另外撰寫、本人審查定義），數字要一致且有根據；2 題要回答「資料裡沒有」。19 題在開發中也被用來調整，沒另外保留新題目；給 AI 的指示經程式掃描、不含標準答案</td></tr>
-    <tr><td>找相關評論</td><td class="num">45/50 則</td><td class="num">20/20 則</td><td>只評「判斷評論相不相關」這一步，不含搜尋有沒有漏找；相關、不相關分開算抓對比例</td></tr>
-    <tr><td>評論分類</td><td class="num">27/30 則<span class="sub">舊版</span></td><td class="num">22/25 則</td><td>新題目：一則評論可以有多個類別，AI 的類別組合跟本人完全一致才算對；由程式判定的 3 類（送貨太慢、沒收到貨、訂單被取消或缺貨）不列入比對，分母仍是 25 則；新題目原有 30 則，其中 5 則被拿來補定義，只用其餘 25 則計分。練習題：舊版定義與不同模型的成績（中間又改過 3 版），本人判對錯（27 則判對中有 7 則由 Claude Code 依本人定的規則套用），現行版沒有重新驗收</td></tr>
-    <tr><td>調查</td><td class="num">4/4 次全過</td><td class="num">2/2 次全過</td><td>練習題「為什麼某些州差評多」每次跑 17 項檢查；新題目「為什麼 CE 州（Ceará）差評多」跑其中 6 項通用檢查（數字、根據、引用、判定、格式、呼叫上限），其餘 11 項只適用練習題（例：有沒有點名差評率最高的州）。「全過」看的是最終報告：4 次中 1 次初稿格式不符，被程式退回重寫一次後通過</td></tr>
+    <tr><td>問資料</td><td class="num">19/19 題</td><td class="num">—</td><td>17 題的標準答案用另一段 SQL 現算（由 Claude Code 另外撰寫、本人審查定義），數字要一致且有根據；2 題要回答「資料裡沒有」。19 題在開發中也被用來調整，沒另外保留測試集；給 AI 的指示經程式掃描、不含標準答案</td></tr>
+    <tr><td>找相關評論</td><td class="num">45/50 則</td><td class="num">20/20 則</td><td>只評「判斷評論相不相關」這一步，不含搜尋有沒有漏找；相關、不相關分開算抓對比例（TPR：相關的抓對比例；TNR：不相關的排除比例）</td></tr>
+    <tr><td>評論分類</td><td class="num">27/30 則<span class="sub">舊版</span></td><td class="num">22/25 則</td><td>測試集：一則評論可以有多個類別，AI 的類別組合跟本人完全一致才算對；由程式判定的 3 類（送貨太慢、沒收到貨、訂單被取消或缺貨）不列入比對，分母仍是 25 則；測試集原有 30 則，其中 5 則被拿來補定義，只用其餘 25 則計分。驗證集：舊版定義與不同模型的成績（中間又改過 3 版），本人判對錯（27 則判對中有 6 則由 Claude Code 依本人定的規則套用），現行版沒有重新驗收</td></tr>
+    <tr><td>調查</td><td class="num">4/4 次全過</td><td class="num">2/2 次全過</td><td>驗證集題目「為什麼某些州差評多」每次跑 17 項檢查；測試集題目「為什麼 CE 州（Ceará）差評多」跑其中 6 項通用檢查（數字、根據、引用、判定、格式、呼叫上限），其餘 11 項是針對驗證集題目寫的（例：有沒有點名差評率最高的州）。「全過」看的是最終報告：4 次中 1 次初稿格式不符，被程式退回重寫一次後通過</td></tr>
   </tbody>
 </table>
 <ul>
-  <li><b>找相關評論：</b>練習題相關的 34 則抓到 32 則（94%）、不相關的 16 則排除 13 則（81%），只到及格；新題目 2 題共 20 則（每題取搜尋結果前 10 則、未挑選；相關 10、不相關 10）全部判斷正確，達標。新門檻在跑新題目之前就定好，但它是看到練習題分數後才訂的：原本的門檻「50 則對 47 則」是 Claude Code 自訂、沒有依據，練習題沒過後，改照驗證 AI 評分器的常見做法，相關、不相關分開算抓對比例，兩者都 &gt; 90% 達標、相關 &gt; 80% 為最低線；不相關的及格線 ≥ 75% 由本人另訂。因此練習題的「及格」只能參考，新題目的「達標」才算數。</li>
-  <li><b>評論分類：</b>新題目 25 則，定義和模型一起更換前後都是 22/25，錯的題目換了 1 則，沒有進步（兩者一起換，分不出各自的效果）。其中 1 則在看過 AI 答案後更正了本人答案（當時畫面沒顯示評論日期），用原答案算是 21/25。</li>
-  <li><b>調查的穩定度：</b>調查的主流程每次都重新呼叫 AI。修改過程中多次失敗（引用被改字、判定抄錯、撞到呼叫上限），每種都改成程式處理或加上檢查後，最終版跑 4 次全部通過。評分程式本身也出過錯：曾把句子裡後一州的差評率算到前一州（報告本身正確），改正後重評練習題全部 50 筆紀錄，只有這類誤判 2 筆改判，並補上刻意造錯的測試，確認真的錯誤仍會被抓到。</li>
+  <li><b>找相關評論：</b>驗證集中相關的 34 則抓到 32 則（TPR 94%）、不相關的 16 則排除 13 則（TNR 81%），只到及格；測試集 2 題共 20 則（每題取搜尋結果前 10 則、未挑選；相關 10、不相關 10）全部判斷正確，達標（但只有 20 則，真實比例可能落在 84%～100%）。新門檻在跑測試集之前就定好，但它是看到驗證集分數後才訂的：原本的門檻「50 則對 47 則」是 Claude Code 自訂、沒有依據，驗證集沒過後，改照驗證 AI 評分器的常見做法，相關、不相關分開算抓對比例，兩者都 &gt; 90% 達標、相關 &gt; 80% 為最低線；不相關的及格線 ≥ 75% 由本人另訂。因此驗證集的「及格」只能參考，測試集的「達標」才算數。</li>
+  <li><b>評論分類：</b>測試集 25 則，定義和模型一起更換前後都是 22/25，錯的題目換了 1 則，沒有進步（兩者一起換，分不出各自的效果）。其中 1 則在看過 AI 答案後更正了本人答案（當時畫面沒顯示評論日期），用原答案算是 21/25。</li>
+  <li><b>調查的穩定度：</b>調查的主流程每次都重新呼叫 AI。修改過程中多次失敗（引用被改字、判定抄錯、撞到呼叫上限），每種都改成程式處理或加上檢查後，最終版跑 4 次全部通過。評分程式本身也出過錯：曾把句子裡後一州的差評率算到前一州（報告本身正確），改正後重評驗證集全部 50 筆紀錄，只有這類誤判 2 筆改判，並補上刻意造錯的測試，確認真的錯誤仍會被抓到。</li>
 </ul>
+</details>
+
+<details class="sec">
+<summary><h2>應用實例：用助理分析差評</h2></summary>
+<p>簡報第 7～8 頁的發現，由三個功能接力找出（數字另用程式重算核對，不呼叫 AI）：</p>
+<ol>
+  <li><b>評論分類找出主因：</b>隨機抽 500 則有留言的 1～2 星評論，最常見的單一抱怨是「缺件或寄錯」28.2%（95% 信賴區間 24.4%～32.3%），高於第二名「客服問題」20.6%；一則可歸到多類，送貨兩類（送貨太慢或沒收到貨）合計 36.6%。</li>
+  <li><b>問資料比較訂單類型：</b>有商品明細的 97,917 則評論中，只買 1 件的差評率 12.71%（88,227 則）、多件同一賣家 24.72%（8,426 則，1.9 倍）、多件多個賣家 47.31%（1,264 則，3.7 倍）。</li>
+  <li><b>評論分類＋找相關評論看實際留言：</b>同一批 500 則中，多件訂單的差評有 66.7%（76/114 則）是「缺件或寄錯」，單件訂單只有 17.7%（65/368 則；排除 18 則沒有商品明細的）；找相關評論找到的留言例如「買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞」。</li>
+</ol>
+<p>限制：只買 1 件的訂單不會「少寄一件」，所以第 3 點只能當佐證；要分辨分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）。</p>
 </details>
 
 <details class="sec">
@@ -429,9 +445,9 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <details class="sec">
 <summary><h2>成本與營運</h2></summary>
 <ul>
-  <li><b>呼叫次數就是成本：</b>免費版每個模型每天 20～500 次請求；「問資料」一題通常 2 次請求（寫 SQL、寫回答各 1 次）；調查練習題最終版每次用 7～11 次工具呼叫（上限 20 次，被退回重寫時最多再 6 次），一次約 12～18 秒；碰到每分鐘上限時會等待重試，第一次替某州評論分類也要多花幾十秒。</li>
+  <li><b>呼叫次數就是成本：</b>免費版每個模型每天 20～500 次請求；「問資料」一題通常 2 次請求（寫 SQL、寫回答各 1 次）；調查驗證集最終版每次用 7～11 次工具呼叫（上限 20 次，被退回重寫時最多再 6 次），一次約 12～18 秒；碰到每分鐘上限時會等待重試，第一次替某州評論分類也要多花幾十秒。</li>
   <li><b>回應快取：</b>分類、相關判斷這類固定答案的步驟，輸入完全相同就不重問；調查把各州的評論分類結果存檔重用，分類定義或模型一改就重新分類。</li>
-  <li><b>用自己的題目選模型：</b>公開排行榜沒有「判斷葡萄牙文評論」這類任務，因此用「找相關評論」的 50 則練習題比較候選的免費模型（5 個中只有 2 個跑出分數：46/50、37/50，其餘當日額度用完或回傳格式不符），選分數較高的一個，評論分類也用同一個模型（沒有另外在分類上比較）；之後收窄「客服問題」類別的定義（相關判斷也引用同一份類別定義）重跑，成績表的 45/50 是現行版。</li>
+  <li><b>用自己的題目選模型：</b>公開排行榜沒有「判斷葡萄牙文評論」這類任務，因此用「找相關評論」的驗證集 50 則比較候選的免費模型（5 個中只有 2 個跑出分數：46/50、37/50，其餘當日額度用完或回傳格式不符），選分數較高的一個，評論分類也用同一個模型（沒有另外在分類上比較）；之後收窄「客服問題」類別的定義（相關判斷也引用同一份類別定義）重跑，成績表的 45/50 是現行版。</li>
   <li><b>紀錄：</b>每次提問留下問題、SQL、模型版本、工具呼叫與失敗原因（每分鐘或每天的上限），網頁可逐步回放調查過程。</li>
 </ul>
 </details>
@@ -440,10 +456,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <summary><h2>限制與下一步</h2></summary>
 <ul>
   <li><b>調查功能只支援一種題型：</b>目前只能調查「各州差評原因」；其他「為什麼」的問題轉給「問資料」回答，原因說明標明「AI 推論，未經假說檢驗」。下一步是通用調查：任何問題都走「假說 → 預期 → SQL 查 → 程式判定」。</li>
-  <li><b>評論分類未達標：</b>補定義沒有讓新題目進步，再加規則效益很低；下一步是精簡定義，再用另一批新題目量。</li>
-  <li><b>問資料沒有新題目：</b>問資料的 19 題在開發中也被用來調整，成績可能偏高。</li>
+  <li><b>評論分類未達標：</b>補定義前後都是 22/25（樣本小，又和模型一起換，分不出有沒有效）；下一步是精簡定義，再用另一批測試集量。</li>
+  <li><b>問資料沒有測試集：</b>問資料的 19 題在開發中也被用來調整，成績可能偏高。</li>
   <li><b>標準答案和系統出自同一個 AI：</b>問資料的標準答案 SQL 與系統都由 Claude Code 撰寫，可能犯同類錯誤；本人審查了指標定義，但沒有逐行獨立重寫。獨立審查者也是同一系列模型，可能有同樣的盲點。</li>
-  <li><b>題量小、只有一位判斷者：</b>找相關評論的不相關評論練習題只有 16 則，評論相關與分類的判斷只有本人一位，沒有第二位判斷者比對一致程度。</li>
+  <li><b>題量小、只有一位判斷者：</b>找相關評論的驗證集中，不相關的評論只有 16 則，評論相關與分類的判斷只有本人一位，沒有第二位判斷者比對一致程度。</li>
   <li><b>找相關評論只評了判斷這一步：</b>沒有量向量搜尋是否漏找相關評論，也沒有評總結是否忠於原文。</li>
   <li><b>使用免費預覽版模型：</b>Google 可能隨時調整；網頁額度用完時換上的備援模型沒有用現行版本評分過。正式上線要改用付費版並固定模型版本。</li>
   <li><b>評分程式只有部分檢查有測試：</b>數字根據、引用比對、州與差評率這幾項有刻意造錯的測試，其餘檢查沒有；10-23 就曾發現一個誤判。</li>
@@ -452,7 +468,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <footer>
   <p>工具：Python（google-genai、DuckDB、Streamlit、fastembed）、Gemini API 免費版、Claude Code。資料：Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a>（Kaggle）。成績日期：問資料、調查 2026-10-23；找相關評論、評論分類 2026-10-22。</p>
-  <p>模型：問資料與調查 gemini-3.5-flash-lite（備援 gemini-3.5-flash）；評論分類與相關判斷 gemini-3.1-flash-lite-preview（2 個跑出分數的模型中，50 則練習題分數較高；備援 gemini-3.5-flash-lite）；找相關評論的總結 gemini-3.5-flash-lite；向量模型 paraphrase-multilingual-MiniLM-L12-v2。</p>
+  <p>模型：問資料與調查 gemini-3.5-flash-lite（備援 gemini-3.5-flash）；評論分類與相關判斷 gemini-3.1-flash-lite-preview（2 個跑出分數的模型中，驗證集 50 則的分數較高；備援 gemini-3.5-flash-lite）；找相關評論的總結 gemini-3.5-flash-lite；向量模型 paraphrase-multilingual-MiniLM-L12-v2。</p>
 </footer>
 
 </main>
@@ -464,7 +480,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>AI 資料助理</h1>
-  <p class="lead">用自然語言問電商資料；<b>AI 回答的每個數字都由程式核對</b>，AI 說錯或說過頭時，程式會標出並更正</p>
+  <p class="lead">用自然語言問電商資料；<b>問資料與調查的每個數字都要在查詢結果裡找得到</b>，找不到就標出；誇大的結論由程式加註更正</p>
   <div class="chips"><span>LLM（Gemini API）</span><span>Text-to-SQL</span><span>RAG</span><span>AI Agent</span></div>
   <div class="roles">
     <div><b>本人</b><span>需求、指標定義、驗收</span></div>
@@ -477,7 +493,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>系統架構</h2>
   <span class="sub">AI 負責理解問題、寫 SQL 和文字；數字核對交給程式</span>
-  <p class="fnline"><b>4 個功能：</b>問資料（Text-to-SQL）：AI 寫 SQL 回答數據問題｜評論分類（結構化輸出）：AI 把評論歸到抱怨類別｜找相關評論（RAG）：AI 找出意思相近的評論｜AI Agent 調查：AI 自己決定查什麼、連續查出原因</p>
+  <p class="fnline"><b>4 個功能：</b>問資料（Text-to-SQL）：AI 寫 SQL 回答數據問題｜評論分類（結構化輸出）：AI 把評論歸到抱怨類別｜找相關評論（RAG）：向量搜尋找出意思相近的評論，AI 逐則判斷相不相關，只用相關的寫總結｜AI Agent 調查：AI 在程式限定的範圍內呼叫分析工具、寫報告</p>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-ask.jpg" alt="問資料畫面：回答上方顯示每個數字都能在查詢結果找到"></div>
     <div>
@@ -488,7 +504,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
         <div class="st code">SQL 安全檢查<small>只准讀取資料，限制執行時間與筆數</small></div>
         <div class="st code">資料庫執行查詢（DuckDB）</div>
         <div class="st ai">AI 寫白話回答</div>
-        <div class="st code">核對回答裡的每個數字<small>都在查詢結果裡就標 ✅；找不到就標 ⚠️，提醒使用者這個數字可能是 AI 編的</small></div>
+        <div class="st code">核對回答裡的每個數字<small>都在查詢結果裡就標 ✅；找不到就標 ⚠️（可能是 AI 編的）</small></div>
       </div>
     </div>
   </div>
@@ -496,17 +512,19 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>AI Agent 調查流程</h2>
-  <span class="sub">AI 自己挑分析工具（AI Agent）調查各州差評；計算、判定由程式負責，誇大的結論由程式加註更正</span>
+  <span class="sub">AI 在程式限定的範圍內呼叫分析工具、寫報告（AI Agent），調查各州差評；計算、判定由程式負責，誇大的結論由程式加註更正</span>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-agent.jpg" alt="調查畫面：AI 寫的結論，下方有程式依工具判定加的附註"></div>
     <div>
       <p class="lg"><i class="ai"></i>藍框＝AI 做的 <i class="code"></i>灰框＝程式做的</p>
       <div class="vpipe">
-        <div class="st code">比較各州差評率，挑出要深入的州<small>挑出差評最突出的 3 州</small></div>
-        <div class="st code">每州檢驗 4 個假說<small>配送延遲、集中在某幾季、買的品類不同、少數問題賣家</small></div>
-        <div class="st code">依事先寫好的規則判定<small>成立／部分成立／不成立</small></div>
-        <div class="st ai">AI 依序呼叫上面的工具，再寫報告</div>
-        <div class="st code">核對數字和引用，在結論下加註程式的判定<small>不合格就退回重寫</small></div>
+        <div class="tools"><p>可用的分析工具（程式計算、判定）</p>
+          <div class="st code">比較各州差評率<small>由程式挑出差評最突出的 3 州</small></div>
+          <div class="st code">每州檢驗 4 個假說<small>配送延遲、集中在某幾季、買的品類不同、少數問題賣家</small></div>
+          <div class="st code">依事先寫好的規則判定<small>成立／部分成立／不成立</small></div>
+        </div>
+        <div class="st ai">AI 在程式限定的範圍內呼叫工具，再寫報告</div>
+        <div class="st code">程式核對數字和引用，在結論下加註程式的判定<small>不合格就退回重寫</small></div>
       </div>
       <p class="callout">截圖：AI 寫「物流因素能解釋大部分差距」；程式依判定結果附註更正為「物流只能解釋部分差距」</p>
     </div>
@@ -515,14 +533,14 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>AI 輸出驗證機制</h2>
-  <span class="sub">回答時：程式核對數字、更正誇大（前 2 張）；開發時：4 個做法避免評估成績虛高（後 4 張）</span>
+  <span class="sub">回答時：程式核對數字、更正誇大；開發時：4 個做法避免評估成績虛高</span>
   <div class="checks">
-    <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>實例：AI 引用評論時把日期 11/09 抄成 09/09 → 改由程式貼原文</em></div>
-    <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>實例：AI 把只能解釋部分差距的原因寫成主因</em></div>
-    <div><b>SQL 正確性比對</b><span>問資料共測 19 題：其中 17 題用另一段 SQL 算好標準答案來比對；另 2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
-    <div><b>驗證集／測試集分開</b><span>驗證集：開發時找錯、調整用；測試集：開發時不看，留到最後評分，避免只對練過的題目表現好（問資料還沒有測試集，見第 5 頁）</span></div>
-    <div><b>範例不放標準答案</b><span>給 AI 的指示（prompt）裡不能出現標準答案，避免 AI 直接照抄、成績虛高；程式自動掃描</span><em>實例：給 AI 的範例原本寫出了 11 題的標準答案 → 拿掉後重跑，19 題仍全對</em></div>
-    <div><b>標準答案由本人先標</b><span>評論分類、找相關評論這兩項，標準答案由本人標，標的時候看不到 AI 的答案，避免被 AI 帶著走</span></div>
+    <div><i class="when">回答時</i><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>實例：AI 引用評論時把日期 11/09 抄成 09/09 → 改由程式貼原文</em></div>
+    <div><i class="when">回答時</i><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>實例：AI 把只能解釋部分差距的原因寫成主因</em></div>
+    <div><i class="when">開發時</i><b>SQL 正確性比對</b><span>問資料共測 19 題：其中 17 題用另一段 SQL 算好標準答案來比對；另 2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
+    <div><i class="when">開發時</i><b>驗證集／測試集分開</b><span>驗證集：開發時找錯、調整用；測試集：不拿來調整，留到最後評分（評論分類有 5 則用來補定義，已排除；調查的測試集只用來確認沒退步；問資料還沒有，見第 5 頁）</span></div>
+    <div><i class="when">開發時</i><b>範例不放標準答案</b><span>給 AI 的指示（prompt）裡不能出現標準答案，避免 AI 直接照抄、成績虛高；程式自動掃描</span><em>實例：給 AI 的範例原本寫出了 11 題的標準答案 → 拿掉後重跑，19 題仍全對</em></div>
+    <div><i class="when">開發時</i><b>測試集由本人先標</b><span>評論分類、找相關評論的測試集由本人先標，標的時候看不到 AI 的答案，避免被 AI 帶著走（1 則事後更正）</span></div>
   </div>
 </div></section>
 
@@ -530,15 +548,15 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>各功能評估結果</h2>
   <span class="sub">測試集：找相關評論 20/20、評論分類 22/25（88%）；問資料還沒有測試集；樣本都少，還不能證明準確率達到 90%</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻</p>
+    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻（評分前訂好的驗收標準）</p>
     <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 題＝100%</div><div class="b none">沒有測試集：19 題開發時都拿來調整過，成績可能偏高</div></div></div>
     <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 則＝90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%</div></div></div>
+      <div><div class="b v miss"><span class="trk"><i style="width:81%"></i><u></u></span><span>相關 94%／不相關 81%<em>（及格，未達 90%）</em></span></div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%（相關、不相關各 10/10）</div></div></div>
     <div class="r"><div class="nm">評論分類<small>選的類別跟本人標的完全一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（舊版分類定義的結果，現行版未重新測）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 則＝88%<em>（未達 90% 門檻）</em></span></div></div></div>
     <div class="r"><div class="nm">AI Agent 調查<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
-      <div class="txt">驗證集：跑 4 次，4 次都通過全部檢查<br>測試集：換一個開發時沒用過的州，跑 2 次都通過 6 項通用檢查（其餘 11 項只適用練習題）</div></div>
+      <div class="txt">驗證集：跑 4 次，4 次都通過全部 17 項檢查<br>測試集：換一個沒拿來調整的州，跑 2 次都通過 6 項通用檢查（其餘 11 項是針對驗證集題目寫的）</div></div>
     <p class="note">測試集只有 20～25 則，100% 也可能是運氣好；真實準確率的可能範圍見下一頁</p>
   </div>
 </div></section>
@@ -555,16 +573,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
         <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
     <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
-    <p class="take">因此目前不能說評論分類的準確率有 90%；找相關評論 20/20、問資料 19/19 也一樣，樣本太少，還不能證明。下一步：先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
+    <p class="take">因此目前不能說評論分類的準確率有 90%；找相關評論 20/20 樣本也太少（可能範圍 84%～100%）；問資料 19/19 是開發時調整過的題目，要先補測試集。下一步：先在驗證集調到 95%，再用約 140 則新的測試集評分</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>應用實例：差評原因</h2>
-  <span class="sub">用這個助理分析差評：最常見的抱怨是「缺件或寄錯」，占 28.2%</span>
+  <span class="sub">三個功能接力分析差評：評論分類找出主因 → 問資料比較訂單類型 → 找相關評論找出實際留言；最常見的單一抱怨是「缺件或寄錯」（28.2%）</span>
   <div class="two">
     <div class="hb" aria-label="各抱怨類別占差評的比例">
-      <p class="ct">AI 把隨機 500 則有留言的 1～2 星評論歸到 10 類：各類占比（可複選）</p>
+      <p class="ct">AI 把隨機 500 則有留言的 1～2 星評論歸到 10 類：各類占比（可複選；評論分類）</p>
       <div class="r hi"><span>缺件或寄錯</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>客服問題</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>商品品質問題</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -579,16 +597,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">長條長度＝占 500 則差評的比例</p>
     </div>
     <div class="side">
-      <p><b>看到什麼：</b>最常見的抱怨是「缺件或寄錯」（28.2%），高於第二名「客服問題」（20.6%）</p>
+      <p><b>看到什麼：</b>最常見的單一抱怨是「缺件或寄錯」（28.2%），高於第二名「客服問題」（20.6%）</p>
       <p><b>下一步：</b>進一步分析第一名「缺件或寄錯」：先看多件訂單的差評是否較多，再看差評中缺件或寄錯的比例（下一頁）</p>
-      <p class="note">占比是估計值（只抽 500 則；AI 分類準確率 88%），但第一名領先第二名的差距大於抽樣誤差</p>
+      <p class="note">占比是估計值（只抽 500 則；AI 分類準確率 88%），但第一名領先第二名的差距大於抽樣誤差；一則可歸到多類，送貨兩類合計 36.6%，所以只說「單一」類別最多</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 8 頁"><div class="sl">
   <h2>應用實例：多件訂單與缺件</h2>
-  <span class="sub">推測一次買多件的訂單比較容易缺件：多件訂單的差評率是只買 1 件的 2～4 倍，差評也更常是「缺件或寄錯」（還不是證明）</span>
+  <span class="sub">推測多件訂單比較容易缺件：差評率是只買 1 件的 2～4 倍，差評也更常是「缺件或寄錯」（還不是證明）</span>
   <div class="two">
     <div class="vb" aria-label="三種訂單的差評率">
       <p class="ct">三種訂單的差評率（1～2 星占評論的比例，全部約 9.8 萬則評論）</p>
@@ -599,10 +617,11 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>跡象①：多件訂單的差評率是只買 1 件的 2～4 倍</b>：只買 1 件 12.71%；多件、同一賣家 24.72%（1.9 倍）；多件、多個賣家 47.31%（3.7 倍）</p>
-      <p><b>跡象②：多件訂單的差評有 66.7% 是「缺件或寄錯」，單件訂單只有 17.7%</b>（第 7 頁同一批 500 則）。找相關評論找到的實際留言，例：</p>
-      <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞，我需要收到另一盞。</span></blockquote>
-      <p class="note">還不是證明：只買 1 件的訂單不會「少寄一件」，所以多件訂單的差評本來就較容易是缺件，跡象②只能當佐證；是分批寄送還是漏寄，需要每個包裹的出貨與送達紀錄（公開資料沒有）</p>
+      <p><b>跡象①（問資料）：多件訂單的差評率是只買 1 件的 2～4 倍</b>（同一賣家 1.9 倍、多個賣家 3.7 倍）</p>
+      <p><b>跡象②（評論分類＋找相關評論）：多件訂單的差評有 66.7%（76/114 則）是「缺件或寄錯」，單件訂單只有 17.7%（65/368 則）</b>（第 7 頁的 500 則，排除 18 則沒有商品明細的）。實際留言例：</p>
+      <blockquote>Comprei dois lustres … mas só recebi 1.<span>買了兩盞吊燈、付了兩盞的錢，卻只收到 1 盞</span></blockquote>
+      <p class="note">還不是證明：單件訂單不會「少寄一件」，跡象②只能當佐證；要分辨分批寄送或漏寄，需要每個包裹的出貨紀錄（公開資料沒有）</p>
+      <p><b>可以怎麼做：</b>請物流與賣家確認是分批寄送還是漏寄（見第 9 頁）</p>
     </div>
   </div>
 </div></section>
@@ -611,10 +630,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>下一步</h2>
   <span class="sub">從自學專案到團隊實際使用</span>
   <div class="nexts">
+    <div><b>補足測試</b><span>第 6 頁：評論分類的準確率先調到約 95%，再標約 140 則新的測試集；第 5 頁：找相關評論補更多測試題，問資料補一批開發時沒用過的題目</span></div>
     <div><b>導入團隊日常使用</b><span>第 3 頁的「各州差評」調查每週自動跑一次，結果做成監控報表</span></div>
     <div><b>把發現交給負責團隊</b><span>第 8 頁的多件訂單缺件 → 請物流與賣家確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
-    <div><b>補足測試</b><span>第 6 頁：評論分類的準確率先調到約 95%，再標約 140 則新的測試集；第 5 頁：找相關評論補更多測試題，問資料補一批開發時沒用過的題目</span></div>
-    <div><b>調查不只問各州差評</b><span>目前第 3 頁的 4 個假說是固定的；下一步改成使用者問任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
+    <div><b>調查不只問各州差評</b><span>目前第 3 頁的 4 個假說（配送延遲、集中在某幾季、品類不同、少數問題賣家）是固定的；下一步改成使用者問任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
   </div>
 </div></section>
 
@@ -626,7 +645,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
   <h1>AI Data Assistant</h1>
-  <p class="lead">Ask e-commerce data questions in natural language; <b>every number in the AI's answer is checked by code</b>, and when the AI is wrong or overstates, code flags and corrects it</p>
+  <p class="lead">Ask e-commerce data questions in natural language; <b>every number from "Ask the data" and the investigation must be found in the query results</b>, or it is flagged; code adds notes correcting overstated conclusions</p>
   <div class="chips"><span>LLM (Gemini API)</span><span>Text-to-SQL</span><span>RAG</span><span>AI Agent</span></div>
   <div class="roles">
     <div><b>Me</b><span>Requirements, metric definitions, acceptance</span></div>
@@ -639,7 +658,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>System architecture</h2>
   <span class="sub">The AI understands the question and writes SQL and text; code checks the numbers</span>
-  <p class="fnline"><b>4 features:</b> Ask the data (Text-to-SQL): the AI writes SQL to answer data questions ｜ Review classification (structured output): the AI sorts reviews into complaint categories ｜ Find relevant reviews (RAG): the AI finds reviews with similar meaning ｜ AI agent investigation: the AI decides what to check and digs out causes</p>
+  <p class="fnline"><b>4 features:</b> Ask the data (Text-to-SQL): the AI writes SQL to answer data questions ｜ Review classification (structured output): the AI sorts reviews into complaint categories ｜ Find relevant reviews (RAG): vector search finds similar reviews, the AI judges each one's relevance and summarizes only relevant ones ｜ AI agent investigation: within limits set by code, the AI calls analysis tools and writes the report</p>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-ask.jpg" alt="Ask the data screen: above the answer, a note says every number was found in the query results"></div>
     <div>
@@ -658,17 +677,19 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>AI agent investigation flow</h2>
-  <span class="sub">An AI agent picks its own tools to investigate negative reviews by state; code calculates, judges, and corrects overstatements</span>
+  <span class="sub">Within limits set by code, an AI agent calls analysis tools and writes a report on negative reviews by state; code calculates, judges, and corrects overstatements</span>
   <div class="shotrow">
     <div class="imgbox"><img src="slide-agent.jpg" alt="Investigation screen: the AI's conclusion, with notes added by code based on the tools' verdicts"></div>
     <div>
       <p class="lg"><i class="ai"></i>Blue = done by AI <i class="code"></i>Gray = done by code</p>
       <div class="vpipe">
-        <div class="st code">Compare states' negative-review rates, pick states to dig into<small>the 3 states that stand out most</small></div>
-        <div class="st code">Test 4 hypotheses per state<small>delivery delays, concentrated in certain quarters, product mix, a few problem sellers</small></div>
-        <div class="st code">Apply pre-written rules<small>supported / partly supported / not supported</small></div>
-        <div class="st ai">AI calls the tools above in order, then writes the report</div>
-        <div class="st code">Check numbers and quotes; add code's verdicts<small>rewrite if checks fail</small></div>
+        <div class="tools"><p>Available analysis tools (code calculates and judges)</p>
+          <div class="st code">Compare states' negative-review rates<small>code picks the 3 states that stand out most</small></div>
+          <div class="st code">Test 4 hypotheses per state<small>delivery delays, concentrated in certain quarters, product mix, a few problem sellers</small></div>
+          <div class="st code">Apply pre-written rules<small>supported / partly supported / not supported</small></div>
+        </div>
+        <div class="st ai">Within limits set by code, the AI calls the tools, then writes the report</div>
+        <div class="st code">Code checks numbers and quotes; adds its verdicts under the conclusion<small>rewrite if checks fail</small></div>
       </div>
       <p class="callout">Screenshot: the AI wrote logistics "explains most of the gap"; code's note corrects it to "only part of the gap"</p>
     </div>
@@ -677,14 +698,14 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>AI output verification</h2>
-  <span class="sub">Answering: code checks numbers and fixes overstatements (first 2 cards); developing: 4 practices keep scores from inflating (last 4)</span>
+  <span class="sub">When answering: code checks numbers and fixes overstatements; during development: 4 practices keep scores from inflating</span>
   <div class="checks">
-    <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Example: the AI copied a review date 11/09 as 09/09 → code now pastes the original text</em></div>
-    <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Example: the AI called a cause that explains only part of the gap the main cause</em></div>
-    <div><b>SQL accuracy check</b><span>"Ask the data": 19 test questions: 17 are checked against answers from a separate SQL query; the other 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
-    <div><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: unseen during development and used only for final scoring, so results don't just reflect practiced questions ("Ask the data" has no test set yet; see slide 5)</span></div>
-    <div><b>No answers in the examples</b><span>The instructions given to the AI (prompt) must not contain reference answers, so the AI can't simply copy them and inflate its score; code scans them automatically</span><em>Example: the AI's examples held answers to 11 questions → removed; still 19/19 on rerun</em></div>
-    <div><b>I label the answers first</b><span>For "Review classification" and "Find relevant reviews", I labeled the reference answers without seeing the AI's, so its answers can't sway mine</span></div>
+    <div><i class="when">When answering</i><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Example: the AI copied a review date 11/09 as 09/09 → code now pastes the original text</em></div>
+    <div><i class="when">When answering</i><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Example: the AI called a cause that explains only part of the gap the main cause</em></div>
+    <div><i class="when">During development</i><b>SQL accuracy check</b><span>"Ask the data": 19 test questions: 17 are checked against answers from a separate SQL query; the other 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
+    <div><i class="when">During development</i><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: not used for tuning, kept for final scoring (5 classification reviews used to refine definitions were excluded; the investigation's test question only checks for regressions; "Ask the data" has none yet, see slide 5)</span></div>
+    <div><i class="when">During development</i><b>No answers in the examples</b><span>The instructions given to the AI (prompt) must not contain reference answers, so the AI can't simply copy them and inflate its score; code scans them automatically</span><em>Example: the AI's examples held answers to 11 questions → removed; still 19/19 on rerun</em></div>
+    <div><i class="when">During development</i><b>I label the test sets first</b><span>For "Review classification" and "Find relevant reviews", I labeled the test sets before seeing the AI's answers, so its answers can't sway mine (1 corrected afterwards)</span></div>
   </div>
 </div></section>
 
@@ -692,15 +713,15 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>Evaluation results by feature</h2>
   <span class="sub">Test sets: Find relevant reviews 20/20, Review classification 22/25 (88%); "Ask the data" has no test set yet; samples are small, so none can yet be shown to reach 90%</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold</p>
+    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold (acceptance standard set before scoring)</p>
     <div class="r"><div class="nm">Ask the data<small>19 questions; numbers must match the reference SQL</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 questions = 100%</div><div class="b none">No test set: all 19 questions were used for tuning, so the score may be inflated</div></div></div>
     <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 reviews = 90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100%</div></div></div>
+      <div><div class="b v miss"><span class="trk"><i style="width:81%"></i><u></u></span><span>Relevant 94% / not relevant 81%<em> (pass, below 90%)</em></span></div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100% (10/10 relevant, 10/10 not relevant)</div></div></div>
     <div class="r"><div class="nm">Review classification<small>Categories exactly match my labels</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (result under the old category definitions; the current version was not retested)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 reviews = 88%<em> (below the 90% threshold)</em></span></div></div></div>
     <div class="r"><div class="nm">AI agent investigation<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
-      <div class="txt">Validation: 4 runs, all 4 passed every check<br>Test: a state not used during development; 2 runs, both passed the 6 general checks (the other 11 apply only to the practice question)</div></div>
+      <div class="txt">Validation: 4 runs, all 4 passed all 17 checks<br>Test: a state not used for tuning; 2 runs, both passed the 6 general checks (the other 11 were written for the validation question)</div></div>
     <p class="note">The test sets have only 20–25 reviews, so even 100% could be luck; the likely range of true accuracy is on the next slide</p>
   </div>
 </div></section>
@@ -717,16 +738,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <div class="tr"><i class="th" style="left:75%"></i><i class="line" style="left:75.1%;width:18.9%"></i><i class="pt" style="left:87.5%"></i>
         <span class="lab lo" style="left:75.1%">90.0%</span><span class="lab hi" style="left:94%">97.6%</span></div></div>
     <div class="axis"><span style="left:0%">60%</span><span style="left:25%">70%</span><span style="left:50%">80%</span><span style="left:75%">90%</span><span style="left:100%">100%</span></div>
-    <p class="take">Therefore "Review classification" can't yet be said to reach 90% accuracy; the same goes for "Find relevant reviews" (20/20) and "Ask the data" (19/19), as the samples are too small. Next: tune to 95% on the validation set, then score on a new test set of about 140 reviews</p>
+    <p class="take">Therefore "Review classification" can't yet be said to reach 90% accuracy; "Find relevant reviews" at 20/20 is also too small a sample (likely range 84%–100%), and "Ask the data" at 19/19 used questions tuned during development, so it needs a test set first. Next: tune to 95% on the validation set, then score on a new test set of about 140 reviews</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Application: causes of negative reviews</h2>
-  <span class="sub">Using the assistant on negative reviews: the most common complaint is "missing or wrong items", at 28.2%</span>
+  <span class="sub">Three features in relay on negative reviews: Review classification finds the main cause → Ask the data compares order types → Find relevant reviews surfaces real comments; the most common single complaint is "missing or wrong items" (28.2%)</span>
   <div class="two">
     <div class="hb" aria-label="Share of negative reviews by complaint category">
-      <p class="ct">The AI sorted 500 random 1–2 star reviews with comments into 10 categories: share by category (multiple allowed)</p>
+      <p class="ct">The AI sorted 500 random 1–2 star reviews with comments into 10 categories: share by category (multiple allowed; Review classification)</p>
       <div class="r hi"><span>Missing or wrong items</span><i style="width:94%"></i><b>28.2%</b></div>
       <div class="r"><span>Customer service</span><i style="width:68.7%"></i><b>20.6%</b></div>
       <div class="r"><span>Product quality</span><i style="width:64%"></i><b>19.2%</b></div>
@@ -741,16 +762,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       <p class="axt">Bar length = share of the 500 negative reviews</p>
     </div>
     <div class="side">
-      <p><b>What we see:</b> the most common complaint is "missing or wrong items" (28.2%), ahead of second-place "customer service" (20.6%)</p>
+      <p><b>What we see:</b> the most common single complaint is "missing or wrong items" (28.2%), ahead of second-place "customer service" (20.6%)</p>
       <p><b>Next step:</b> dig into the top category, "missing or wrong items": first check whether multi-item orders get more negative reviews, then the share of those reviews that are missing or wrong items (next slide)</p>
-      <p class="note">Shares are estimates (only 500 reviews; AI classification accuracy 88%), but the lead of #1 over #2 is larger than the sampling error</p>
+      <p class="note">Shares are estimates (only 500 reviews; AI classification accuracy 88%), but the lead of #1 over #2 is larger than the sampling error; a review can have several categories, and the two delivery categories total 36.6%, so this is only the top single category</p>
     </div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 8"><div class="sl">
   <h2>Application: multi-item orders and missing items</h2>
-  <span class="sub">Hypothesis: orders with several items are more prone to missing items. Their negative-review rate is 2–4× that of single-item orders, and their negative reviews are more often about "missing or wrong items" (not yet proof)</span>
+  <span class="sub">Hypothesis: multi-item orders are more prone to missing items: 2–4× the negative-review rate of single-item orders, and more often "missing or wrong items" (not yet proof)</span>
   <div class="two">
     <div class="vb" aria-label="Negative-review rate for three order types">
       <p class="ct">Negative-review rate for three order types (share of reviews with 1–2 stars, about 98,000 reviews in total)</p>
@@ -761,10 +782,11 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
       </div>
     </div>
     <div class="side">
-      <p><b>Sign 1: orders with several items have 2–4× the negative-review rate of single-item orders</b>: single item 12.71%; one seller 24.72% (1.9×); several sellers 47.31% (3.7×)</p>
-      <p><b>Sign 2: 66.7% of negative reviews on multi-item orders are about "missing or wrong items", versus 17.7% for single-item orders</b> (same 500 reviews as slide 7). A real comment found by "Find relevant reviews", e.g.:</p>
-      <blockquote>Comprei dois lustres … mas só recebi 1. Preciso receber o outro.<span>I bought two pendant lamps and paid for two, but received only 1. I need to receive the other one.</span></blockquote>
-      <p class="note">Not yet proof: a single-item order cannot be "one item short", so negative reviews on multi-item orders are naturally more likely to be about missing items, and sign 2 is only supporting evidence; telling split shipments from missing items needs per-package shipping and delivery records (not in the public dataset)</p>
+      <p><b>Sign 1 (Ask the data): orders with several items have 2–4× the negative-review rate of single-item orders</b> (one seller 1.9×, several sellers 3.7×)</p>
+      <p><b>Sign 2 (Review classification + Find relevant reviews): 66.7% (76/114) of negative reviews on multi-item orders are about "missing or wrong items", versus 17.7% (65/368) for single-item orders</b> (slide 7's 500 reviews, excluding 18 with no item details). A real comment:</p>
+      <blockquote>Comprei dois lustres … mas só recebi 1.<span>I paid for two pendant lamps but received only 1</span></blockquote>
+      <p class="note">Not yet proof: a single-item order cannot be "one item short", so sign 2 is only supporting evidence; telling split shipments from missing items needs per-package records (not in the public data)</p>
+      <p><b>What to do:</b> ask logistics and sellers to check whether these are split shipments or missing items (see slide 9)</p>
     </div>
   </div>
 </div></section>
@@ -773,23 +795,23 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>Next steps</h2>
   <span class="sub">From self-directed project to team use</span>
   <div class="nexts">
+    <div><b>Fill the testing gaps</b><span>Slide 6: tune "Review classification" to about 95% accuracy, then label a new test set of about 140 reviews; slide 5: add more test reviews for "Find relevant reviews", and data questions not used during development for "Ask the data"</span></div>
     <div><b>Bring it into the team's daily work</b><span>Run slide 3's "negative reviews by state" investigation automatically every week and turn the results into a monitoring report</span></div>
     <div><b>Hand findings to the owning teams</b><span>Slide 8's missing items in multi-item orders → ask logistics and sellers whether it's split shipments or missing items; test any fix (e.g. telling customers at shipping that the order comes in N packages) with an experiment first</span></div>
-    <div><b>Fill the testing gaps</b><span>Slide 6: tune "Review classification" to about 95% accuracy, then label a new test set of about 140 reviews; slide 5: add more test reviews for "Find relevant reviews", and data questions not used during development for "Ask the data"</span></div>
-    <div><b>Investigate more than states</b><span>Today the 4 hypotheses on slide 3 are fixed; next, extend to any "why" question a user asks: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
+    <div><b>Investigate more than states</b><span>Today the 4 hypotheses on slide 3 (delivery delays, concentrated in certain quarters, product mix, a few problem sellers) are fixed; next, extend to any "why" question a user asks: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
   </div>
 </div></section>
 </template>
 
 
-<!-- i18n:start --><template id="main-en" data-title="AI Data Assistant" data-desc="Jia Cheng Yu's self-directed project: a Chinese-language data assistant built on the Gemini API (AI-written SQL, review classification, RAG, agent investigation). Every feature has re-runnable automated scoring, three of them are also tested on unseen questions, and the numbers and quotes the AI writes are checked by code.">
+<!-- i18n:start --><template id="main-en" data-title="AI Data Assistant" data-desc="Jia Cheng Yu's self-directed project: a Chinese-language data assistant built on the Gemini API (AI-written SQL, review classification, RAG, agent investigation). Every feature has re-runnable automated scoring, three of them are also scored on a test set not used for tuning, and every number from "ask the data" and the investigation must be found in the query results.">
 <header>
   <span class="tag">Self-directed project</span><span class="tag">October 2026</span>
   <h1>AI Data Assistant: An Eval-Driven LLM Application</h1>
   <p class="meta">Jia Cheng Yu | Olist Brazilian e-commerce public data | Python, Gemini API, DuckDB, Streamlit, Claude Code</p>
 </header>
 
-<p>This project shows how to make a data assistant built on a large language model (LLM: an AI that reads and writes text, such as ChatGPT or Gemini) produce <b>output that can be verified</b>: code checks the numbers and quotes the AI writes and flags anything that does not match, and every feature has re-runnable automated scoring. An operations manager asks questions in Chinese, and the system has 4 features:</p>
+<p>This project shows how to make a data assistant built on a large language model (LLM: an AI that reads and writes text, such as ChatGPT or Gemini) produce <b>output that can be verified</b>: every number from "ask the data" and the investigation must be found in the query results or it is flagged, and code adds notes correcting overstated conclusions; every feature has re-runnable automated scoring. An operations manager asks questions in Chinese, and the system has 4 features:</p>
 <ul>
   <li><b>Ask the data:</b> the AI writes its own SQL (the language used to query databases), runs it and answers</li>
   <li><b>Review classification:</b> assigns each negative review to a fixed set of 10 categories (e.g., slow delivery, product quality issue, not as described)</li>
@@ -799,19 +821,19 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <p>The focus is not on analytical findings but on AI engineering: workflow, evaluation, reliability and cost. The data is the same Olist dataset of about 100,000 orders (2016-09 to 2018-10; see the "<a href="../olist-lakehouse/">E-commerce Lakehouse</a>" page for an introduction). Division of labor: I defined the requirements, metric definitions and acceptance criteria and did the acceptance testing; the code was written by the AI coding tool Claude Code, and I reviewed it and tested it as a user.</p>
 
 <div class="caveat">
-  <p><b>Two kinds of test questions:</b> "practice questions" were used repeatedly to tune the system during development, so their scores tend to be inflated; "unseen questions" were not used for tuning and better reflect real performance.</p>
-  <p><b>Limitations:</b> each feature has only 19–50 questions (or reviews), and the investigation has only 1 practice question and 1 unseen question; with samples this small, the margin of error can reach more than 10 percentage points (pp) (e.g., at 22/25, the true accuracy of review classification could plausibly be anywhere from 70% to 96%). Other limitations are under "Limitations and next steps".</p>
+  <p><b>Two kinds of test sets:</b> the "validation set" was used repeatedly to tune the system during development, so its scores tend to be inflated; the "test set" was not used for tuning and better reflects real performance.</p>
+  <p><b>Limitations:</b> each feature has only 19–50 questions (or reviews), and the investigation has only 1 validation question and 1 test question; with samples this small, the margin of error can reach more than 10 percentage points (pp) (e.g., at 22/25, the true accuracy of review classification could plausibly be anywhere from 70% to 96%). Other limitations are under "Limitations and next steps".</p>
 </div>
 
 <div class="stats">
-  <div class="stat"><b>19/19</b><span>"Ask the data" practice questions passed (no unseen set, may be inflated)</span></div>
-  <div class="stat"><b>20/20</b><span>"Find relevant reviews" blind test: relevance calls matching mine</span></div>
-  <div class="stat"><b>22/25</b><span>"Review classification" blind test: exact matches with mine (88%, below the 90% threshold)</span></div>
-  <div class="stat"><b>4/4</b><span>Final "investigation" runs passing all 17 checks (the unseen question also passed twice)</span></div>
+  <div class="stat"><b>19/19</b><span>"Ask the data" validation questions passed (no test set, may be inflated)</span></div>
+  <div class="stat"><b>20/20</b><span>"Find relevant reviews" blind test on the test set: relevance calls matching mine</span></div>
+  <div class="stat"><b>22/25</b><span>"Review classification" blind test on the test set: exact matches with mine (88%, below the 90% threshold)</span></div>
+  <div class="stat"><b>4/4</b><span>Final "investigation" runs passing all 17 checks (the test question also passed twice)</span></div>
 </div>
 
 <div class="tldr lead">
-  <p><b>Conclusion:</b> reliability comes from a division of labor: the AI is responsible only for understanding the question and writing the text, while numbers, dates, rule-based verdicts and review quotes are produced or checked by code, and mismatches are flagged. Of the 4 scores, only review classification missed its threshold; "ask the data" has no unseen questions, so its score may be inflated.</p>
+  <p><b>Conclusion:</b> reliability comes from a division of labor: the AI is responsible only for understanding the question and writing the text, while numbers, dates, rule-based verdicts and review quotes are produced or checked by code, and mismatches are flagged. Of the 4 scores, only review classification missed its threshold; "ask the data" has no test set, so its score may be inflated.</p>
 </div>
 
 <details class="sec" open>
@@ -819,7 +841,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <ol>
   <li><b>Define success first:</b> before building each feature, write the requirements and acceptance thresholds; how metrics such as revenue, on-time delivery and negative reviews are calculated is written in one "data dictionary" document that both the AI and people follow.</li>
   <li><b>Eval-driven development (scoring re-runs automatically after every change):</b> every type of error found becomes a check that re-runs automatically; after each change, re-run to confirm nothing regressed.</li>
-  <li><b>Blind tests on unseen questions (to guard against overfitting to the practice set):</b> scores on the "practice questions" used repeatedly during development keep rising with tuning, so separate "unseen questions" not used for tuning measure real performance. For review classification and finding relevant reviews, I judged the unseen questions first without seeing the AI's answers (blind test). The investigation's unseen question is the same question type for a different state, scored by code; it was also re-run during development, but only to check for regressions, and no code was changed based on its results. "Ask the data" has no unseen questions. Reference answers are kept out of the AI's instructions, and code automatically scans the instructions for answers.</li>
+  <li><b>Blind tests on the test set (to guard against overfitting to the validation set):</b> scores on the "validation set" used repeatedly during development keep rising with tuning, so a separate "test set" not used for tuning measures real performance. For review classification and finding relevant reviews, I judged the test set first without seeing the AI's answers (blind test). The investigation's test question is the same question type for a different state, scored by code; it was also re-run during development, but only to check for regressions, and no code was changed based on its results. "Ask the data" has no test set. Reference answers are kept out of the AI's instructions, and code automatically scans the instructions for answers.</li>
   <li><b>My acceptance testing:</b> I decided the category boundaries for review classification and whether each review is relevant (a few were applied automatically from rules I set), and the AI's scores are measured against my judgments; the reference answers for "ask the data" and the investigation are SQL written by Claude Code, and I reviewed the metric definitions.</li>
   <li><b>Independent review:</b> separate AI reviewers who had not seen the project looked only for "miscalculated numbers" and "conclusions that would lead users to wrong decisions", each finding backed by SQL and query results, and changes were made only after checking them; the investigation went through 6 rounds and stopped once the issues had narrowed from numerical errors to wording of conclusions.</li>
   <li><b>Testing as a user:</b> I used the web app as an operations manager would, to find issues where "the code is correct, but a manager would not understand or would misread it", and prioritized fixing them with code-level mechanisms or regression test questions rather than just reminding the AI to be careful.</li>
@@ -848,19 +870,30 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <details class="sec">
 <summary><h2>Evaluation method and scores</h2></summary>
 <table class="eval">
-  <thead><tr><th>Feature</th><th class="num">Practice</th><th class="num">Unseen</th><th>What is evaluated and how</th></tr></thead>
+  <thead><tr><th>Feature</th><th class="num">Validation</th><th class="num">Test</th><th>What is evaluated and how</th></tr></thead>
   <tbody>
-    <tr><td>Ask the data</td><td class="num">19/19 questions</td><td class="num">—</td><td>For 17 questions the reference answer is computed live by a separate SQL query (also written by Claude Code, definitions reviewed by me); numbers must match and have a source; 2 questions must answer "not in the data". The 19 questions were also used for tuning during development, with no separate unseen set; the AI's instructions were scanned by code and contain no reference answers</td></tr>
-    <tr><td>Find relevant reviews</td><td class="num">45/50 reviews</td><td class="num">20/20 reviews</td><td>Evaluates only the "is this review relevant" step, not whether the search missed anything; recall is calculated separately for relevant and not-relevant reviews (per-class recall)</td></tr>
-    <tr><td>Review classification</td><td class="num">27/30 reviews<span class="sub">older version</span></td><td class="num">22/25 reviews</td><td>Unseen: a review can have several categories, and it counts as correct only if the AI's set of categories exactly matches mine; the 3 categories decided by code (slow delivery, not received, order canceled or out of stock) are excluded from the comparison, and the denominator is still 25; the unseen set originally had 30 reviews, 5 of which were used to refine the definitions, so only the other 25 are scored. Practice: the score of an older definition with a different model (revised 3 more times since), judged right or wrong by me (of the 27 judged correct, 7 were judged by Claude Code applying rules I set); the current version was not re-tested</td></tr>
-    <tr><td>Investigation</td><td class="num">4/4 runs passed</td><td class="num">2/2 runs passed</td><td>Each run of the practice question "why do some states have more negative reviews" gets 17 checks; the unseen question "why does CE (Ceará) have more negative reviews" gets the 6 general checks among them (numbers, sources, quotes, verdicts, format, call limit), and the other 11 apply only to the practice question (e.g., whether the state with the highest negative-review rate is named). "Passed" refers to the final report: in 1 of the 4 runs the first draft had the wrong format and passed after code sent it back for one rewrite</td></tr>
+    <tr><td>Ask the data</td><td class="num">19/19 questions</td><td class="num">—</td><td>For 17 questions the reference answer is computed live by a separate SQL query (also written by Claude Code, definitions reviewed by me); numbers must match and have a source; 2 questions must answer "not in the data". The 19 questions were also used for tuning during development, with no separate test set; the AI's instructions were scanned by code and contain no reference answers</td></tr>
+    <tr><td>Find relevant reviews</td><td class="num">45/50 reviews</td><td class="num">20/20 reviews</td><td>Evaluates only the "is this review relevant" step, not whether the search missed anything; recall is calculated separately for relevant and not-relevant reviews (TPR for relevant, TNR for not relevant)</td></tr>
+    <tr><td>Review classification</td><td class="num">27/30 reviews<span class="sub">older version</span></td><td class="num">22/25 reviews</td><td>Test: a review can have several categories, and it counts as correct only if the AI's set of categories exactly matches mine; the 3 categories decided by code (slow delivery, not received, order canceled or out of stock) are excluded from the comparison, and the denominator is still 25; the test set originally had 30 reviews, 5 of which were used to refine the definitions, so only the other 25 are scored. Validation: the score of an older definition with a different model (revised 3 more times since), judged right or wrong by me (of the 27 judged correct, 6 were judged by Claude Code applying rules I set); the current version was not re-tested</td></tr>
+    <tr><td>Investigation</td><td class="num">4/4 runs passed</td><td class="num">2/2 runs passed</td><td>Each run of the validation question "why do some states have more negative reviews" gets 17 checks; the test question "why does CE (Ceará) have more negative reviews" gets the 6 general checks among them (numbers, sources, quotes, verdicts, format, call limit), and the other 11 were written for the validation question (e.g., whether the state with the highest negative-review rate is named). "Passed" refers to the final report: in 1 of the 4 runs the first draft had the wrong format and passed after code sent it back for one rewrite</td></tr>
   </tbody>
 </table>
 <ul>
-  <li><b>Find relevant reviews:</b> on the practice set, 32 of the 34 relevant reviews were caught (94%) and 13 of the 16 not-relevant reviews were excluded (81%), which only reaches "pass"; on the unseen set, all 20 reviews across 2 questions (the top 10 search results for each, not hand-picked; 10 relevant, 10 not relevant) were judged correctly, meeting the target. The new thresholds were set before the unseen questions were run, but after seeing the practice scores: the original threshold "47 of 50 correct" was set by Claude Code with no basis; after the practice set failed it, the threshold was switched to a common practice for validating LLM judges, calculating recall separately for relevant and not-relevant reviews (per-class recall), with &gt; 90% on both as the target and &gt; 80% on relevant as the minimum; I separately set the pass line of ≥ 75% for not relevant. So the practice "pass" is for reference only; the unseen "target met" is what counts.</li>
-  <li><b>Review classification:</b> on the 25 unseen reviews, the score was 22/25 both before and after the definitions and model were changed together (one of the misclassified reviews changed), so there was no improvement (since both changed at once, their separate effects cannot be told apart). For 1 review I corrected my own answer after seeing the AI's answer (the review date was not shown on screen at the time); with my original answer it is 21/25.</li>
-  <li><b>Investigation stability:</b> the main investigation flow calls the AI fresh every time. It failed many times during development (quotes altered, verdicts copied wrong, hitting the call limit); after each failure type was moved to code or given a check, the final version passed all 4 runs. The scoring code itself also made a mistake: it attributed the negative-review rate of the later state in a sentence to the earlier state (the report itself was correct); after the fix, all 50 practice records were re-scored and only the 2 records affected by this misjudgment changed verdict, and tests with deliberately planted errors were added to confirm real errors are still caught.</li>
+  <li><b>Find relevant reviews:</b> on the validation set, 32 of the 34 relevant reviews were caught (TPR 94%) and 13 of the 16 not-relevant reviews were excluded (TNR 81%), which only reaches "pass"; on the test set, all 20 reviews across 2 questions (the top 10 search results for each, not hand-picked; 10 relevant, 10 not relevant) were judged correctly, meeting the target (but with only 20 reviews, the true rate could be anywhere from 84% to 100%). The new thresholds were set before the test set was run, but after seeing the validation scores: the original threshold "47 of 50 correct" was set by Claude Code with no basis; after the validation set failed it, the threshold was switched to a common practice for validating LLM judges, calculating recall separately for relevant and not-relevant reviews (per-class recall), with &gt; 90% on both as the target and &gt; 80% on relevant as the minimum; I separately set the pass line of ≥ 75% for not relevant. So the validation "pass" is for reference only; the test-set "target met" is what counts.</li>
+  <li><b>Review classification:</b> on the 25 test reviews, the score was 22/25 both before and after the definitions and model were changed together (one of the misclassified reviews changed), so there was no improvement (since both changed at once, their separate effects cannot be told apart). For 1 review I corrected my own answer after seeing the AI's answer (the review date was not shown on screen at the time); with my original answer it is 21/25.</li>
+  <li><b>Investigation stability:</b> the main investigation flow calls the AI fresh every time. It failed many times during development (quotes altered, verdicts copied wrong, hitting the call limit); after each failure type was moved to code or given a check, the final version passed all 4 runs. The scoring code itself also made a mistake: it attributed the negative-review rate of the later state in a sentence to the earlier state (the report itself was correct); after the fix, all 50 validation records were re-scored and only the 2 records affected by this misjudgment changed verdict, and tests with deliberately planted errors were added to confirm real errors are still caught.</li>
 </ul>
+</details>
+
+<details class="sec">
+<summary><h2>Application: analyzing negative reviews with the assistant</h2></summary>
+<p>The findings on slides 7–8 came from three features working in relay (the numbers were also recomputed by code, without calling the AI):</p>
+<ol>
+  <li><b>Review classification finds the main cause:</b> in 500 random 1–2 star reviews with comments, the most common single complaint is "missing or wrong items" at 28.2% (95% confidence interval 24.4%–32.3%), ahead of second-place "customer service" at 20.6%; a review can have several categories, and the two delivery categories (late delivery or not received) together reach 36.6%.</li>
+  <li><b>Ask the data compares order types:</b> among the 97,917 reviews with item details, the negative-review rate is 12.71% for single-item orders (88,227 reviews), 24.72% for several items from one seller (8,426 reviews, 1.9×) and 47.31% for several items from several sellers (1,264 reviews, 3.7×).</li>
+  <li><b>Review classification + Find relevant reviews look at real comments:</b> in the same 500 reviews, 66.7% (76/114) of negative reviews on multi-item orders are "missing or wrong items", versus 17.7% (65/368) for single-item orders (excluding 18 with no item details); one comment found by "find relevant reviews": "I bought two pendant lamps and paid for two, but received only 1."</li>
+</ol>
+<p>Limitation: a single-item order cannot be "one item short", so point 3 is only supporting evidence; telling split shipments from missing items needs per-package shipping and delivery records (not in the public dataset).</p>
 </details>
 
 <details class="sec">
@@ -884,9 +917,9 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <details class="sec">
 <summary><h2>Cost and operations</h2></summary>
 <ul>
-  <li><b>Call count is cost:</b> the free tier allows 20–500 requests per model per day; an "ask the data" question usually takes 2 requests (1 to write the SQL, 1 to write the answer); the final investigation uses 7–11 tool calls per run on the practice question (limit 20, plus up to 6 more when sent back for a rewrite) and takes about 12–18 seconds; when it hits the per-minute limit it waits and retries, and classifying a state's reviews for the first time adds tens of seconds.</li>
+  <li><b>Call count is cost:</b> the free tier allows 20–500 requests per model per day; an "ask the data" question usually takes 2 requests (1 to write the SQL, 1 to write the answer); the final investigation uses 7–11 tool calls per run on the validation question (limit 20, plus up to 6 more when sent back for a rewrite) and takes about 12–18 seconds; when it hits the per-minute limit it waits and retries, and classifying a state's reviews for the first time adds tens of seconds.</li>
   <li><b>Response caching:</b> steps with fixed answers, such as classification and relevance judgments, are not re-asked when the input is identical; the investigation saves each state's review classification results for reuse and re-classifies whenever the category definitions or model change.</li>
-  <li><b>Choosing the model with my own questions:</b> public leaderboards have no task like "judging Portuguese reviews", so I compared candidate free models on the 50 practice reviews of "find relevant reviews" (only 2 of 5 produced scores: 46/50 and 37/50; the rest ran out of daily quota or returned an invalid format) and chose the higher-scoring one, which review classification also uses (not compared separately on classification); later the definition of the "customer service issue" category was narrowed (relevance judgments use the same category definitions) and re-run, and the 45/50 in the score table is the current version.</li>
+  <li><b>Choosing the model with my own questions:</b> public leaderboards have no task like "judging Portuguese reviews", so I compared candidate free models on the 50 validation reviews of "find relevant reviews" (only 2 of 5 produced scores: 46/50 and 37/50; the rest ran out of daily quota or returned an invalid format) and chose the higher-scoring one, which review classification also uses (not compared separately on classification); later the definition of the "customer service issue" category was narrowed (relevance judgments use the same category definitions) and re-run, and the 45/50 in the score table is the current version.</li>
   <li><b>Logging:</b> each question logs the question, SQL, model version, tool calls and failure reasons (per-minute or per-day limits), and the web app can replay an investigation step by step.</li>
 </ul>
 </details>
@@ -895,10 +928,10 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 <summary><h2>Limitations and next steps</h2></summary>
 <ul>
   <li><b>The investigation supports only one question type:</b> it can currently only investigate "why states differ in negative reviews"; other "why" questions are handed to "ask the data", with the explanation labeled "AI inference, not verified by hypothesis testing". The next step is general investigation: any question goes through "hypothesis → expectation → SQL query → verdict by code".</li>
-  <li><b>Review classification missed its target:</b> refining the definitions did not improve the unseen score, and adding more rules has low payoff; the next step is to simplify the definitions and measure on a new batch of unseen reviews.</li>
-  <li><b>"Ask the data" has no unseen questions:</b> its 19 questions were also used for tuning during development, so the score may be inflated.</li>
+  <li><b>Review classification missed its target:</b> the test score was 22/25 both before and after refining the definitions (the sample is small and the model changed at the same time, so whether it helped cannot be told); the next step is to simplify the definitions and measure on a new test set.</li>
+  <li><b>"Ask the data" has no test set:</b> its 19 questions were also used for tuning during development, so the score may be inflated.</li>
   <li><b>Reference answers and system come from the same AI:</b> the reference SQL for "ask the data" and the system were both written by Claude Code and may make the same kinds of errors; I reviewed the metric definitions but did not independently rewrite the SQL line by line. The independent reviewers are from the same model family and may share the same blind spots.</li>
-  <li><b>Small samples and a single judge:</b> the "find relevant reviews" practice set has only 16 not-relevant reviews, and relevance and classification were judged by me alone, with no second judge to measure agreement.</li>
+  <li><b>Small samples and a single judge:</b> the "find relevant reviews" validation set has only 16 not-relevant reviews, and relevance and classification were judged by me alone, with no second judge to measure agreement.</li>
   <li><b>"Find relevant reviews" evaluates only the judgment step:</b> it does not measure whether the embedding search missed relevant reviews, nor whether the summary is faithful to the source.</li>
   <li><b>Free preview models:</b> Google may change them at any time; the fallback models the web app switches to when quota runs out have not been scored on the current version. A production launch would need paid models with pinned versions.</li>
   <li><b>Only some scoring checks are tested:</b> the number-source, quote-comparison and state/negative-review-rate checks have tests with deliberately planted errors, while the other checks do not; one misjudgment was found as recently as 2026-10-23.</li>
@@ -907,7 +940,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <footer>
   <p>Tools: Python (google-genai, DuckDB, Streamlit, fastembed), Gemini API free tier, Claude Code. Data: Olist <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Brazilian E-Commerce Public Dataset</a> (Kaggle). Score dates: "ask the data" and investigation 2026-10-23; find relevant reviews and review classification 2026-10-22.</p>
-  <p>Models: ask the data and investigation gemini-3.5-flash-lite (fallback gemini-3.5-flash); review classification and relevance judgment gemini-3.1-flash-lite-preview (the higher scorer on the 50 practice reviews among the 2 models that produced scores; fallback gemini-3.5-flash-lite); find relevant reviews summary gemini-3.5-flash-lite; embedding model paraphrase-multilingual-MiniLM-L12-v2.</p>
+  <p>Models: ask the data and investigation gemini-3.5-flash-lite (fallback gemini-3.5-flash); review classification and relevance judgment gemini-3.1-flash-lite-preview (the higher scorer on the 50 validation reviews among the 2 models that produced scores; fallback gemini-3.5-flash-lite); find relevant reviews summary gemini-3.5-flash-lite; embedding model paraphrase-multilingual-MiniLM-L12-v2.</p>
 </footer>
 </template>
 <!-- i18n:start --><script>

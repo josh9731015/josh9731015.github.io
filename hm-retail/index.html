@@ -459,7 +459,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <tr><td>顧客</td><td>137 萬人</td><td>年齡、會員狀態</td></tr>
   <tr><td>商品</td><td>10.6 萬款</td><td>商品大類（女裝、男裝、童裝等）、商品部門（依品項劃分，例如褲裝、針織衫、襯衫，共 250 個）、款式、顏色、花色等</td></tr>
 </table>
-<p class="howto">名詞說明：H&amp;M 的會計年度從 12 月開始，所以 <b>FY2020 Q1 ＝ 2019 年 12 月～2020 年 2 月</b>，拿來比較的「去年同一季」是 2018 年 12 月～2019 年 2 月。資料裡的兩個銷售通路只標成 1 和 2，官方沒說哪個是實體店；本頁依資料推論通路 1 是實體店、通路 2 是網路（歐洲封城那個月，通路 1 的銷量占比從平常的三成掉到 14.6%，符合實體店關門的情況）。</p>
+<p class="howto">名詞說明：H&amp;M 的會計年度從 12 月開始，所以 <b>FY2020 Q1 ＝ 2019 年 12 月～2020 年 2 月</b>，拿來比較的「去年同一季」是 2018 年 12 月～2019 年 2 月。資料裡的兩個銷售通路只標成 1 和 2，官方沒說哪個是實體店；本頁依資料推論通路 1 是實體店、通路 2 是網路（歐洲封城的 FY2020 Q2 整季，通路 1 的銷量占比從平常的三成掉到 14.6%，其中 2020 年 4 月整月為 0，符合實體店關門的情況）。</p>
 
 <h3>資料品質檢查</h3>
 <p>分析前先依業界常用的資料分析流程 CRISP-DM（依序為商業理解、資料理解、資料準備、建模、評估、部署）檢查資料品質，並決定每一類問題要不要處理：</p>
@@ -837,13 +837,13 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <p>本段用 <b>Precision@50K</b> 評估名單準不準：挑出的 5 萬人（50K）中，之後半年真的沒再回來買的比例。</p>
 
 <h3>第 1 步：先定義什麼叫「流失」</h3>
-<p>服飾不像訂閱制有「退訂」這個動作，顧客只是慢慢不來了，所以要自己訂標準。本專案定義為：<b>在某個時間點之後的 180 天內都沒有再買</b>。選 180 天有兩個依據：① 看每位顧客平常多久回來買一次，90% 的顧客在 192 天內會回來，半年沒買已經超出大多數人的習慣；② 業界服飾顧客一年約購買 2～4 次，本專案顧客的中位數為一年 2 次。兩項依據都指向「半年左右」，因此取半年整數 180 天。</p>
+<p>服飾不像訂閱制有「退訂」這個動作，顧客只是慢慢不來了，所以要自己訂標準。本專案定義為：<b>在某個時間點之後的 180 天內都沒有再買</b>。選 180 天有兩個依據：① 看每位顧客平常多久回來買一次，有兩次以上購買的 91.4 萬人中，90% 的平常購買間隔在 192 天以內，半年沒買已經超出大多數人的習慣；② 業界服飾顧客一年約購買 2～4 次，本專案顧客的中位數為一年 2 次。兩項依據都指向「半年左右」，因此取半年整數 180 天。</p>
 
 <h3>第 2 步：建模前的資料準備</h3>
 <p><b>① 類別比例：</b>流失與未流失的顧客約 35：65，比例並不懸殊。實際測試了 4 種常見的平衡處理方法（例如複製或減少其中一類顧客），Precision@50K 都沒有提升，反而讓模型預測的流失機率偏高，因此不做處理。</p>
 <p><b>② 避免模型學到不該學的規律。</b>資料依時間切成三份，而不是把同一批顧客隨機分成兩半：每一份都選一個「預測日」，用預測日之前半年的購買紀錄算出顧客特徵，再用預測日之後半年有沒有回來買，當作已知的結果。模型只用較早的資料學習，再拿較晚、沒看過的資料評估，避免模型「偷看到答案」。</p>
 <table>
-  <tr><th>用途</th><th>預測日</th><th>算顧客特徵的期間（預測日前 180 天）</th><th>判斷是否流失的期間（預測日後 180 天）</th></tr>
+  <tr><th>用途</th><th>預測日</th><th>算顧客特徵的期間（預測日前 365 天；新特徵用 181～365 天）</th><th>判斷是否流失的期間（預測日後 180 天）</th></tr>
   <tr><td>訓練：讓模型學習規律</td><td>2019-09-28</td><td>2019-04-02～2019-09-28</td><td>2019-09-29～2020-03-26</td></tr>
   <tr><td>驗證：比較、挑選方法</td><td>2019-12-26</td><td>2019-06-30～2019-12-26</td><td>2019-12-27～2020-06-23</td></tr>
   <tr class="hi"><td>測試：最終成績（本段所有結果）</td><td>2020-03-26</td><td>2019-09-29～2020-03-26</td><td>2020-03-27～2020-09-22</td></tr>
@@ -899,7 +899,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <p style="margin-top:8px">這三個指標都是以「流失機率 ≥ 0.5 就判為流失」來計算。以這個門檻，LightGBM 會選出 22.5 萬人，但預算只有 5 萬張券，實際發券時是取分數最高的 5 萬人，因此門檻 0.5 的結果不對應實際決策。Precision@50K 就是以這 5 萬人計算的 Precision；同樣以 5 萬人計算的 Recall（名單涵蓋了多少實際流失者）為 16.1%，見第 5 步的預算限制。三個指標的完整數字保留在調查底稿中。</p>
   </details>
 </div>
-<p><b>LightGBM 與 XGBoost 表現相同，為什麼選 LightGBM？</b>方法依驗證資料選擇：LightGBM 78.2%、XGBoost 78.1%，差距在誤差範圍內（抽樣誤差約 0.2 個百分點；測試資料反過來是 XGBoost 略高，79.6% 對 79.4%），因此採用驗證資料上略高的 LightGBM。改用 XGBoost 也不會改變結論。</p>
+<p><b>LightGBM 與 XGBoost 表現相同，為什麼選 LightGBM？</b>驗證資料上 LightGBM 78.2%、XGBoost 78.1%，差距在誤差範圍內（抽樣誤差約 0.2 個百分點；測試資料反過來是 XGBoost 略高，79.6% 對 79.4%），兩者表現相同，採用 LightGBM；換成 XGBoost 結論不變。</p>
 <p><b>為什麼以 Precision@50K 選模型，而不是 Accuracy？</b>預算固定 5 萬張，Precision@50K 直接代表「每張券發給真正要流失的人的比例」。Accuracy 可以確認兩個最佳模型的整體判斷沒有偏差（都是 74.8%，其他模型也在 74%～75%），但不適合用來選模型：即使把所有人都判為「不流失」，Accuracy 也有 65.0%，各模型之間拉不開差距。</p>
 <p><b>為什麼比簡單規則準？</b>依模型的特徵重要度（資訊增益，白話說是模型做判斷時這項線索出了多少力，以占全部的比例表示），最重要的三個是過去半年來買了幾天（37.3%）、更早半年來過幾天（21.1%），以及「以這個人自己平常的習慣來說，現在是不是異常地久沒來」（16.1%）。名單上幾乎都是更早半年沒來過、過去半年只來過一天的顧客，主要靠前兩項挑出來；第三項用來區分來過兩次以上的顧客：例如一位平常每 30 天來一次的顧客，已經 90 天沒來，是正常間隔的 3 倍，很可能要流失了；另一位平常半年才來一次的顧客，90 天沒來其實很正常，只看「多久沒來」會把後者誤判為比較可能流失。重要度高不代表拿掉就會變差：第 3 步拿掉「來過幾天」結果幾乎不變，可能是因為「買了幾件」「花了多少」帶有相同的資訊，可以補位。</p>
 
@@ -1086,12 +1086,12 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 9 月 ｜ 余家丞</p>
   <h1>零售業績下滑調查與顧客流失預測</h1>
-  <p class="lead">用 H&amp;M 交易資料回答：<b>業績為什麼下滑（含哪個通路的老顧客較留不住）、挽留券該發給誰、發券後怎麼證明有效</b></p>
+  <p class="lead">用 H&amp;M 交易資料回答：<b>業績為什麼下滑（含哪個通路的顧客較少回購）、挽留券該發給誰、發券後怎麼證明有效</b></p>
   <div class="chips"><span>Python（pandas）</span><span>邏輯迴歸</span><span>LightGBM</span><span>時間切分回測</span><span>A/B 測試（檢定力分析）</span></div>
   <div class="roles">
     <div><b>54%</b><span>業績下滑（件數比去年同季 −10.3%）中來自童裝的比例；童裝可能是資料收錄改變，待確認</span></div>
     <div><b>79.4%</b><span>模型挑出的 5 萬人中，之後半年未再購買的比例（隨機抽樣為 35.0%）</span></div>
-    <div><b>3,500 人</b><span>驗證發券效果時，每輪需隨機保留、不發券的對照組人數（以依流失機率挑出的名單為例），比較兩組發券後 180 天的回購比例，判斷券有沒有效</span></div>
+    <div><b>14%</b><span>單輪實驗看出券有效的機率（名單二的檢定力）；所以發券效果要每輪隨機保留不發券的對照組、累積多輪才能確認</span></div>
   </div>
   <p class="foot">資料：H&amp;M 在 Kaggle 公開的部分顧客交易樣本（2018-09～2020-09），結果不代表 H&amp;M 真實業績；價格為換算後的相對值；發券效果為模擬。程式由 Claude Code 協助撰寫，分析方向與結論由本人負責</p>
 </div></section>
@@ -1145,11 +1145,11 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 </div></section>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
-  <h2>老顧客未回購的通路差異</h2>
+  <h2>去年同季顧客未回購的通路差異</h2>
   <span class="sub">購買件數與年齡相同時，只在網路買的顧客，未回購比例比只在實體店買的高 7.1 個百分點</span>
   <div class="two">
     <div class="dp" aria-label="只在實體店買與只在網路買的顧客未回購比例">
-      <p class="ct">去年同季的老顧客，今年同季一件都沒買的比例（未回購比例）</p>
+      <p class="ct">去年同季的顧客，今年同季一件都沒買的比例（未回購比例）</p>
       <p class="lg"><i class="g"></i>只在實體店買（17.8 萬人） <i class="t"></i>只在網路買（23.4 萬人）</p>
       <div class="r"><span>直接比較<small>各組實際比例</small></span><div class="tr" style="--a:53.33%;--b:83.33%"><i class="pt" style="left:53.33%"><span>52.4%</span></i><i class="pt on" style="left:83.33%"><span>56.0%</span></i><em class="gap" style="left:68.33%;font-style:normal">+3.6</em></div></div>
       <div class="r"><span>購買件數、年齡相同<small>邏輯迴歸控制後</small></span><div class="tr" style="--a:20.83%;--b:80.00%"><i class="pt" style="left:20.83%"><span>48.5%</span></i><i class="pt on" style="left:80.00%"><span>55.6%</span></i><em class="gap" style="left:50.42%;font-style:normal">+7.1</em></div></div>
@@ -1157,7 +1157,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">X 軸：未回購比例，從 46% 開始以便看清差距；兩點之間的數字＝差距（百分點）；誤差範圍（95% 信賴區間）約 ±0.2 個百分點，差距可信</p>
     </div>
     <div class="side">
-      <p><b>為什麼看通路：</b>這季顧客總數比去年同季只少 2.6%，但去年同季的老顧客有 49.2% 這季一件都沒買（未回購）；這些未回購的人有 52.8% 原本只在網路買。網路顧客本來就最多，人數多自然占比高，所以改比各組自己的未回購比例（兩邊都有買的顧客，未回購比例只有 25.5%）</p>
+      <p><b>為什麼看通路：</b>這季顧客總數比去年同季只少 2.6%，但去年同季的顧客有 49.2% 這季一件都沒買（未回購）；這些未回購的人有 52.8% 原本只在網路買。網路顧客本來就最多，人數多自然占比高，所以改比各組自己的未回購比例（兩邊都有買的顧客，未回購比例只有 25.5%）</p>
       <p><b>為什麼要控制購買件數：</b>買得多的顧客本來就比較會回購；網路顧客中買 10 件以上的占 22.0%（實體店 8.0%），直接比較會低估差距，所以用邏輯迴歸把購買件數與年齡拉到相同再比</p>
       <p><b>差距隨購買件數縮小：</b>只在網路買和只在實體店買的顧客，未回購比例在買 1 件時差 12.0 個百分點，買 10 件以上只差 0.2 個百分點</p>
       <p><b>只是關聯，不是因果：</b>迴歸能衡量差距大小，不能證明是「網路」本身造成的；找原因需要網站造訪、配送與退貨資料（第 9 頁）</p>
@@ -1167,7 +1167,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>挽留券名單比較</h2>
-  <span class="sub">機器學習模型 LightGBM 挑出的 5 萬人中 79.4% 之後半年未再購買，比最好的簡單規則多找到 3,071 位會流失的顧客</span>
+  <span class="sub">機器學習模型 LightGBM 挑出的 5 萬人中 79.4% 之後半年未再購買，比最好的簡單規則（73.2%）多找到 3,071 位會流失的顧客</span>
   <div class="two">
     <div class="bars">
       <p class="ct">各方法挑出的 5 萬人中，預測日後 180 天內沒再購買的比例</p>
@@ -1179,10 +1179,10 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">回測（用過去的資料假裝預測、再對答案）：以 2020-03-26 為預測日，各方法從前半年有購物的 70.2 萬人中挑 5 萬人；本頁起「流失」＝預測日後 180 天沒再購買</p>
     </div>
     <div class="side">
-      <p><b>比較範圍：</b>5 種機器學習模型、1 種統計模型（BG/NBD，依購買頻率推算回購）與 2 種簡單規則；LightGBM 與 XGBoost 差距在誤差內，依驗證資料選 LightGBM（下一頁）</p>
-      <p><b>為什麼用 Precision@50K：</b>＝挑出的 5 萬人中真正流失的比例，直接代表 5 萬張券有沒有發對人；Accuracy（全部猜對的比例）全猜「不流失」也有 65.0%，分不出優劣</p>
-      <p><b>關鍵特徵（模型判斷用的欄位）：</b>預測日前 181～365 天沒有購買的顧客流失 60.6%，有購買的 22.3%；補上這個特徵後，Precision@50K 從 68.4% 提升到 79.4%</p>
-      <p><b>兩份名單：</b>名單一＝依流失機率挑的這 5 萬人；名單二＝依「流失機率 × 過去半年消費」挑 5 萬人，流失者占 47.1%，但流失者的半年消費合計是名單一流失者的 3.4 倍。留住最多人用名單一，保住最多營收用名單二</p>
+      <p><b>比較範圍：</b>5 種機器學習模型、1 種統計模型（BG/NBD）與 2 種簡單規則（圖中灰色兩條）；LightGBM 與 XGBoost 差距在誤差內，採用 LightGBM，換 XGBoost 結論不變</p>
+      <p><b>為什麼用 Precision@50K：</b>預算固定發 5 萬張券，它＝挑出的 5 萬人中真正流失的比例；Accuracy（全部猜對的比例）全猜「不流失」也有 65.0%，分不出優劣</p>
+      <p><b>關鍵特徵：</b>「是不是老顧客」＝預測日前 181～365 天有沒有來買過。新顧客之後半年有 60.6% 沒再購買，老顧客只有 22.3%；補上 4 個新特徵後 Precision@50K 從 68.4% 升到 79.4%，主要來自這個特徵</p>
+      <p><b>兩份名單：</b>名單一＝依流失機率挑的這 5 萬人；名單二＝依「流失機率 × 過去半年消費」挑，流失者占 47.1%，但流失者的半年消費合計是名單一流失者的 3.4 倍</p>
     </div>
   </div>
 </div></section>
@@ -1197,26 +1197,26 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   </div>
   <div class="checks c2" style="flex:none;margin-top:.5em">
     <div><b>為什麼依時間切，不隨機切</b><span>實際使用時只能用過去預測未來；依時間切才能模擬這個情況，避免模型看到預測日之後的資料。訓練只用童裝驟降之後的預測日（第 3 頁），避免把「不再買童裝」學成流失訊號</span></div>
-    <div><b>限制</b><span>驗證與測試判斷流失的期間重疊約 3 個月（疫情初期），挑方法時已經看過這 3 個月顧客有沒有回來，測試成績可能略為偏高</span></div>
+    <div><b>限制</b><span>驗證與測試判斷流失的期間重疊約 3 個月，挑方法時已經看過這 3 個月顧客有沒有回來，測試成績可能略為偏高</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>發券效果的驗證設計（模擬）</h2>
-  <span class="sub">這一輪名單二的估計範圍（95% 信賴區間）整段高於回本門檻，但單輪人數只有 14% 檢定力，結果容易受分組運氣影響；名單一可能高於也可能低於門檻；兩份都要累積多輪實驗才能確定</span>
+  <span class="sub">名單二區間高於回本門檻、名單一跨過；模擬 1,000 次誤判機率 12%／4%，單輪檢定力僅 14%，要累積多輪</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">發券組 − 對照組的 180 天回購比例差距（百分點，模擬）</p>
       <p class="lg"><i class="t"></i>量到的差距與 95% 信賴區間 <i class="thk"></i>回本門檻（券成本 ÷ 每位回購顧客毛利）</p>
-      <div class="r"><div class="nm"><b>名單一：依流失機率</b><span>信賴區間 +1.08～+3.83</span><span>預期淨利 +3.4 萬（−6.9～+13.8 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>名單二：依流失損失</b><span>信賴區間 +1.37～+4.17</span><span>預期淨利 +51.4 萬（+17.8～+85.0 萬）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
+      <div class="r"><div class="nm"><b>名單一：依流失機率</b><span>信賴區間 +1.08～+3.83</span><span>預期淨利 +3.4 萬（−6.9～+13.8）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">門檻 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
+      <div class="r"><div class="nm"><b>名單二：流失機率×半年消費</b><span>信賴區間 +1.37～+4.17</span><span>預期淨利 +51.4 萬（+17.8～+85.0）</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">門檻 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
-      <p class="note">名單二的顧客消費較高，所以回本門檻較低（名單定義見第 5 頁）；門檻低，單輪要兩組各約 10 萬人才達 80% 檢定力，所以要累積多輪。對照組回購是真實資料，券的效果為事先設定的模擬值；金額為假設單位</p>
+      <p class="note">名單二消費高、門檻低，單輪要兩組各約 10 萬人才達 80% 檢定力；對照組回購為真實資料，券的效果為模擬值，金額為假設單位</p>
     </div>
     <div class="side">
       <p><b>對照組必須隨機分配：</b>若改挑「最不會流失的 2,500 人」當對照組，這組即使沒拿到券，回購比例也比其他人高 2.7 個百分點，超過回本門檻，券的效果會被蓋掉，誤判券無效</p>
-      <p><b>人數用檢定力分析決定：</b>檢定力＝券的效果剛好等於回本門檻時，實驗能看出效果的機率；原本規劃的對照組 2,500 人（第一輪實驗、換模型前的名單）檢定力只有 54%；換新模型後的這一輪，名單一需 3,500 人才達 80%</p>
-      <p><b>效果要看滿 180 天，並累積多輪實驗：</b>名單一發券組比對照組多出的回購比例，第 30 天是 +3.75 個百分點，到第 180 天只剩 +2.46，只看 30 天會高估券的效果；只做一輪實驗，還不足以決定要停止發券或擴大發券</p>
+      <p><b>人數用檢定力分析決定：</b>檢定力＝券的效果剛好等於回本門檻時，實驗能看出效果的機率；原本規劃的對照組 2,500 人檢定力只有 54%；換新模型後的這一輪，名單一需 3,500 人才達 80%</p>
+      <p><b>效果要看滿 180 天，並累積多輪實驗：</b>名單一發券組比對照組多出的回購比例，第 30 天是 +3.75 個百分點，到第 180 天只剩 +2.46（模擬設定：券會讓之後才回購的人提早買），只看 30 天會高估券的效果</p>
     </div>
   </div>
 </div></section>
@@ -1225,9 +1225,9 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>結論</h2>
   <span class="sub">業績下滑主要來自童裝與部分款式；模型名單比簡單規則準；發券效果要靠隨機對照組、累積多輪確認</span>
   <div class="checks">
-    <div><b>業績為什麼下滑</b><span>FY2020 Q1 件數比去年同季少 10.3%：54% 來自童裝，46% 來自成人服飾（主要是深藍、條紋、蕾絲款式減少）。童裝自 2019 年 3 月起驟降，可能是資料收錄範圍改變，需先確認。也檢查了通路：購買件數與年齡相同時，只在網路買的老顧客未回購比例高 7.1 個百分點；但直接看實際比例，兩個通路都有超過一半的老顧客沒回購，所以問題不只在通路</span></div>
-    <div><b>挽留券該發給誰</b><span>兩份 LightGBM 名單都發：名單一挑出的 5 萬人中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則多找到 3,071 位；名單二流失者過去半年的消費合計是名單一的 3.4 倍，保住的營收較多</span></div>
-    <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，比較 180 天的回購比例；模擬中名單二這一輪的估計範圍整段高於回本門檻，但單輪人數只有 14% 檢定力，結果容易受分組運氣影響，名單一可能高於也可能低於門檻；兩份都要累積多輪才能確定</span></div>
+    <div><b>業績為什麼下滑</b><span>FY2020 Q1 件數比去年同季少 10.3%：54% 來自童裝，46% 來自成人服飾（主要是深藍、條紋、蕾絲款式減少）。童裝自 2019 年 3 月起驟降，可能是資料收錄範圍改變，需先確認。也檢查了通路（第 4 頁）：購買件數與年齡相同時，只在網路買的去年同季顧客，未回購比例比只在實體店買的高 7.1 個百分點</span></div>
+    <div><b>挽留券該發給誰</b><span>5 萬張券兩份名單各發 2.5 萬張：名單一（依流失機率挑 5 萬人）中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則（先挑半年到一年沒買過、再挑最久沒買的人，73.2%）多找到 3,071 位；名單二（依流失機率 × 過去半年消費挑 5 萬人）流失者過去半年的消費合計是名單一的 3.4 倍，保住的營收較多</span></div>
+    <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，比較 180 天的回購比例。模擬中名單二的區間整段高於回本門檻（券成本 ÷ 每位回購顧客毛利），名單一的區間跨過門檻；重複 1,000 次，誤判機率名單一約 12%、名單二約 4%。名單二單輪檢定力（效果剛好等於門檻時能看出來的機率）只有 14%，所以兩份都要每輪留對照組、累積多輪</span></div>
   </div>
 </div></section>
 
@@ -1235,10 +1235,10 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>建議的下一步</h2>
   <span class="sub">前兩項只要向相關單位確認，成本最低；後兩項需要新資料或實際發券</span>
   <div class="nexts">
-    <div><b>向資料提供單位確認童裝收錄範圍</b><span><i class="pg">第 3 頁</i>確認 2019 年 3 月起童裝交易的收錄範圍有沒有改變；若是資料問題，排除童裝重算業績，否則才投入人力調查童裝業務</span></div>
-    <div><b>向商品企劃確認款式減少原因</b><span><i class="pg">第 2 頁</i>深藍、條紋、蕾絲款式少了 48.4%：確認是款式決策還是顧客偏好改變，再決定下一季選品</span></div>
-    <div><b>取得網站與物流資料，找出網路老顧客未回購的原因</b><span><i class="pg">第 4 頁</i>購買件數與年齡相同時，網路顧客未回購比例高 7.1 個百分點：用網站造訪、轉換率、配送與退貨資料，判斷是引流、結帳流程還是購物後體驗的問題</span></div>
-    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">第 7 頁</i>兩份名單都發、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
+    <div><b>向資料提供單位確認童裝收錄範圍</b><span><i class="pg">根據：第 3 頁</i>確認 2019 年 3 月起童裝交易的收錄範圍有沒有改變；若是資料問題，排除童裝重算業績，否則才投入人力調查童裝業務</span></div>
+    <div><b>向商品企劃確認款式減少原因</b><span><i class="pg">根據：第 2 頁</i>深藍、條紋、蕾絲款式少了 48.4%：確認是款式決策還是顧客偏好改變，再決定下一季選品</span></div>
+    <div><b>取得網站與物流資料，找出網路顧客未回購的原因</b><span><i class="pg">根據：第 4 頁</i>購買件數與年齡相同時，網路顧客未回購比例高 7.1 個百分點：用網站造訪、轉換率、配送與退貨資料，判斷是引流、結帳流程還是購物後體驗的問題</span></div>
+    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">根據：第 7 頁</i>5 萬張券兩份名單各發 2.5 萬張、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
   </div>
   <p class="note">限制：資料為部分顧客樣本，不代表 H&amp;M 真實業績；資料只到 2020 年 9 月（疫情期間）；發券效果為模擬，需實際發券後驗證</p>
 </div></section>
@@ -1257,7 +1257,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <div class="roles">
     <div><b>54%</b><span>Share of the sales decline (units −10.3% year over year) that came from kidswear; possibly a data coverage change, to be confirmed</span></div>
     <div><b>79.4%</b><span>Share of the 50,000 customers picked by the model who did not buy again in the next six months (35.0% for a random sample)</span></div>
-    <div><b>3,500</b><span>Random no-coupon control group needed per round to test coupon impact (for the list ranked by churn probability), judged on repurchases within 180 days of sending</span></div>
+    <div><b>14%</b><span>Chance that one round of the experiment detects a working coupon (list 2's power); so coupon impact must be confirmed with a random no-coupon control group every round, pooled over several rounds</span></div>
   </div>
   <p class="foot">Data: a partial customer sample of transactions H&amp;M released on Kaggle (2018-09 to 2020-09); results do not represent H&amp;M's actual sales; prices are rescaled relative values; coupon effects are simulated. Code written with help from Claude Code; analysis direction and conclusions are my own</p>
 </div></section>
@@ -1279,7 +1279,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <div class="side">
       <p><b>Comparison baseline:</b> compared with the same quarter last year to avoid seasonality, units fell 10.3% while the average price per unit actually rose 1.7%, so the problem is the number of units sold</p>
       <p><b>Breaking down all 15 categories:</b> comparing each category's share of this quarter's lost units with its share of units in the same quarter last year, kidswear had the biggest gap: kidswear was 7.9% of units in the same quarter last year, but 54% of this quarter's lost units (Slide 3)</p>
-      <p><b>Dark blue, striped, and lace styles fell by 236K units:</b> 48.4% below the same quarter last year; they declined in all four adult apparel groups (Divided, Ladieswear, Menswear, Sport), a change in product mix; whether it was a styling decision or a change in customer taste needs to be confirmed with merchandising</p>
+      <p><b>Dark blue, striped, and lace styles fell by 236K units:</b> 48.4% below the same quarter last year; they declined in all four adult apparel groups (young fashion, ladieswear, menswear, sportswear), a change in product mix; whether it was a styling decision or a change in customer taste needs to be confirmed with merchandising</p>
     </div>
   </div>
 </div></section>
@@ -1333,7 +1333,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="slide" aria-label="Slide 5"><div class="sl">
   <h2>Comparing Coupon Lists</h2>
-  <span class="sub">79.4% of the 50,000 customers picked by LightGBM did not buy again in six months, finding 3,071 more future churners than the best simple rule</span>
+  <span class="sub">79.4% of the 50,000 customers picked by LightGBM did not buy again in six months, finding 3,071 more future churners than the best simple rule (73.2%)</span>
   <div class="two">
     <div class="bars">
       <p class="ct">Share of each method's 50,000 picks who did not buy again within 180 days of the prediction date</p>
@@ -1345,10 +1345,10 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">Backtest: prediction date 2020-03-26; each method picks 50,000 of the 702K customers who shopped in the prior six months; from here on, "churn" = no purchase within 180 days after the prediction date</p>
     </div>
     <div class="side">
-      <p><b>What was compared:</b> 5 machine learning models, 1 statistical model (BG/NBD repurchase model) and 2 simple rules; LightGBM and XGBoost tied within error, and LightGBM was chosen on validation data (next slide)</p>
-      <p><b>Why Precision@50K:</b> the budget is fixed at 50,000 coupons, so it directly measures the share of coupons going to customers who would really churn; Accuracy is 65.0% even when predicting "no churn" for everyone, so it cannot separate the models</p>
-      <p><b>Key feature (an input the model uses):</b> customers with no purchase 6–12 months (181–365 days) before the prediction date churned 60.6% vs 22.3% for those with one; adding this feature raised Precision@50K from 68.4% to 79.4%</p>
-      <p><b>Two lists:</b> list 1 = these 50,000 by churn probability; list 2 = 50,000 by churn probability × past-6-month spend (47.1% churn, but its churners spent 3.4× as much in total). List 1 keeps the most customers, list 2 the most revenue</p>
+      <p><b>Compared:</b> 5 machine learning models, 1 statistical model (BG/NBD) and 2 simple rules (gray bars); LightGBM and XGBoost tied within error; LightGBM was used, and XGBoost gives the same conclusion</p>
+      <p><b>Why Precision@50K:</b> with a fixed budget of 50,000 coupons, it is the share going to real churners; Accuracy is 65.0% even if everyone is predicted "no churn"</p>
+      <p><b>Key feature (model input):</b> "returning customer" = bought 6–12 months (181–365 days) before the prediction date. New customers: 60.6% did not buy again vs 22.3% of returning ones; 4 new features raised Precision@50K from 68.4% to 79.4%, mainly due to this one</p>
+      <p><b>Two lists:</b> list 1 = these 50,000 by churn probability; list 2 = 50,000 by churn probability × past-6-month spend: 47.1% churn, but its churners' past-6-month spend totals 3.4× that of list 1's churners</p>
     </div>
   </div>
 </div></section>
@@ -1363,26 +1363,26 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   </div>
   <div class="checks c2" style="flex:none;margin-top:.5em">
     <div><b>Why split by time, not at random</b><span>In real use, the model can only predict the future from the past; splitting by time mimics that and keeps the model from seeing data after the prediction date. Training uses only prediction dates after the kidswear plunge (Slide 3), so the model does not learn "stopped buying kidswear" as a churn signal</span></div>
-    <div><b>Limitation</b><span>The validation and test churn periods overlap by about 3 months (early pandemic); those months were already seen when choosing the method, so the test score may be slightly optimistic</span></div>
+    <div><b>Limitation</b><span>The validation and test churn periods overlap by about 3 months; those months were already seen when choosing the method, so the test score may be slightly optimistic</span></div>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Coupon Impact: Test Design (Simulated)</h2>
-  <span class="sub">This round, list 2's whole estimated range (95% confidence interval) is above break-even, but one round only gives 14% power, so the result is easily swayed by the luck of the split; list 1's could be above or below it; both need several rounds to be sure</span>
+  <span class="sub">List 2's interval is above break-even, list 1's straddles it; over 1,000 simulated repeats, wrong calls occur about 12% (list 1) and 4% (list 2) of the time; list 2's one-round power is only 14%, so both need a control group every round, pooled over rounds</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">Treatment − control 180-day repurchase rate difference (pp, simulated)</p>
-      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="thk"></i>Break-even threshold (coupon cost ÷ gross profit per returning customer)</p>
+      <p class="lg"><i class="t"></i>Measured difference and 95% confidence interval <i class="thk"></i>Break-even threshold (coupon cost ÷ gross profit per repurchasing customer)</p>
       <div class="r"><div class="nm"><b>List 1: by churn probability</b><span>95% CI +1.08 to +3.83</span><span>expected net profit +34K (−69K to +138K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:34.67%;width:calc(80.50% - 34.67%)"></i><i class="th" style="left:50.00%"></i><span class="thl" style="left:50.00%">break-even 2.00</span><i class="pt" style="left:57.67%"></i><span class="ptl" style="left:57.67%">+2.46</span></div></div>
-      <div class="r"><div class="nm"><b>List 2: by churn loss</b><span>95% CI +1.37 to +4.17</span><span>expected net profit +514K (+178K to +850K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
+      <div class="r"><div class="nm"><b>List 2: churn prob. × 6-mo spend</b><span>95% CI +1.37 to +4.17</span><span>expected net profit +514K (+178K to +850K)</span></div><div class="tr"><i class="zero" style="left:16.67%"></i><i class="line" style="left:39.50%;width:calc(86.17% - 39.50%)"></i><i class="th" style="left:27.17%"></i><span class="thl" style="left:27.17%">break-even 0.63</span><i class="pt" style="left:62.83%"></i><span class="ptl" style="left:62.83%">+2.77</span></div></div>
       <div class="axis"><span style="left:0.00%">−1</span><span style="left:16.67%">0</span><span style="left:33.33%">+1</span><span style="left:50.00%">+2</span><span style="left:66.67%">+3</span><span style="left:83.33%">+4</span><span style="left:100.00%">+5</span></div>
-      <p class="note">List 2's customers spend more, so its break-even threshold is lower (list definitions on slide 5); with such a low threshold, one round would need about 100,000 per group for 80% power, so rounds must be pooled. Control-group repurchases are real data; the coupon effect is a preset simulated value; amounts are in hypothetical units</p>
+      <p class="note">List 2 spends more, so its threshold is lower; one round would need about 100,000 per group for 80% power. Control repurchases are real data; the coupon effect is simulated; amounts are hypothetical units</p>
     </div>
     <div class="side">
       <p><b>Assign the control group at random:</b> if the "2,500 least likely to churn" were picked as controls, their repurchase rate would be 2.7 pp higher than everyone else's even without a coupon, above break-even, so the coupon's effect would be masked and it would wrongly look ineffective</p>
-      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; the manager's planned 2,500-person control group (round 1, before the model change) has only 54%; in this round, after the model change, list 1 needs 3,500 to reach 80%</p>
-      <p><b>Measure over 180 days and pool several rounds:</b> list 1's extra repurchase rate was +3.75 pp at day 30 but only +2.46 at day 180, so 30 days overstates the effect; one round cannot decide whether to stop or expand coupons</p>
+      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; the originally planned 2,500-person control group has only 54%; in this round, after the model change, list 1 needs 3,500 to reach 80%</p>
+      <p><b>Measure over 180 days and pool several rounds:</b> list 1's extra repurchase rate was +3.75 pp at day 30 but only +2.46 at day 180 (simulation setting: the coupon makes people who would have come back later buy sooner), so 30 days overstates the effect</p>
     </div>
   </div>
 </div></section>
@@ -1391,9 +1391,9 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>Conclusions</h2>
   <span class="sub">The decline mainly came from kidswear and certain styles; the model's list beats simple rules; coupon impact must be confirmed with random control groups over several rounds</span>
   <div class="checks">
-    <div><b>Why sales fell</b><span>FY2020 Q1 units fell 10.3% vs the same quarter last year: 54% from kidswear, 46% from adult apparel (mainly fewer dark blue, striped, and lace styles). Kidswear dropped sharply from March 2019, possibly a change in data coverage, which needs confirming first. Channels were also checked: with items bought and age held equal, online-only customers' non-return rate is 7.1 pp higher; but in the raw rates, over half of repeat customers in both channels did not return, so it is not just a channel problem</span></div>
-    <div><b>Who should get coupons</b><span>Send to both LightGBM lists: 79.4% of list 1's 50,000 customers did not buy again in six months (35.0% for a random sample), 3,071 more than the best simple rule; list 2's churners spent 3.4× as much as list 1's in the past six months, so it keeps more revenue</span></div>
-    <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and compare 180-day repurchase rates; in simulation, list 2's whole estimated range this round is above break-even, but one round only gives 14% power, so the result is easily swayed by luck, while list 1's could be above or below it; both need several rounds to be sure</span></div>
+    <div><b>Why sales fell</b><span>FY2020 Q1 units fell 10.3% vs the same quarter last year: 54% from kidswear, 46% from adult apparel (mainly fewer dark blue, striped, and lace styles). Kidswear dropped sharply from March 2019, possibly a change in data coverage, which needs confirming first. Channels were also checked (slide 4): with items bought and age held equal, online-only customers among last year's same-quarter customers have a non-return rate 7.1 pp higher than store-only ones</span></div>
+    <div><b>Who should get coupons</b><span>Split the 50,000 coupons, 25,000 to each list: 79.4% of list 1's 50,000 customers (picked by churn probability) did not buy again in six months (35.0% for a random sample), 3,071 more than the best simple rule (no purchase 6–12 months ago, then longest since last purchase: 73.2%); list 2's churners (picked by churn probability × past-6-month spend) spent 3.4× as much as list 1's in the past six months, so it keeps more revenue</span></div>
+    <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and compare 180-day repurchase rates. In simulation, list 2's whole interval is above break-even (coupon cost ÷ gross profit per repurchasing customer), while list 1's straddles it; over 1,000 repeats, the chance of a wrong call is about 12% for list 1 and 4% for list 2. List 2's one-round power (the chance of seeing an effect exactly at break-even) is only 14%, so both need a control group every round, pooled over several rounds</span></div>
   </div>
 </div></section>
 
@@ -1401,10 +1401,10 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <h2>Recommended Next Steps</h2>
   <span class="sub">The first two only need confirmation from the relevant teams and cost least; the last two need new data or a real coupon send</span>
   <div class="nexts">
-    <div><b>Ask the data provider about kidswear coverage</b><span><i class="pg">Slide 3</i>Confirm whether coverage of kidswear transactions changed from March 2019; if it is a data issue, exclude kidswear and recompute sales, only otherwise commit staff to investigating the kidswear business</span></div>
-    <div><b>Ask merchandising why styles declined</b><span><i class="pg">Slide 2</i>Dark blue, striped, and lace styles fell 48.4%: confirm whether the drop was a styling decision or a change in customer taste, then plan next season's range</span></div>
-    <div><b>Get website and delivery data to find why online repeat customers don't return</b><span><i class="pg">Slide 4</i>With items bought and age held equal, online customers' non-return rate is 7.1 pp higher: use website visit, conversion rate, delivery, and return data to tell whether the problem is traffic, checkout, or the post-purchase experience</span></div>
-    <div><b>Send coupons by the experiment design, with a control group each round</b><span><i class="pg">Slide 7</i>Send to both lists, randomly hold back a no-coupon control group every round, set the next budget from 180-day results and pool rounds; re-validate whenever the model changes</span></div>
+    <div><b>Ask the data provider about kidswear coverage</b><span><i class="pg">Based on: slide 3</i>Confirm whether coverage of kidswear transactions changed from March 2019; if it is a data issue, exclude kidswear and recompute sales, only otherwise commit staff to investigating the kidswear business</span></div>
+    <div><b>Ask merchandising why styles declined</b><span><i class="pg">Based on: slide 2</i>Dark blue, striped, and lace styles fell 48.4%: confirm whether the drop was a styling decision or a change in customer taste, then plan next season's range</span></div>
+    <div><b>Get website and delivery data to find why online customers don't return</b><span><i class="pg">Based on: slide 4</i>With items bought and age held equal, online customers' non-return rate is 7.1 pp higher: use website visit, conversion rate, delivery, and return data to tell whether the problem is traffic, checkout, or the post-purchase experience</span></div>
+    <div><b>Send coupons by the experiment design, with a control group each round</b><span><i class="pg">Based on: slide 7</i>Split the 50,000 coupons, 25,000 to each list, randomly hold back a no-coupon control group every round, set the next budget from 180-day results and pool rounds; re-validate whenever the model changes</span></div>
   </div>
   <p class="note">Limitations: the data is a partial customer sample and does not represent H&amp;M's actual sales; it only runs to September 2020 (during the pandemic); coupon effects are simulated and must be verified with a real send</p>
 </div></section>
@@ -1458,7 +1458,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <tr><td>Customers</td><td>1.37 million</td><td>Age, membership status</td></tr>
   <tr><td>Products</td><td>106K items</td><td>Product group (e.g. Ladieswear, Menswear, kidswear), department (by product type, e.g. trousers, knitwear, shirts; 250 in total), style, color, pattern, etc.</td></tr>
 </table>
-<p class="howto">Terms: H&amp;M's fiscal year starts in December, so <b>FY2020 Q1 = Dec 2019 – Feb 2020</b>, and "the same quarter last year" is Dec 2018 – Feb 2019. The two sales channels in the data are only labeled 1 and 2, and H&amp;M did not say which is in-store. This page infers channel 1 is in-store and channel 2 is online (in the month Europe went into lockdown, channel 1's share of units fell from its usual ~30% to 14.6%, consistent with stores closing).</p>
+<p class="howto">Terms: H&amp;M's fiscal year starts in December, so <b>FY2020 Q1 = Dec 2019 – Feb 2020</b>, and "the same quarter last year" is Dec 2018 – Feb 2019. The two sales channels in the data are only labeled 1 and 2, and H&amp;M did not say which is in-store. This page infers channel 1 is in-store and channel 2 is online (in FY2020 Q2, the quarter Europe went into lockdown, channel 1's share of units fell from its usual ~30% to 14.6%, with zero for all of April 2020, consistent with stores closing).</p>
 
 <h3>Data quality checks</h3>
 <p>Before the analysis, I checked data quality following CRISP-DM, a widely used analytics process (business understanding, data understanding, data preparation, modeling, evaluation, deployment), and decided whether each type of issue needed handling:</p>
@@ -1836,13 +1836,13 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 <p>This section uses <b>Precision@50K</b> to judge how accurate a list is: the share of the 50,000 people picked (50K) who actually did not buy again in the next six months.</p>
 
 <h3>Step 1: Define what "churn" means</h3>
-<p>Unlike subscriptions, clothing has no "cancel" action — customers just gradually stop coming — so a definition is needed. This project defines churn as: <b>no purchase in the 180 days after a given point in time</b>. 180 days rests on two grounds: ① looking at how often each customer usually comes back, 90% of customers return within 192 days, so six months without buying is beyond most people's habit; ② industry benchmarks put fashion customers at about 2–4 purchases a year, and the median here is 2 times a year. Both point to "about six months," so the round figure of 180 days was chosen.</p>
+<p>Unlike subscriptions, clothing has no "cancel" action — customers just gradually stop coming — so a definition is needed. This project defines churn as: <b>no purchase in the 180 days after a given point in time</b>. 180 days rests on two grounds: ① looking at how often each customer usually comes back, among the 914K customers with two or more purchases, 90% have a typical gap between purchases of 192 days or less, so six months without buying is beyond most people's habit; ② industry benchmarks put fashion customers at about 2–4 purchases a year, and the median here is 2 times a year. Both point to "about six months," so the round figure of 180 days was chosen.</p>
 
 <h3>Step 2: Data preparation before modeling</h3>
 <p><b>① Class balance:</b> churned vs not-churned customers are about 35:65, not very imbalanced. I tested 4 common balancing methods (e.g. duplicating or removing customers of one class); none improved Precision@50K, and they made the model's predicted churn probabilities too high, so no balancing was applied.</p>
 <p><b>② Preventing the model from learning patterns it shouldn't.</b> The data is split into three parts by time, rather than randomly splitting the same customers in half. Each part has a "prediction date": customer features are computed from the six months of purchases before that date, and whether the customer came back in the six months after it is the known outcome. The model learns only from earlier data and is evaluated on later, unseen data, so it can't "peek at the answers."</p>
 <table>
-  <tr><th>Purpose</th><th>Prediction date</th><th>Feature period (180 days before)</th><th>Churn outcome period (180 days after)</th></tr>
+  <tr><th>Purpose</th><th>Prediction date</th><th>Feature period (365 days before; new features use days 181–365)</th><th>Churn outcome period (180 days after)</th></tr>
   <tr><td>Training: the model learns patterns</td><td>2019-09-28</td><td>2019-04-02 – 2019-09-28</td><td>2019-09-29 – 2020-03-26</td></tr>
   <tr><td>Validation: compare and choose methods</td><td>2019-12-26</td><td>2019-06-30 – 2019-12-26</td><td>2019-12-27 – 2020-06-23</td></tr>
   <tr class="hi"><td>Test: final score (all results in this section)</td><td>2020-03-26</td><td>2019-09-29 – 2020-03-26</td><td>2020-03-27 – 2020-09-22</td></tr>
@@ -1898,7 +1898,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <p style="margin-top:8px">All three are computed by classing "churn probability ≥ 0.5" as churn. At that threshold LightGBM would select 225K people, but the budget is only 50,000 coupons; in practice the top 50,000 by score get coupons, so the 0.5-threshold results don't match the real decision. Precision@50K is exactly Precision computed on those 50,000; Recall on the same 50,000 (how many actual churners the list covers) is 16.1%, see the budget limit in Step 5. The full figures for all three metrics are kept in the working notes.</p>
   </details>
 </div>
-<p><b>LightGBM and XGBoost perform the same — why choose LightGBM?</b> Methods were chosen on validation data: LightGBM 78.2% vs XGBoost 78.1%, within the margin of error (sampling error about 0.2 points; on test data XGBoost is slightly higher, 79.6% vs 79.4%), so LightGBM, slightly higher on validation, was chosen. Switching to XGBoost would not change the conclusions.</p>
+<p><b>LightGBM and XGBoost perform the same — why choose LightGBM?</b> On validation data, LightGBM scored 78.2% vs XGBoost 78.1%, within the margin of error (sampling error about 0.2 points; on test data XGBoost is slightly higher, 79.6% vs 79.4%), so the two perform the same; LightGBM was used, and switching to XGBoost would not change the conclusions.</p>
 <p><b>Why choose the model by Precision@50K rather than Accuracy?</b> With a fixed budget of 50,000 coupons, Precision@50K directly represents "the share of coupons that go to people who will actually churn." Accuracy confirms the two best models' overall predictions aren't skewed (both 74.8%, others 74%–75%), but it's not suited to choosing a model: even predicting "no churn" for everyone gives 65.0% Accuracy, so models barely differ on it.</p>
 <p><b>Why is it more accurate than the simple rules?</b> By the model's feature importance (information gain — roughly, how much each signal contributes to the model's decisions, as a share of the total), the top three are shopping days in the past six months (37.3%), shopping days in the earlier six months (21.1%), and "given this person's own usual habits, have they been away unusually long?" (16.1%). The list is almost entirely customers with no purchase in the earlier six months who shopped on just one day in the past six months, so they are picked mainly by the first two. The third separates customers who came at least twice: a customer who normally comes every 30 days and hasn't come for 90 days is at 3 times their normal interval and is likely churning, while a customer who normally comes once every six months is perfectly normal after 90 days away; looking only at "how long since the last visit" would wrongly rank the latter as more likely to churn. High importance doesn't mean removing a feature hurts: in Step 3, removing "shopping days" barely changed the result likely because "items bought" and "amount spent" carry the same information and fill in.</p>
 

@@ -933,7 +933,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>每件商品各自的出貨與送達紀錄</td><td>多賣家訂單分數低，是否因為分批送達</td></tr>
   <tr><td>評價是在收貨後多久填寫、是否由平台主動邀請</td><td>沒有評價的 646 張已送達訂單，是否和有評價的訂單一樣滿意</td></tr>
 </table>
-<p><b>實驗規模估算：</b>隨機一半提前處理、一半照常，比較 1～2 星比例（lakehouse/analysis/b5_late_low_star_share.py）：</p>
+<p><b>實驗規模估算：</b>隨機一半提前處理、一半照常，比較兩組<b>所有被列出訂單</b>的 1～2 星比例（不能只比最後晚到的訂單：提前處理有效時，部分訂單會變準時、掉出「晚到」這一群，兩組就不能比）。被列出的訂單在歷史資料中看不出來，下表以實際晚到訂單近似起始比例與每月張數（lakehouse/analysis/b5_late_low_star_share.py）：</p>
 <table>
   <tr><th>項目</th><th class="num">數值</th></tr>
   <tr><td>假設的 1～2 星比例變化（實際效果要實驗才知道）</td><td class="num">62.4% → 52.4%</td></tr>
@@ -967,25 +967,25 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="第 1 頁"><div class="sl cover">
   <p class="kicker">自學專案 ｜ 2026 年 10 月 ｜ 余家丞</p>
   <h1>電商資料湖倉與配送延遲分析</h1>
-  <p class="lead">把 9 個原始檔整理成資料湖倉（集中存放、可查回舊版本的分析資料庫），發現<b>晚到訂單的評分明顯較低</b></p>
+  <p class="lead">把 9 個原始檔整理成資料湖倉（原始檔和整理好的資料表放在同一個平台），發現<b>晚到訂單的評分明顯較低</b></p>
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion 三層架構（原始→清洗→分析）</span><span>資料品質規則</span></div>
   <div class="roles">
     <div><b>62.42% vs 9.27%</b><span>晚到 vs 準時訂單給 1～2 星的比例</span></div>
     <div><b>6.66%</b><span>已送達且有評價的訂單中，晚於預計送達日的比例</span></div>
-    <div><b>15 條</b><span>自動檢查資料錯誤的規則，資料更新後一次重跑，目前全部通過</span></div>
+    <div><b>15 條</b><span>自動檢查資料錯誤的規則，資料更新後一次重跑：11 條 ERROR 級全部通過，4 條 WARN 級的異常筆數沒有增加</span></div>
   </div>
   <p class="foot">資料：巴西電商平台 Olist 公開資料，約 10 萬筆訂單（2016-09～2018-10）。SQL 由 Claude Code 協助撰寫，本人在 Databricks 逐段執行，並另從原始檔獨立計算核對答案</p>
 </div></section>
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>資料湖倉架構與讀取檢查</h2>
-  <span class="sub">用 Delta Lake（可查回舊版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
+  <span class="sub">用 Delta Lake（寫入時能擋下不合規資料的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張用預設設定讀入的評價表，用來對照讀取設定是否正確</em></div>
     <div class="ar">→</div>
     <div><b>silver 清洗層</b><span>修正讀取錯誤、刪除重複資料、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
     <div class="ar">→</div>
-    <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張對照表（星狀結構：明細表在中間，對照表圍在旁邊）</span><em>5 張表</em></div>
+    <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張維度表（dimension table）；明細表是事實表（fact table），維度表圍在旁邊，稱為星狀模型（star schema）</span><em>5 張表</em></div>
   </div>
   <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
@@ -999,7 +999,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">15 條規則自動檢查錯誤；實際測試資料表的寫入限制，發現 CHECK（檢查條件）擋得下錯誤值，主鍵卻擋不下重複訂單（未處理會重複計算），因此寫入前先刪除重複資料</span>
   <div class="two top">
     <div>
-      <p class="ct">15 條規則存成一個 VIEW（存好的查詢），資料更新後可一次重跑全部規則</p>
+      <p class="ct">15 條規則存成一個 VIEW（存好的查詢）：資料寫入後定期重跑、找出錯誤，不會擋下寫入</p>
       <table class="seg">
         <tr><th>唯一性</th><td>例：訂單編號不重複</td><td class="n">4 條</td></tr>
         <tr><th>完整性</th><td>例：每張訂單都有顧客代號</td><td class="n">3 條</td></tr>
@@ -1010,7 +1010,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張訂單「送達早於出貨」），只監控筆數是否增加</p>
     </div>
     <div class="side">
-      <p class="ct">寫入限制的測試結果</p>
+      <p class="ct">寫入限制（寫入當下就擋）的測試結果</p>
       <p><b>CHECK（檢查條件）：</b>寫入 6 分的評價會被擋下；新增規則時也會先檢查舊資料</p>
       <p><b>主鍵（訂單編號不可重複）：</b>寫入 2 筆同編號的訂單，兩筆都成功；Databricks 的主鍵只是標示，不會擋重複</p>
       <p><b>因應做法：</b>先刪除新資料裡的重複列，再用 MERGE 寫入（訂單編號已存在就更新、不存在才新增）</p>
@@ -1053,7 +1053,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     <div class="side">
       <p><b>和上一頁的差別：</b>上一頁依「晚了幾天」分組；這頁依「下單到送達共幾天」分組，在等一樣久的訂單裡比較準時與晚到</p>
       <p><b>結果（左圖）：</b>送達天數相同時，晚到仍低 0.44～1.78 分</p>
-      <p><b>補充（未畫圖）：</b>地區也不是原因，在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
+      <p><b>補充（未畫圖）：</b>州別差異解釋不了這個差距，在晚到訂單 100 張以上的 14 個州（占 95,824 張訂單的 95.2%）裡，每一州都是晚到比準時低 1.63～2.33 分</p>
       <p><b>尚未證明因果：</b>只排除了地區和送達天數；要證明延遲「造成」低分，需要隨機分組的實驗（第 7 頁）</p>
     </div>
   </div>
@@ -1061,7 +1061,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>準時訂單的評分落差</h2>
-  <span class="sub">沒有晚到也會因等得久而扣分：準時訂單中，實際送達天數越長評分越低，排除重量、件數、賣家出貨速度後仍成立</span>
+  <span class="sub">準時訂單中，實際送達越久評分越低，排除重量、件數、賣家出貨速度後仍成立</span>
   <div class="two">
     <div>
       <p class="ct">準時送達的 89,443 張訂單，依實際與預計送達天數交叉分組的平均評分</p>
@@ -1070,7 +1070,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>讀法：</b>往右看（實際天數相同、預計變長），分數最多差 0.11 分；往下看（預計相同、實際變長），分數持續下降，例如預計 22～28 天從 4.40 降到 3.93</p>
     </div>
     <div class="side">
-      <p><b>為什麼重要：</b>晚到只占 6.66%，只看準時與否會覺得配送沒問題，但看不到準時訂單之間 4.44 到 3.82 的評分落差</p>
+      <p><b>為什麼重要：</b>晚到只占 6.66%，只看準時與否會覺得配送沒問題，但看不到準時訂單之間的評分落差（下單後 0～7 天送達 4.41 分，31 天以上 3.62 分）</p>
       <p><b>排除其他解釋：</b>實際送達天數較長的訂單分數低，是否另有原因？分別排除以下三種原因後，送達越慢的訂單，分數仍然越低</p>
       <p><b>大件商品容易損壞？</b>只看總重 500 克以下（送達最快組 → 最慢組）：4.44 → 3.79</p>
       <p><b>多件商品分批送達？</b>只看單件訂單：4.48 → 3.68</p>
@@ -1083,9 +1083,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>結論與建議</h2>
   <span class="sub">優先處理即將晚到的訂單並用隨機實驗驗證效果；物流指標加入實際送達天數</span>
   <div class="nexts n3">
-    <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較給 1～2 星的比例。實驗規模：假設提前處理能讓 1～2 星比例從 62.4% 降到 52.4%（假設值，實際效果由實驗測得），要在統計上確認這個差異，兩組共需 766 張晚到訂單，收集這些訂單約需 2 個月</span></div>
-    <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.44 → 3.82），只看準時率看不到這個落差</span></div>
+    <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">根據：第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">根據：第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組所有被列出訂單給 1～2 星的比例（不能只比晚到的：提前處理會讓部分訂單變準時）。實驗規模以實際晚到訂單近似：假設 1～2 星比例從 62.4% 降到 52.4%（假設值，實際效果由實驗測得），兩組共需約 766 張，約需 1.6 個月</span></div>
+    <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">根據：第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.41 → 3.62），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
 
@@ -1093,8 +1093,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>後續分析方向</h2>
   <span class="sub">確認低分是否來自商品品類，並找出送貨最慢的環節</span>
   <div class="nexts n2">
-    <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
-    <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">第 6 頁</i>準時訂單的評分隨實際送達天數下降；資料有記錄賣家出貨的日期，可把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
+    <div><b>在同一商品品類內比較晚到與準時的評分</b><span><i class="pg">根據：第 5 頁</i>目前只排除了地區和送達天數兩種解釋；資料中有商品品類，可確認晚到訂單的低分是否只因集中在某些評分本來就低的品類</span></div>
+    <div><b>拆解實際送達天數，找出耗時最長的環節</b><span><i class="pg">根據：第 6 頁</i>準時訂單的評分隨實際送達天數下降；資料有記錄賣家出貨的日期，可把天數拆成賣家出貨與物流配送兩段，比較哪一段耗時最長</span></div>
   </div>
 </div></section>
 
@@ -1107,25 +1107,25 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 <section class="slide" aria-label="Slide 1"><div class="sl cover">
   <p class="kicker">Self-directed project ｜ October 2026 ｜ Jia Cheng Yu</p>
   <h1>E-commerce Data Lakehouse and Delivery Delay Analysis</h1>
-  <p class="lead">Turned 9 raw files into a lakehouse (a central, versioned analytics store) and found that <b>late orders get clearly lower ratings</b></p>
+  <p class="lead">Turned 9 raw files into a lakehouse (raw files and cleaned tables on one platform) and found that <b>late orders get clearly lower ratings</b></p>
   <div class="chips"><span>Databricks SQL</span><span>Delta Lake</span><span>Medallion architecture (raw → cleaned → analysis)</span><span>Data quality rules</span></div>
   <div class="roles">
     <div><b>62.42% vs 9.27%</b><span>share of late vs. on-time orders rated 1–2 stars</span></div>
     <div><b>6.66%</b><span>of delivered, reviewed orders arrived after the estimated delivery date</span></div>
-    <div><b>15 rules</b><span>automatic data-error checks rerun after every update; all currently pass</span></div>
+    <div><b>15 rules</b><span>automatic data-error checks rerun after every update: all 11 ERROR-level rules pass, and the 4 WARN-level anomaly counts have not grown</span></div>
   </div>
   <p class="foot">Data: public dataset from Brazilian e-commerce platform Olist, about 100,000 orders (2016-09 to 2018-10). SQL written with help from Claude Code; I ran each step in Databricks and checked results against answers computed independently from the raw files</p>
 </div></section>
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>Lakehouse architecture and load checks</h2>
-  <span class="sub">Three layers in Delta Lake (a table format that keeps version history), each checked on its own; row counts checked on load caught 2 load errors</span>
+  <span class="sub">Three layers in Delta Lake (a table format that can block invalid data at write time), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
     <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 review table read with default settings, kept to check the load settings</em></div>
     <div class="ar">→</div>
     <div><b>silver (cleaned)</b><span>Fix load errors, deduplicate, flag suspicious data (flag, never delete)</span><em>Cleaned tables + 15 quality rules</em></div>
     <div class="ar">→</div>
-    <div><b>gold (analysis)</b><span>1 sales detail table (one row = one item sold) + 4 lookup tables: customer, product, seller, date (star schema: the detail table in the middle, lookup tables around it)</span><em>5 tables</em></div>
+    <div><b>gold (analysis)</b><span>1 sales detail table (one row = one item sold) + 4 dimension tables: customer, product, seller, date; the detail table is the fact table with the dimension tables around it, a star schema</span><em>5 tables</em></div>
   </div>
   <p class="ct">Row counts in bronze were checked against the raw files on load, catching 2 load errors</p>
   <div class="checks c2">
@@ -1136,10 +1136,10 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality controls</h2>
-  <span class="sub">15 rules check for errors automatically; testing the table's write constraints showed CHECK (validation rules) blocks invalid values, but the primary key doesn't block duplicate orders (which would be double-counted), so duplicates are removed before writing</span>
+  <span class="sub">15 rules check for errors automatically; testing the table's write constraints showed CHECK (a condition on values) blocks invalid values, but the primary key doesn't block duplicate orders (which would be double-counted), so duplicates are removed before writing</span>
   <div class="two top">
     <div>
-      <p class="ct">The 15 rules live in one VIEW (a saved query); all of them can be rerun at once after every data update</p>
+      <p class="ct">The 15 rules live in one VIEW (a saved query): rerun after data is written to find errors; it does not block writes</p>
       <table class="seg">
         <tr><th>Uniqueness</th><td>e.g. no duplicate order IDs</td><td class="n">4</td></tr>
         <tr><th>Completeness</th><td>e.g. every order has a customer ID</td><td class="n">3</td></tr>
@@ -1150,7 +1150,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>WARN level (4 rules):</b> known anomalies in the source data that can't be fixed (e.g. 23 orders "delivered before handed to the carrier"); only whether the count grows is monitored</p>
     </div>
     <div class="side">
-      <p class="ct">Write-time constraints: test results</p>
+      <p class="ct">Write-time constraints (block data as it is written): test results</p>
       <p><b>CHECK (a condition on values):</b> a review scored 6 is blocked; adding a new rule also checks existing data first</p>
       <p><b>Primary key (no duplicate order IDs):</b> writing 2 orders with the same ID, both succeed; Databricks primary keys are labels only and don't stop duplicates</p>
       <p><b>How to handle it:</b> deduplicate the new data first, then write with MERGE (update if the order ID exists, insert if not)</p>
@@ -1193,7 +1193,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     <div class="side">
       <p><b>How this differs from the previous slide:</b> that slide grouped orders by how many days late they were; this one groups them by total days from purchase to delivery, comparing on-time and late orders that waited equally long</p>
       <p><b>Result (chart on the left):</b> at the same delivery time, late orders still score 0.44–1.78 points lower</p>
-      <p><b>Also (not charted):</b> region isn't the cause either; in each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
+      <p><b>Also (not charted):</b> differences between states can't explain the gap; in each of the 14 states with 100+ late orders (95.2% of the 95,824 orders), late orders score 1.63–2.33 points lower than on-time ones</p>
       <p><b>Not yet causal:</b> only region and delivery time are ruled out; proving delays "cause" low scores needs a randomized experiment (slide 7)</p>
     </div>
   </div>
@@ -1210,7 +1210,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
       <p><b>Reading the table:</b> across a row (same actual time, longer estimate), scores differ by at most 0.11; down a column (same estimate, longer actual time), scores keep falling, e.g. the 22–28 day estimate goes from 4.40 to 3.93</p>
     </div>
     <div class="side">
-      <p><b>Why it matters:</b> late orders are only 6.66%, so looking only at on-time vs late makes delivery seem fine, yet it hides a rating gap from 4.44 to 3.82 among on-time orders</p>
+      <p><b>Why it matters:</b> late orders are only 6.66%, so looking only at on-time vs late makes delivery seem fine, yet it hides the rating gap among on-time orders (4.41 when delivered in 0–7 days, 3.62 in 31+ days)</p>
       <p><b>Ruling out other explanations:</b> do orders that take longer score lower for some other reason? After excluding each of the three causes below, slower deliveries still score lower</p>
       <p><b>Bulky items get damaged?</b> Total weight 500 g or less (fastest group → slowest group): 4.44 → 3.79</p>
       <p><b>Split deliveries?</b> Single-item orders: 4.48 → 3.68</p>
@@ -1223,9 +1223,9 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>Conclusions and recommendations</h2>
   <span class="sub">Prioritize orders about to run late and test the effect with a randomized experiment; add actual delivery time to logistics metrics</span>
   <div class="nexts n3">
-    <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the share giving 1–2 stars. Experiment size: assuming acting early cuts the 1–2 star share from 62.4% to 52.4% (an assumption; the real effect is what the test measures), confirming that difference statistically needs 766 late orders across both groups, which take about 2 months to collect</span></div>
-    <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they actually take (4.44 → 3.82); the on-time rate alone misses this gap</span></div>
+    <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Based on: slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Based on: slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the 1–2 star share across all listed orders in each group (not just the late ones: acting early turns some orders on time). Size, approximated with actually late orders: assuming the 1–2 star share falls from 62.4% to 52.4% (an assumption; the real effect is what the test measures), both groups together need about 766 orders, about 1.6 months</span></div>
+    <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Based on: slide 6</i>On-time orders score lower the longer they actually take (4.41 → 3.62); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>
 
@@ -1233,8 +1233,8 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>Further analysis</h2>
   <span class="sub">Check whether low scores come from product categories, and find the slowest step in delivery</span>
   <div class="nexts n2">
-    <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
-    <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Slide 6</i>On-time orders score lower the longer they take; the data records when the seller shipped, so split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
+    <div><b>Compare late and on-time scores within the same product category</b><span><i class="pg">Based on: slide 5</i>So far only region and delivery time have been ruled out; the data includes product categories, so we can check whether late orders score low only because they cluster in categories that score low anyway</span></div>
+    <div><b>Break down actual delivery time to find what slows it</b><span><i class="pg">Based on: slide 6</i>On-time orders score lower the longer they take; the data records when the seller shipped, so split delivery time into seller shipping and carrier transit, and find which takes longest</span></div>
   </div>
 </div></section>
 </template>
@@ -1761,7 +1761,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <tr><td>Shipping and delivery records for each item</td><td>Whether multi-seller orders score low because items arrive separately</td></tr>
   <tr><td>How long after delivery reviews are written, and whether the platform invites them</td><td>Whether the 646 delivered orders without a review are as satisfied as reviewed orders</td></tr>
 </table>
-<p><b>Experiment sizing:</b> act early on a random half and compare 1–2 star shares (lakehouse/analysis/b5_late_low_star_share.py):</p>
+<p><b>Experiment sizing:</b> act early on a random half and compare the 1–2 star share across <b>all listed orders</b> in each group (not just orders that end up late: if acting early works, some orders become on time and drop out of the "late" group, so the groups would no longer be comparable). Listed orders cannot be identified in the historical data, so the table approximates the starting share and monthly count with actually late orders (lakehouse/analysis/b5_late_low_star_share.py):</p>
 <table>
   <tr><th>Item</th><th class="num">Value</th></tr>
   <tr><td>Assumed change in 1–2 star share (the real effect is what the test measures)</td><td class="num">62.4% → 52.4%</td></tr>
