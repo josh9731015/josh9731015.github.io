@@ -356,7 +356,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   /* 結論（第 8 頁，3 欄 .checks）、下一步（第 9 頁）沿用 .nexts；.checks.c2 第 6 頁也在用 */
   #deck .checks.c2 { grid-template-columns: 1fr 1fr; }
   #deck .checks span b { font-size: 1em; margin: 0; color: var(--ink); }
-  #deck .nexts .pg { font-style: normal; display: inline-block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin-right: .3em; }
+  #deck .nexts .pg { font-style: normal; display: block; color: var(--ink-3); font-size: .85em; font-weight: 600; margin: .1em 0 .2em; }  /* 「根據：第 N 頁」放在卡片標題下單獨一行（Josh 11-03） */
   html[lang="en"] #deck .dv .r, html[lang="en"] #deck .dv .ax { grid-template-columns: 12.5em 1fr 8.2em; }
   html[lang="en"] #deck .dp .r, html[lang="en"] #deck .dp .ax { grid-template-columns: 11em 1fr; }
   html[lang="en"] #deck .tl .r, html[lang="en"] #deck .tl .ax { grid-template-columns: 11.5em 1fr; }
