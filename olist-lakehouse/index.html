@@ -476,7 +476,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <details class="sec">
 <summary><h2>資料湖倉的三層架構</h2></summary>
-<p><b>資料湖（data lake）</b>是存放原始檔案的地方，什麼格式都能放，但不保證乾淨；<b>資料倉儲（data warehouse）</b>存放整理好、可以直接查詢的表。<b>資料湖倉（lakehouse）</b>把兩者放在同一個地方：原始檔與整理好的表都在 Databricks 裡，表使用 Delta Lake 格式，因此能做到一般檔案做不到的事，例如在寫入時擋下不合規的資料。資料由原始到可用分成三層，業界常稱為 medallion（獎牌）架構，類似餐廳處理食材：進貨原樣保存（bronze）→ 清洗、切好備料（silver）→ 依菜單組合成餐點（gold）。這樣分層的好處是：原始資料永遠留著，清洗出錯可以重來；每一層都能各自跑品質檢查。用一般的說法，這三層就是一個 ETL 流程（讀取、清洗、寫成分析用的表），gold 層則相當於給銷售分析用的 data mart。</p>
+<p><b>資料湖（data lake）</b>是存放原始檔案的地方，什麼格式都能放，但不保證乾淨；<b>資料倉儲（data warehouse）</b>存放整理好、可以直接查詢的表。<b>資料湖倉（lakehouse）</b>把兩者放在同一個地方：原始檔與整理好的表都在 Databricks 裡，表使用 Delta Lake 格式，因此能做到一般檔案做不到的事，例如在寫入時擋下不合規的資料，以及<b>版本回溯</b>（time travel）：每次寫入都會留下一個版本，可以查詢或還原到舊版本。本專案實際試過：在測試用的訂單表刪除全部資料後，用 RESTORE 還原回刪除前的 99,441 筆。資料由原始到可用分成三層，業界常稱為 medallion（獎牌）架構，類似餐廳處理食材：進貨原樣保存（bronze）→ 清洗、切好備料（silver）→ 依菜單組合成餐點（gold）。這樣分層的好處是：原始資料永遠留著，清洗出錯可以重來；每一層都能各自跑品質檢查。用一般的說法，這三層就是一個 ETL 流程（讀取、清洗、寫成分析用的表），gold 層則相當於給銷售分析用的 data mart。</p>
 <div class="flow">
   <div class="layer"><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另加「何時讀入、來自哪個檔案」兩個欄位</span><em>10 張表（含 1 張用預設設定讀評價檔的對照表）</em></div>
   <div class="arrow">→</div>
@@ -979,7 +979,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>資料湖倉架構與讀取檢查</h2>
-  <span class="sub">用 Delta Lake（支援 CHECK 等寫入限制的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
+  <span class="sub">用 Delta Lake（能在寫入時擋下不合規資料、可回溯版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張用預設設定讀入的評價表，用來對照讀取設定是否正確</em></div>
     <div class="ar">→</div>
@@ -1119,7 +1119,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>Lakehouse architecture and load checks</h2>
-  <span class="sub">Three layers in Delta Lake (a table format that supports write constraints such as CHECK), each checked on its own; row counts checked on load caught 2 load errors</span>
+  <span class="sub">Three layers in Delta Lake (a table format that can block invalid data at write time and supports time travel), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
     <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 review table read with default settings, kept to check the load settings</em></div>
     <div class="ar">→</div>
@@ -1304,7 +1304,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <details class="sec">
 <summary><h2>The lakehouse's three-layer architecture</h2></summary>
-<p>A <b>data lake</b> stores raw files in any format, with no guarantee they are clean; a <b>data warehouse</b> stores cleaned tables that can be queried directly. A <b>lakehouse</b> puts both in one place: raw files and cleaned tables both live in Databricks, and the tables use the Delta Lake format, which supports things plain files cannot, such as blocking non-compliant data at write time. Data moves from raw to usable in three layers, commonly called the medallion architecture. It works like a restaurant kitchen: ingredients are stored as delivered (bronze) → washed and prepped (silver) → assembled into dishes on the menu (gold). The benefit of layering: raw data is always kept, so cleaning mistakes can be redone, and each layer can run its own quality checks. In general terms, the three layers form an ETL process (extract, clean, and load into analysis-ready tables), and the gold layer works as a sales data mart.</p>
+<p>A <b>data lake</b> stores raw files in any format, with no guarantee they are clean; a <b>data warehouse</b> stores cleaned tables that can be queried directly. A <b>lakehouse</b> puts both in one place: raw files and cleaned tables both live in Databricks, and the tables use the Delta Lake format, which supports things plain files cannot, such as blocking non-compliant data at write time, and <b>time travel</b>: every write keeps a version that can be queried or restored. I tested it in this project: after deleting every row from a test copy of the orders table, RESTORE brought back all 99,441 rows. Data moves from raw to usable in three layers, commonly called the medallion architecture. It works like a restaurant kitchen: ingredients are stored as delivered (bronze) → washed and prepped (silver) → assembled into dishes on the menu (gold). The benefit of layering: raw data is always kept, so cleaning mistakes can be redone, and each layer can run its own quality checks. In general terms, the three layers form an ETL process (extract, clean, and load into analysis-ready tables), and the gold layer works as a sales data mart.</p>
 <div class="flow">
   <div class="layer"><b>Bronze (raw)</b><span>9 CSV files loaded as-is, plus two columns recording when each row was loaded and from which file</span><em>10 tables (incl. 1 comparison table that reads the review file with default settings)</em></div>
   <div class="arrow">→</div>
