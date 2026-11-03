@@ -996,7 +996,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <h2>資料品質控管</h2>
-  <span class="sub">15 條規則自動檢查錯誤；測試發現 CHECK 擋得下錯誤值、主鍵擋不下重複訂單（未處理會重複計算），因此寫入前先刪除重複資料</span>
+  <span class="sub">15 條規則自動檢查錯誤；實際測試資料表的寫入限制，發現 CHECK（檢查條件）擋得下錯誤值，主鍵卻擋不下重複訂單（未處理會重複計算），因此寫入前先刪除重複資料</span>
   <div class="two top">
     <div>
       <p class="ct">15 條規則存成一個 VIEW（存好的查詢），資料更新後可一次重跑全部規則</p>
@@ -1020,7 +1020,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>晚到天數與評分</h2>
-  <span class="sub">只晚 1～3 天，平均評分即從 4.29 降至 3.29；晚一週以上，約八成給 1～2 星</span>
+  <span class="sub">只晚 1～3 天，平均評分就從準時訂單的 4.29 降至 3.29；晚一週以上，約八成給 1～2 星</span>
   <div class="two lkw">
     <div>
       <p class="ct">已送達且有評價的 95,824 張訂單，依晚到天數分組（晚到＝實際送達日晚於預計送達日）</p>
@@ -1030,7 +1030,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>晚到的訂單只占 6.66%</b>（6,381 張），但其中 62.42% 給 1～2 星，準時的只有 9.27%</p>
-      <p><b>評分下降集中在第一週：</b>晚到 1～3 天即低 1 分；晚到一週以上，分數不再隨天數明顯下降（1.67 與 1.72）</p>
+      <p><b>評分下降集中在第一週：</b>晚到 1～3 天即低 1 分；晚到一週以上，平均評分不再隨天數明顯下降（晚 8～14 天 1.67 分，晚 15 天以上 1.72 分）</p>
       <p class="note">平均分數＝該組評分加總 ÷ 訂單數；同一張訂單有多則評價時，只取最新的一則</p>
     </div>
   </div>

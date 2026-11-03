@@ -1091,7 +1091,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <div class="roles">
     <div><b>54%</b><span>業績下滑（件數比去年同季 −10.3%）中來自童裝的比例；童裝可能是資料收錄改變，待確認</span></div>
     <div><b>79.4%</b><span>模型挑出的 5 萬人中，之後半年未再購買的比例（隨機抽樣為 35.0%）</span></div>
-    <div><b>3,500 人</b><span>驗證發券效果時，每輪需隨機保留的不發券對照組人數（名單一），以 180 天結果判斷</span></div>
+    <div><b>3,500 人</b><span>驗證發券效果時，每輪需隨機保留、不發券的對照組人數（以依流失機率排出的名單為例），看發券後 180 天的回購結果判斷</span></div>
   </div>
   <p class="foot">資料：H&amp;M 在 Kaggle 公開的部分顧客交易樣本（2018-09～2020-09），結果不代表 H&amp;M 真實業績；價格為換算後的相對值；發券效果為模擬。程式由 Claude Code 協助撰寫，分析方向與結論由本人負責</p>
 </div></section>
@@ -1139,7 +1139,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
         <tr><td>單一通路問題<small class="res">排除</small></td><td>實體店與網路的童裝同時大跌</td></tr>
         <tr><td>大量童裝下架<small class="res">只能解釋一部分</small></td><td>有銷售的款數少 16%，件數少 43%</td></tr>
       </table>
-      <p class="callout">剩下兩種可能：童裝業務本身的變化，或資料收錄範圍改變；向資料提供單位確認，成本最低（第 9 頁）</p>
+      <p class="callout">剩下兩種可能：童裝業務本身的變化，或資料收錄範圍改變；最省成本的做法是先問資料提供單位（第 9 頁）</p>
     </div>
   </div>
 </div></section>
@@ -1158,7 +1158,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     </div>
     <div class="side">
       <p><b>為什麼要控制購買件數：</b>買得多的顧客本來就不容易流失；網路顧客中買 10 件以上的占 22.0%（實體店 8.0%），直接比較會低估差距，所以用邏輯迴歸把購買件數與年齡拉到相同再比</p>
-      <p><b>差距隨購買件數縮小：</b>買 1 件的顧客差 12.0 個百分點，買 10 件以上只差 0.2</p>
+      <p><b>差距隨購買件數縮小：</b>只在網路買和只在實體店買的顧客，流失機率在買 1 件時差 12.0 個百分點，買 10 件以上只差 0.2 個百分點</p>
       <p><b>只是關聯，不是因果：</b>迴歸能衡量差距大小，不能證明是「網路」本身造成的；找原因需要網站造訪、配送與退貨資料（第 9 頁）</p>
     </div>
   </div>
@@ -1201,7 +1201,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>發券效果的驗證設計（模擬）</h2>
-  <span class="sub">名單二本輪確定高於回本門檻，名單一還不確定，需累積多輪</span>
+  <span class="sub">這一輪名單二的發券效果確定高於回本門檻；名單一可能高於也可能低於門檻，要多做幾輪實驗才能確定</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">發券組 − 對照組的 180 天回購比例差距（百分點，模擬）</p>
@@ -1212,9 +1212,9 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">名單二依「流失機率 × 過去半年消費」排序，顧客消費較高、門檻較低。對照組回購是真實資料，券的效果為事先設定的模擬值；金額為假設單位</p>
     </div>
     <div class="side">
-      <p><b>對照組必須隨機分配：</b>若改挑「最不會流失的 2,500 人」當對照組，即使不發券也會多 2.7 個百分點回來，超過回本門檻，會誤判券有效</p>
-      <p><b>人數用檢定力分析決定：</b>檢定力＝效果剛好等於回本門檻時看得出來的機率；對照組 2,500 人時只有 54%，名單一需 3,500 人才達 80%</p>
-      <p><b>看 180 天、累積多輪：</b>名單一第 30 天量到 +3.75，到第 180 天降為 +2.46，只看 30 天會高估；單一輪結果不足以決定停發或加碼</p>
+      <p><b>對照組必須隨機分配：</b>若改挑「最不會流失的 2,500 人」當對照組，這組即使沒拿到券，回購比例也比其他人高 2.7 個百分點，超過回本門檻，券的效果會被蓋掉，誤判券無效</p>
+      <p><b>人數用檢定力分析決定：</b>檢定力＝券的效果剛好等於回本門檻時，實驗能看出效果的機率；對照組 2,500 人時檢定力只有 54%，名單一需 3,500 人才達 80%</p>
+      <p><b>效果要看滿 180 天，並累積多輪實驗：</b>名單一發券組比對照組多出的回購比例，第 30 天是 +3.75 個百分點，到第 180 天只剩 +2.46，只看 30 天會高估券的效果；只做一輪實驗，還不足以決定要停止發券或擴大發券</p>
     </div>
   </div>
 </div></section>
@@ -1224,8 +1224,8 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <span class="sub">業績下滑主要來自童裝與部分款式；模型名單比簡單規則準；發券效果要靠隨機對照組、累積多輪確認</span>
   <div class="checks">
     <div><b>業績為什麼下滑</b><span>FY2020 Q1 件數比去年同季少 10.3%：54% 來自童裝，46% 來自成人服飾（主要是深藍、條紋、蕾絲款式減少）。童裝自 2019 年 3 月起驟降，可能是資料收錄範圍改變，需先確認</span></div>
-    <div><b>挽留券該發給誰</b><span>用 LightGBM 名單：挑出的 5 萬人中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則多找到 3,071 位會流失的顧客；只在網路買的顧客流失機率較高（+7.1 個百分點）</span></div>
-    <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，看 180 天結果；模擬中名單二高於回本門檻、名單一還不確定，單一輪人數不足以下定論，需累積多輪</span></div>
+    <div><b>挽留券該發給誰</b><span>用 LightGBM 名單：挑出的 5 萬人中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則多找到 3,071 位會流失的顧客；只在網路買的顧客，流失機率比只在實體店買的高 7.1 個百分點</span></div>
+    <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，看 180 天結果；模擬中名單二的發券效果確定高於回本門檻，名單一可能高於也可能低於門檻；一輪實驗的人數不夠下結論，要多做幾輪才能確定</span></div>
   </div>
 </div></section>
 
@@ -1365,7 +1365,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <h2>Coupon Impact: Test Design (Simulated)</h2>
-  <span class="sub">This round, list 2 is clearly above break-even while list 1 is still uncertain, so rounds must be pooled</span>
+  <span class="sub">This round, list 2's coupon effect is clearly above break-even; list 1's could be above or below it, so more rounds are needed to be sure</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">Treatment − control 180-day repurchase rate difference (pp, simulated)</p>
@@ -1376,9 +1376,9 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
       <p class="note">List 2 is ranked by "churn probability × spend in the past six months"; its customers spend more, so its threshold is lower. Control-group repurchases are real data; the coupon effect is a preset simulated value; amounts are in hypothetical units</p>
     </div>
     <div class="side">
-      <p><b>Assign the control group at random:</b> if the "2,500 least likely to churn" were picked as controls, they would return 2.7 pp more even without a coupon, above break-even, wrongly making the coupon look effective</p>
+      <p><b>Assign the control group at random:</b> if the "2,500 least likely to churn" were picked as controls, their repurchase rate would be 2.7 pp higher than everyone else's even without a coupon, above break-even, so the coupon's effect would be masked and it would wrongly look ineffective</p>
       <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; a 2,500-person control group has only 54%, and list 1 needs 3,500 to reach 80%</p>
-      <p><b>Wait 180 days and pool rounds:</b> List 1 measured +3.75 at day 30 but +2.46 at day 180, so day 30 overstates the effect; one round is not enough to stop or scale up</p>
+      <p><b>Measure over 180 days and pool several rounds:</b> List 1's extra repurchase rate over the control group was +3.75 percentage points at day 30 but only +2.46 at day 180, so looking at 30 days alone overstates the coupon's effect; one round is not enough to decide whether to stop or expand the coupons</p>
     </div>
   </div>
 </div></section>
@@ -1389,7 +1389,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <div class="checks">
     <div><b>Why sales fell</b><span>FY2020 Q1 units fell 10.3% vs the same quarter last year: 54% from kidswear, 46% from adult apparel (mainly fewer dark blue, striped, and lace styles). Kidswear dropped sharply from March 2019, possibly a change in data coverage, which needs confirming first</span></div>
     <div><b>Who should get coupons</b><span>Use the LightGBM list: 79.4% of the 50,000 customers it picks did not buy again in six months (35.0% for a random sample), finding 3,071 more future churners than the best simple rule; online-only customers are more likely to churn (+7.1 pp)</span></div>
-    <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and judge on 180-day results; in simulation list 2 is above break-even while list 1 is still uncertain; one round is too small to decide, so rounds must be pooled</span></div>
+    <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and judge on 180-day results; in simulation list 2's coupon effect is clearly above break-even while list 1's could be above or below it; one round has too few customers to decide, so more rounds are needed</span></div>
   </div>
 </div></section>
 

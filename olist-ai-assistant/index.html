@@ -515,13 +515,13 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>AI 輸出驗證機制</h2>
-  <span class="sub">回答時程式核對數字、更正誇大；開發時用 4 個做法確保評分可信</span>
+  <span class="sub">回答時程式核對數字、更正誇大；開發時用 4 個做法，確保 AI 各功能的評估成績可信</span>
   <div class="checks">
     <div><b>數字有出處</b><span>程式核對 AI 寫的每個數字和引用</span><em>實例：AI 引用評論時把日期 11/09 抄成 09/09 → 改由程式貼原文</em></div>
     <div><b>程式更正誇大</b><span>程式依分析工具的判定結果，在 AI 寫的結論下自動加附註</span><em>實例：AI 把只能解釋部分差距的原因寫成主因</em></div>
-    <div><b>SQL 正確性比對</b><span>AI 寫 SQL 回答數據問題，19 題：17 題用另一段 SQL 算好標準答案來比對；2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
+    <div><b>SQL 正確性比對</b><span>AI 寫 SQL 回答數據問題，共測 19 題：其中 17 題用另一段 SQL 算好標準答案來比對；另 2 題問資料裡沒有的東西，AI 要答「查不到」</span><em class="lim">限制：標準答案的 SQL 也是 AI（Claude Code）寫的，本人審查過指標定義</em></div>
     <div><b>驗證集／測試集分開</b><span>驗證集：開發時找錯、調整用；測試集：開發時不看，留到最後評分，避免只對練過的題目表現好</span></div>
-    <div><b>範例不放標準答案</b><span>給 AI 的指示（prompt）裡不能出現標準答案，避免 AI 直接照抄、成績虛高；程式自動掃描</span><em>實例：範例寫出了 11 題的答案 → 拿掉後重跑，19 題仍全對</em></div>
+    <div><b>範例不放標準答案</b><span>給 AI 的指示（prompt）裡不能出現標準答案，避免 AI 直接照抄、成績虛高；程式自動掃描</span><em>實例：給 AI 的範例原本寫出了 11 題的標準答案 → 拿掉後重跑，19 題仍全對</em></div>
     <div><b>標準答案由本人先標</b><span>AI 把評論歸類、AI 找相近評論這兩項，標準答案由本人標，標的時候看不到 AI 的答案，避免被 AI 帶著走</span></div>
   </div>
 </div></section>
@@ -614,7 +614,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div><b>導入團隊日常使用</b><span>第 3 頁的「各州差評」調查每週自動跑一次，結果做成監控報表</span></div>
     <div><b>把發現交給負責團隊</b><span>第 8 頁的多件訂單缺件 → 請物流與賣家確認是分批寄送還是漏寄；對策（例：出貨時通知「分 N 包寄送」）先用實驗驗證效果</span></div>
     <div><b>補足測試</b><span>第 6 頁：AI 把評論歸類的準確率先調到約 95%，再標約 140 則新的測試集；第 5 頁：AI 寫 SQL 答數據問題，補一批開發時沒用過的題目</span></div>
-    <div><b>調查不只問各州差評</b><span>第 3 頁的 4 個假說是固定的；改成任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
+    <div><b>調查不只問各州差評</b><span>目前第 3 頁的 4 個假說是固定的；下一步改成使用者問任何「為什麼」的問題，都由 AI 提出可能的原因，再由程式用資料逐一檢驗、判定成不成立</span></div>
   </div>
 </div></section>
 
