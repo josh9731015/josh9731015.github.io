@@ -981,11 +981,11 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>資料湖倉架構與讀取檢查</h2>
   <span class="sub">用 Delta Lake（可查回舊版本的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
-    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張原始評價表，用來核對讀取結果</em></div>
+    <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張用預設設定讀入的評價表，用來對照讀取設定是否正確</em></div>
     <div class="ar">→</div>
     <div><b>silver 清洗層</b><span>修正讀取錯誤、刪除重複資料、標記可疑資料（只標記不刪除）</span><em>清洗後的表＋15 條品質規則</em></div>
     <div class="ar">→</div>
-    <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張對照表（星狀結構）</span><em>5 張表</em></div>
+    <div><b>gold 分析層</b><span>1 張銷售明細表（一列＝賣出的一件商品）＋顧客、商品、賣家、日期 4 張對照表（星狀結構：明細表在中間，對照表圍在旁邊）</span><em>5 張表</em></div>
   </div>
   <p class="ct">bronze 讀入後即與原始檔核對列數，發現 2 個讀取錯誤</p>
   <div class="checks c2">
@@ -1007,7 +1007,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
         <tr><th>一致性</th><td>例：訂單明細的商品都存在商品表</td><td class="n">5 條</td></tr>
       </table>
       <p><b>ERROR 級（11 條）：</b>一列都不能違反，否則算失敗</p>
-      <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張「送達早於出貨」），只監控筆數是否增加</p>
+      <p><b>WARN 級（4 條）：</b>來源資料本身的已知異常，無法修正（例：23 張訂單「送達早於出貨」），只監控筆數是否增加</p>
     </div>
     <div class="side">
       <p class="ct">寫入限制的測試結果</p>
@@ -1121,11 +1121,11 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <h2>Lakehouse architecture and load checks</h2>
   <span class="sub">Three layers in Delta Lake (a table format that keeps version history), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
-    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 original review table kept to verify the load</em></div>
+    <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 review table read with default settings, kept to check the load settings</em></div>
     <div class="ar">→</div>
     <div><b>silver (cleaned)</b><span>Fix load errors, deduplicate, flag suspicious data (flag, never delete)</span><em>Cleaned tables + 15 quality rules</em></div>
     <div class="ar">→</div>
-    <div><b>gold (analysis)</b><span>1 sales detail table (one row = one item sold) + 4 lookup tables: customer, product, seller, date (star schema)</span><em>5 tables</em></div>
+    <div><b>gold (analysis)</b><span>1 sales detail table (one row = one item sold) + 4 lookup tables: customer, product, seller, date (star schema: the detail table in the middle, lookup tables around it)</span><em>5 tables</em></div>
   </div>
   <p class="ct">Row counts in bronze were checked against the raw files on load, catching 2 load errors</p>
   <div class="checks c2">
@@ -1136,7 +1136,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <h2>Data quality controls</h2>
-  <span class="sub">15 rules check for errors automatically; tests showed CHECK blocks invalid values but the primary key doesn't block duplicate orders (which would be double-counted), so duplicates are removed before writing</span>
+  <span class="sub">15 rules check for errors automatically; testing the table's write constraints showed CHECK (validation rules) blocks invalid values, but the primary key doesn't block duplicate orders (which would be double-counted), so duplicates are removed before writing</span>
   <div class="two top">
     <div>
       <p class="ct">The 15 rules live in one VIEW (a saved query); all of them can be rerun at once after every data update</p>
@@ -1160,7 +1160,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>Days late and ratings</h2>
-  <span class="sub">Just 1–3 days late drops the average score from 4.29 to 3.29; at a week or more late, about 80% give 1–2 stars</span>
+  <span class="sub">Just 1–3 days late drops the average score from 4.29 for on-time orders to 3.29; at a week or more late, about 80% give 1–2 stars</span>
   <div class="two lkw">
     <div>
       <p class="ct">95,824 delivered, reviewed orders by days late (late = delivered after the estimated delivery date)</p>
@@ -1170,7 +1170,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
     </div>
     <div class="side">
       <p><b>Late orders are only 6.66%</b> (6,381 orders), but 62.42% of them give 1–2 stars vs. 9.27% of on-time orders</p>
-      <p><b>Most of the drop happens in the first week:</b> 1–3 days late already scores 1 point lower; beyond a week late, scores stop falling much further (1.67 and 1.72)</p>
+      <p><b>Most of the drop happens in the first week:</b> 1–3 days late already scores 1 point lower; beyond a week late, the average score stops falling much further (1.67 at 8–14 days late, 1.72 at 15+ days)</p>
       <p class="note">Average score = sum of scores ÷ orders in the group; for orders with several reviews, only the most recently answered review is used</p>
     </div>
   </div>

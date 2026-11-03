@@ -528,7 +528,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
 
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <h2>各功能評估結果</h2>
-  <span class="sub">測試集：AI 找相近評論 20/20、AI 把評論歸類 22/25（88%）；AI 寫 SQL 回答數據問題還沒有測試集；樣本都少，還不能證明有 90%</span>
+  <span class="sub">測試集：AI 找相近評論 20/20、AI 把評論歸類 22/25（88%）；AI 寫 SQL 回答數據問題還沒有測試集；樣本都少，還不能證明準確率達到 90%</span>
   <div class="bars">
     <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻</p>
     <div class="r"><div class="nm">AI 寫 SQL 回答數據問題<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
@@ -536,16 +536,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div class="r"><div class="nm">AI 找相近評論<small>判斷評論相不相關，跟本人一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 則＝90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 則＝100%</div></div></div>
     <div class="r"><div class="nm">AI 把評論歸類<small>選的類別跟本人標的完全一致</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（分類項目修改前的結果）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 則＝88%<em>（未達 90% 門檻）</em></span></div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 則＝90%（舊版分類定義的結果，現行版未重新測）</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 則＝88%<em>（未達 90% 門檻）</em></span></div></div></div>
     <div class="r"><div class="nm">AI 自動調查原因（AI Agent）<small>報告通過全部程式檢查（數字、引用、判定、格式等）的次數</small></div>
-      <div class="txt">驗證集：跑 4 次，4 次都通過全部檢查<br>測試集：換一個開發時沒用過的州，跑 2 次都通過適用的檢查</div></div>
+      <div class="txt">驗證集：跑 4 次，4 次都通過全部檢查<br>測試集：換一個開發時沒用過的州，跑 2 次都通過 6 項通用檢查（其餘 11 項只適用練習題）</div></div>
     <p class="note">測試集只有 20～25 則，100% 也可能是運氣好；真實準確率的可能範圍見下一頁</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <h2>評論歸類準確率的樣本數評估</h2>
-  <span class="sub">只測了 25 則，真實準確率可能落在 70%～96%；要證明有 90%，需先提升到約 95%，再測約 140 則</span>
+  <span class="sub">只測了 25 則，真實準確率可能落在 70%～96%；要證明準確率達到 90%，需先把準確率提升到約 95%，再測約 140 則</span>
   <div class="ci">
     <p class="ct">真實準確率的可能範圍（Wilson 95% 信賴區間）；紅色虛線＝90% 門檻</p>
     <div class="r"><div class="nm"><b>現在</b><span>25 則對 22 則（88%）</span></div>
@@ -681,9 +681,9 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="checks">
     <div><b>Numbers have a source</b><span>Code checks every number and quote the AI writes</span><em>Example: the AI copied a review date 11/09 as 09/09 → code now pastes the original text</em></div>
     <div><b>Code corrects overstatements</b><span>Based on the analysis tools' verdicts, code adds notes under the AI's conclusion</span><em>Example: the AI called a cause that explains only part of the gap the main cause</em></div>
-    <div><b>SQL accuracy check</b><span>AI writing SQL to answer data questions, 19 questions: 17 are checked against answers from a separate SQL query; 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
+    <div><b>SQL accuracy check</b><span>AI writes SQL to answer data questions; 19 test questions: 17 are checked against answers from a separate SQL query; the other 2 ask for data that doesn't exist, so the AI must say "not found"</span><em class="lim">Limitation: the reference SQL was also written by AI (Claude Code); I reviewed the metric definitions</em></div>
     <div><b>Validation / test split</b><span>Validation set: used to find errors and tune; test set: unseen during development and used only for final scoring, so results don't just reflect practiced questions (SQL answers: no test set yet, see slide 5)</span></div>
-    <div><b>No answers in the examples</b><span>The instructions given to the AI (prompt) must not contain reference answers, so the AI can't simply copy them and inflate its score; code scans them automatically</span><em>Example: examples held the answers to 11 questions → removed them; still 19/19 on rerun</em></div>
+    <div><b>No answers in the examples</b><span>The instructions given to the AI (prompt) must not contain reference answers, so the AI can't simply copy them and inflate its score; code scans them automatically</span><em>Example: the AI's examples held answers to 11 questions → removed; still 19/19 on rerun</em></div>
     <div><b>I label the answers first</b><span>For the AI sorting reviews into categories and finding similar reviews, I labeled the reference answers without seeing the AI's, so its answers can't sway mine</span></div>
   </div>
 </div></section>
@@ -698,16 +698,16 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div class="r"><div class="nm">AI finds similar reviews<small>Relevance calls match my labels</small></div>
       <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>45/50 reviews = 90%</div><div class="b t"><span class="trk"><i style="width:100%"></i><u></u></span>20/20 reviews = 100%</div></div></div>
     <div class="r"><div class="nm">AI sorts reviews into categories<small>Categories exactly match my labels</small></div>
-      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (result before the categories were revised)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 reviews = 88%<em> (below the 90% threshold)</em></span></div></div></div>
+      <div><div class="b v"><span class="trk"><i style="width:90%"></i><u></u></span>27/30 reviews = 90% (result under the old category definitions; the current version was not retested)</div><div class="b t miss"><span class="trk"><i style="width:88%"></i><u></u></span><span>22/25 reviews = 88%<em> (below the 90% threshold)</em></span></div></div></div>
     <div class="r"><div class="nm">AI investigates causes (AI agent)<small>Runs whose report passed all code checks (numbers, quotes, verdicts, format, etc.)</small></div>
-      <div class="txt">Validation: 4 runs, all 4 passed every check<br>Test: a state not used during development; 2 runs, both passed the applicable checks</div></div>
+      <div class="txt">Validation: 4 runs, all 4 passed every check<br>Test: a state not used during development; 2 runs, both passed the 6 general checks (the other 11 apply only to the practice question)</div></div>
     <p class="note">The test sets have only 20–25 reviews, so even 100% could be luck; the likely range of true accuracy is on the next slide</p>
   </div>
 </div></section>
 
 <section class="slide" aria-label="Slide 6"><div class="sl">
   <h2>Sample size for review-categorization accuracy</h2>
-  <span class="sub">Only 25 reviews tested, so true accuracy is likely 70%–96%; to show 90%, first raise it to about 95%, then test about 140 reviews</span>
+  <span class="sub">Only 25 reviews tested, so true accuracy is likely 70%–96%; to show 90% accuracy, first raise accuracy to about 95%, then test about 140 reviews</span>
   <div class="ci">
     <p class="ct">Likely range of true accuracy (Wilson 95% confidence interval); red dashed line = 90% threshold</p>
     <div class="r"><div class="nm"><b>Now</b><span>22 of 25 correct (88%)</span></div>
@@ -776,7 +776,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
     <div><b>Bring it into the team's daily work</b><span>Run slide 3's "negative reviews by state" investigation automatically every week and turn the results into a monitoring report</span></div>
     <div><b>Hand findings to the owning teams</b><span>Slide 8's missing items in multi-item orders → ask logistics and sellers whether it's split shipments or missing items; test any fix (e.g. telling customers at shipping that the order comes in N packages) with an experiment first</span></div>
     <div><b>Fill the testing gaps</b><span>Slide 6: tune the AI's review categorization to about 95% accuracy, then label a new test set of about 140 reviews; slide 5: add more test reviews for AI finding similar reviews, and data questions not used during development for AI answering data questions with SQL</span></div>
-    <div><b>Investigate more than states</b><span>The 4 hypotheses on slide 3 are fixed; extend to any "why" question: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
+    <div><b>Investigate more than states</b><span>Today the 4 hypotheses on slide 3 are fixed; next, extend to any "why" question a user asks: the AI proposes possible causes, and code tests each one against the data and decides whether it holds</span></div>
   </div>
 </div></section>
 </template>
