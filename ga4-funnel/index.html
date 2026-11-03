@@ -603,7 +603,7 @@ SELECT
   <tr><td>7 天</td><td>每一步隔了幾天才完成的人有多少（整段最長 21 天）</td><td>購買 2,726 人，比 1 天只多 44 人；整體 6.04%</td><td>每一步隔了幾天才完成的情況很少；但使用者在第一次看商品後考慮多久，這個算法看不出來</td></tr>
 </table>
 <p><b>結論：時限不改變三個轉換的高低順序；依序完成的購買中，購買前的最後一段流程多半是連續完成的（每一步都在 30 分鐘內：92.4%）。</b></p>
-<p>這個發現只描述最後有購買的人，看不出沒買的人卡在哪裡，因此不拿來推論購物車或結帳該怎麼改。另有三個限制：① 只涵蓋依序走完四步的 2,755 位購買者，另外 596 位購買者（3,351 − 2,755）沒有依序走完，無法判斷；② 看不出使用者在最後一次看商品之前考慮了多久；③ 使用者換裝置、清除 cookie 或使用無痕視窗會變成新的代號，跨天回來的流程可能被切斷。寄送提醒能否把人帶回來，這份資料沒有相關紀錄，無法判斷。</p>
+<p>「購買前最後一段多半連續完成」這個發現只描述最後有購買的人，看不出沒買的人卡在哪裡，因此不拿來推論購物車或結帳該怎麼改。另有三個限制：① 只涵蓋依序走完四步的 2,755 位購買者，另外 596 位購買者（3,351 − 2,755）沒有依序走完，無法判斷；② 看不出使用者在最後一次看商品之前考慮了多久；③ 使用者換裝置、清除 cookie 或使用無痕視窗會變成新的代號，跨天回來的流程可能被切斷。寄送提醒能否把人帶回來，這份資料沒有相關紀錄，無法判斷。</p>
 <details><summary>SQL：一次計算四種時間限制</summary>
 <div class="sqltags"><span class="tag">UNNEST 自訂清單</span><span class="tag">CROSS JOIN</span><span class="tag">非等值 JOIN（時間區間）</span><span class="tag">SELECT DISTINCT</span></div>
 <p class="howto">接在分析二的 <code>WITH ev AS (...)</code> 之後（以逗號接續）。r2 找出「在某一次看商品之後 w 分鐘內」的加購事件，r3、r4 再從這些事件往下接，所以每一段的起點都可以是任何一次上一步。</p>
@@ -663,7 +663,7 @@ ORDER BY win;</code></pre>
   <li><b>後兩步的高低方向不變，但不夠確定：</b>「加入購物車→開始結帳」仍低於「開始結帳→購買」，但差距從 17.4 個百分點縮小到最小 2.7 個百分點，因此這兩步的高低只能當作初步結果。</li>
 </ul>
 <p class="howto">第 3 類開始結帳後只有 8 人購買，行為與第 1 類差異很大，較不像漏記，所以「全部補回」只當作上限參考。這項檢查也只能補回「之後有開始結帳」的漏記：漏記了加入購物車、之後也沒有結帳的人，在資料中看不出來。</p>
-<p class="bridge"><b>為什麼接著看這個：</b>「看商品→加入購物車」確定是最低的一步，下一步是找改善對象。這份資料只有 67 天，沒有歷史數字可比 26.6% 是否偏低，因此改比同一段期間內的不同族群：這一步在哪些族群特別低？</p>
+<p class="bridge"><b>為什麼接著看這個：</b>「看商品→加入購物車」在檢查過的各種算法下都是最低的一步，下一步是找改善對象。可用的資料只有 67 天（11-26 起），沒有歷史數字可比 26.6% 是否偏低，因此改比同一段期間內的不同族群：這一步在哪些族群特別低？</p>
 
 <h3>分析五：分群比較「看商品→加入購物車」</h3>
 <p>定義同分析二（不限時間、同時發生算有順序）；分母＝期間內看過商品的人，分子＝第一次看商品之後有加購的人。每人的裝置、進站來源取第一次看商品那個事件的值；新訪客＝資料中有 first_visit（GA4 自動記錄的第一次造訪）事件、且在第一次看商品之前的人，其餘為舊訪客。</p>
@@ -801,7 +801,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>非等值 JOIN</span><span>分區／叢集</span></div>
   <div class="roles">
     <div><b>26.6%</b><span>看過商品的人中，之後加入購物車的比例，是三個轉換中最低</span></div>
-    <div><b>33,091 人</b><span>看過商品、之後沒加入購物車的人數（三個轉換中流失最多）</span></div>
+    <div><b>每組約 7,700 人</b><span>改版前先做 A/B 測試：新訪客隨機分兩組，一組看現在的商品頁、一組看改版後的，比較兩組看過商品後加購的比例</span></div>
     <div><b>25.8% vs 38.2%</b><span>新訪客 vs 舊訪客看過商品後加購的比例；新訪客佔看過商品的人 93%，是改善重點</span></div>
   </div>
   <p class="foot">資料：Google 公開的 GA4 電商範例資料（Google 周邊商品網路商店，2020-11-01～2021-01-31，分析採 11-26 起的 67 天，原因見第 2 頁）；部分內容經匿名化，數字不代表真實業績。SQL 由 Claude Code 協助撰寫，分析範圍與呈現由本人決定、逐段檢視</p>
@@ -835,7 +835,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>轉換率</b>＝走到這一步的人數 ÷ 走到上一步的人數；每一步都要發生在上一步之後才算</p>
       <p><b>看的是轉換率，不是流失人數：</b>第一步人數最多，流失人數自然最多；但它的轉換率 26.6% 也遠低於後兩步的 40.0%、57.4%</p>
       <p><b>不同算法下結論一致：</b>限定每一步要在 30 分鐘、1 天或 7 天內完成，「看商品→加入購物車」的轉換率都還是最低</p>
-      <p class="bridge"><b>沒有歷史基準：</b>26.6% 是否偏低，要用同樣算法跟上一季或去年同期比；這份範例資料只有 67 天，做不到（見第 6 頁）。因此先比同一段期間內的不同族群（第 4 頁）</p>
+      <p class="bridge"><b>沒有歷史基準：</b>26.6% 是否偏低，要用同樣算法跟上一季或去年同期比；可用的資料只有 67 天（11-26 起），做不到（見第 6 頁）。因此先比同一段期間內的不同族群（第 4 頁）</p>
     </div>
   </div>
 </div></section>
@@ -862,7 +862,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     </div>
     <div class="side">
       <p><b>裝置、可辨識的 4 種進站來源之間差不到 3 個百分點：</b>改善「看商品→加購」不需要先分裝置或進站來源處理</p>
-      <p><b>舊訪客明顯較高：</b>舊訪客＝資料期間內沒有 first_visit 事件的人（推論為之前來過；first_visit 有漏記）；38.2% 對新訪客 25.8%；新訪客佔看過商品的人 93%，是改善的重點對象</p>
+      <p><b>舊訪客明顯較高：</b>舊訪客＝第一次看商品之前沒有 first_visit 事件的人（推論為之前來過；first_visit 有漏記）；38.2% 對新訪客 25.8%；新訪客佔看過商品的人 93%，是改善的重點對象</p>
       <p><b>依第一次出現的時間分層比較：</b>三層中兩層舊訪客明顯較高（7.3、11.5 個百分點）；樣本最小的一層（6.6）在誤差內</p>
       <p class="note">first_visit＝GA4 自動記錄的「第一次造訪」事件。進站來源另有兩類在匿名化時被換成代稱、看不出實際來源，不列入（其中 (data deleted) 1,816 人，比例 37.6%）</p>
     </div>
@@ -873,7 +873,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>結論與建議</h2>
   <span class="sub">優先改善新訪客：改版前先用 A/B 測試驗證，並建立每日事件監控</span>
   <div class="nexts n3c">
-    <div><b>① 優先改善新訪客</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多、改善空間最大；依第一次出現的時間分層比較，三層中兩層新訪客看過商品後加購的比例明顯低於舊訪客（低 7.3、11.5 個百分點）；但差距可能來自舊訪客本身購買意願較高，不一定是商品頁的問題，所以改版對新訪客有沒有效要用 ② 驗證</span></div>
+    <div><b>① 優先改善新訪客</b><span>新訪客有 41,920 人，佔看過商品的人 93%，人數最多；依第一次出現的時間分層比較，三層中兩層新訪客看過商品後加購的比例明顯低於舊訪客（低 7.3、11.5 個百分點）；但差距可能來自舊訪客本身購買意願較高，不一定是商品頁的問題，所以改版對新訪客有沒有效要用 ② 驗證</span></div>
     <div><b>② 改版前先做 A/B 測試</b><span>隨機把新訪客分成兩組，一組看現在的商品頁、一組看改版後的，比較「看商品→加購」轉換率；假設改版能提升 2 個百分點，要看出 25.8%→27.8% 的差異，每組約需 7,700 人（顯著水準 5%、檢定力 80%）；每天約 626 位新訪客，約需 25 天</span></div>
     <div><b>③ 建立每日事件數監控</b><span>任何一種漏斗事件降為 0 就發警示；11 月加購有 18 天沒紀錄，建立監控即可在當天發現</span></div>
   </div>
@@ -921,7 +921,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <div class="chips"><span>BigQuery SQL</span><span>CTE</span><span>Non-equi JOIN</span><span>Partitioning / clustering</span></div>
   <div class="roles">
     <div><b>26.6%</b><span>of item viewers then added to cart, the lowest of the three conversions</span></div>
-    <div><b>33,091</b><span>users who viewed an item but never added to cart (the most lost of the three conversions)</span></div>
+    <div><b>~7,700 per group</b><span>A/B test before a redesign: randomly split new visitors into two groups, one seeing the current product page and one the redesign, and compare their add-to-cart rates after viewing items</span></div>
     <div><b>25.8% vs 38.2%</b><span>share of new vs returning visitors who added to cart after viewing an item; new visitors are 93% of item viewers, so they are the focus</span></div>
   </div>
   <p class="foot">Data: Google's public GA4 e-commerce sample dataset (Google Merchandise Store, 2020-11-01 to 2021-01-31; the analysis uses the 67 days from Nov 26, see slide 2); partly obfuscated, so the numbers are not real business results. SQL written with help from Claude Code; scope and presentation decided by me, every query reviewed step by step</p>
@@ -955,7 +955,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
       <p><b>Conversion rate</b> = users reaching this step ÷ users reaching the previous step; each step must happen after the previous one</p>
       <p><b>Judged by conversion rate, not users lost:</b> the first step has the most users, so it naturally loses the most; but its 26.6% rate is also far below the next two steps' 40.0% and 57.4%</p>
       <p><b>Holds under other definitions:</b> requiring each step within 30 minutes, 1 day or 7 days, the "view item → add to cart" rate is still the lowest</p>
-      <p class="bridge"><b>No historical benchmark:</b> judging whether 26.6% is low needs the same metric for the previous quarter or the same period last year; this sample covers only 67 days, so it can't be done (slide 6). Instead, compare groups within the same period (slide 4)</p>
+      <p class="bridge"><b>No historical benchmark:</b> judging whether 26.6% is low needs the same metric for the previous quarter or the same period last year; only 67 days of the sample are usable (from Nov 26), so it can't be done (slide 6). Instead, compare groups within the same period (slide 4)</p>
     </div>
   </div>
 </div></section>
@@ -982,7 +982,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     </div>
     <div class="side">
       <p><b>Devices and the 4 identifiable traffic sources differ by under 3 points:</b> improving view-to-cart doesn't need to start with a specific device or source</p>
-      <p><b>Returning visitors are clearly higher:</b> returning = users with no first_visit event during the data period (inferred to have visited before; first_visit is sometimes not recorded); 38.2% vs. 25.8% for new visitors; new visitors are 93% of item viewers, so they are the main target</p>
+      <p><b>Returning visitors are clearly higher:</b> returning = users with no first_visit event before their first item view (inferred to have visited before; first_visit is sometimes not recorded); 38.2% vs. 25.8% for new visitors; new visitors are 93% of item viewers, so they are the main target</p>
       <p><b>Split by when users first appear in the data:</b> returning visitors are clearly higher in 2 of 3 groups (7.3 and 11.5 points); the smallest group (6.6) is within the margin of error</p>
       <p class="note">first_visit = the "first visit" event GA4 records automatically. Two other traffic-source values were replaced with placeholders during anonymization, so their real source is unknown and they are left out (one of them, (data deleted), has 1,816 users at 37.6%)</p>
     </div>
@@ -993,7 +993,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <h2>Conclusions and recommendations</h2>
   <span class="sub">Prioritize new visitors: A/B test the redesign before rolling it out, and monitor daily events</span>
   <div class="nexts n3c">
-    <div><b>① Prioritize new visitors</b><span>New visitors number 41,920, 93% of item viewers, so the room to improve is largest; split by when users first appear in the data, their view-to-cart rate is clearly below returning visitors' in 2 of 3 groups (by 7.3 and 11.5 points); but the gap may come from returning visitors already leaning toward buying rather than from the product page, so whether a redesign helps new visitors needs testing with ②</span></div>
+    <div><b>① Prioritize new visitors</b><span>New visitors number 41,920, 93% of item viewers, the largest group; split by when users first appear in the data, their view-to-cart rate is clearly below returning visitors' in 2 of 3 groups (by 7.3 and 11.5 points); but the gap may come from returning visitors already leaning toward buying rather than from the product page, so whether a redesign helps new visitors needs testing with ②</span></div>
     <div><b>② A/B test before rolling out</b><span>Randomly split new visitors into two groups, one seeing the current product page and one the redesign, and compare view-to-cart rates; assuming the redesign adds 2 points, detecting a rise from 25.8% to 27.8% needs about 7,700 users per group (5% significance level, 80% power); with about 626 new visitors a day, that takes about 25 days</span></div>
     <div><b>③ Monitor daily event counts</b><span>Alert when any funnel event drops to 0; the 18 days of missing add-to-carts in November would have been caught the same day</span></div>
   </div>
@@ -1259,7 +1259,7 @@ SELECT
   <tr><td>7 days</td><td>How many took several days between steps (at most 21 days end to end)</td><td>2,726 purchasers, only 44 more than at 1 day; 6.04% overall</td><td>Taking several days between steps is rare; but this method cannot show how long users deliberated after their first item view</td></tr>
 </table>
 <p><b>Conclusion: The time limit does not change the ranking of the three conversions; among in-order purchases, the final stretch before purchase is mostly done in one go (every step within 30 minutes: 92.4%).</b></p>
-<p>This finding describes only users who ended up buying and cannot show where non-buyers got stuck, so it is not used to infer how the cart or checkout should change. It has three further limitations: ① it covers only the 2,755 purchasers who completed all four steps in order; the other 596 purchasers (3,351 − 2,755) did not, and cannot be assessed; ② it cannot show how long users had been considering the purchase before their last item view; ③ switching devices, clearing cookies, or using a private window creates a new ID, so users who return on a later day may appear as new users, splitting their journey. Whether sending reminders could bring people back cannot be assessed, as this data has no related records.</p>
+<p>The finding that the final stretch is mostly done in one go describes only users who ended up buying and cannot show where non-buyers got stuck, so it is not used to infer how the cart or checkout should change. It has three further limitations: ① it covers only the 2,755 purchasers who completed all four steps in order; the other 596 purchasers (3,351 − 2,755) did not, and cannot be assessed; ② it cannot show how long users had been considering the purchase before their last item view; ③ switching devices, clearing cookies, or using a private window creates a new ID, so users who return on a later day may appear as new users, splitting their journey. Whether sending reminders could bring people back cannot be assessed, as this data has no related records.</p>
 <details><summary>SQL: compute all four time limits at once</summary>
 <div class="sqltags"><span class="tag">UNNEST custom list</span><span class="tag">CROSS JOIN</span><span class="tag">Non-equi JOIN (time window)</span><span class="tag">SELECT DISTINCT</span></div>
 <p class="howto">Append this after Analysis 2's <code>WITH ev AS (...)</code>, separated by a comma. r2 finds add-to-cart events "within w minutes after some item view," and r3 and r4 chain on from those events, so each stretch can start from any occurrence of the previous step.</p>
@@ -1319,7 +1319,7 @@ ORDER BY win;</code></pre>
   <li><b>The ranking of the last two conversions holds, but is not certain:</b> "add to cart → begin checkout" is still below "begin checkout → purchase," but the gap shrinks from 17.4 percentage points to as little as 2.7, so the ranking of these two conversions should be treated as preliminary.</li>
 </ul>
 <p class="howto">Only 8 users in group 3 purchased after checkout — behavior very different from group 1 and less like missed records — so "add back all" is only an upper-bound reference. This check can also only recover missed records for users who "later began checkout": users whose add to cart was missed and who never checked out are invisible in the data.</p>
-<p class="bridge"><b>Why look at this next:</b> with "view item → add to cart" confirmed as the lowest step, the next question is whom to target. This sample covers only 67 days, so there is no history to judge whether 26.6% is low; instead, compare groups within the same period: which groups are especially low at this step?</p>
+<p class="bridge"><b>Why look at this next:</b> with "view item → add to cart" the lowest step under every method checked, the next question is whom to target. Only 67 days of the sample are usable (from Nov 26), so there is no history to judge whether 26.6% is low; instead, compare groups within the same period: which groups are especially low at this step?</p>
 
 <h3>Analysis 5: "View item → add to cart" by segment</h3>
 <p>Same definition as Analysis 2 (no time limit, same-time events count as in order); denominator = users who viewed an item during the period, numerator = those who added to cart after their first item view. Each user's device and traffic source come from their first item-view event; new visitors = users with a first_visit event (the "first visit" GA4 records automatically) at or before their first item view; everyone else is a returning visitor.</p>

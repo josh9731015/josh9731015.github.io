@@ -979,7 +979,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="第 2 頁"><div class="sl">
   <h2>資料湖倉架構與讀取檢查</h2>
-  <span class="sub">用 Delta Lake（寫入時能擋下不合規資料的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
+  <span class="sub">用 Delta Lake（支援 CHECK 等寫入限制的資料表格式）分三層、每層各自檢查；讀入後核對列數，抓出 2 個讀取錯誤</span>
   <div class="flow3">
     <div><b>bronze 原始層</b><span>9 個 CSV 原樣讀進表，另記「何時讀入、來自哪個檔」</span><em>10 張表：9 個原始檔各一張，另留 1 張用預設設定讀入的評價表，用來對照讀取設定是否正確</em></div>
     <div class="ar">→</div>
@@ -1084,7 +1084,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">優先處理即將晚到的訂單並用隨機實驗驗證效果；物流指標加入實際送達天數</span>
   <div class="nexts n3">
     <div><b>① 每天列出即將晚到的訂單，提前處理</b><span><i class="pg">根據：第 4 頁</i>列出「即將到預計送達日、仍未送達」的訂單，通知物流優先配送；晚到訂單只占 6.66%，但其中 62.42% 給 1～2 星</span></div>
-    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">根據：第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組所有被列出訂單給 1～2 星的比例（不能只比晚到的：提前處理會讓部分訂單變準時）。實驗規模以實際晚到訂單近似：假設 1～2 星比例從 62.4% 降到 52.4%（假設值，實際效果由實驗測得），兩組共需約 766 張，約需 1.6 個月</span></div>
+    <div><b>② 用隨機實驗驗證 ① 能減少 1～2 星評價</b><span><i class="pg">根據：第 5 頁</i>目前只證明晚到和低分有關聯，尚未證明因果。做法：即將晚到的訂單隨機分兩組，一組提前處理、一組照常，比較兩組所有被列出訂單給 1～2 星的比例（不能只比晚到的：提前處理會讓部分訂單變準時）。實驗規模以實際晚到訂單近似：假設 1～2 星比例從 62.4% 降到 52.4%（假設值，實際效果由實驗測得），兩組共需約 766 張、約 1.6 個月（下限估計：被列出的訂單有些最後準時，實際需要更多）</span></div>
     <div><b>③ 在物流指標中加入實際送達天數</b><span><i class="pg">根據：第 6 頁</i>準時訂單的評分隨實際送達天數下降（4.41 → 3.62），只看準時率看不到這個落差</span></div>
   </div>
 </div></section>
@@ -1119,7 +1119,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
 
 <section class="slide" aria-label="Slide 2"><div class="sl">
   <h2>Lakehouse architecture and load checks</h2>
-  <span class="sub">Three layers in Delta Lake (a table format that can block invalid data at write time), each checked on its own; row counts checked on load caught 2 load errors</span>
+  <span class="sub">Three layers in Delta Lake (a table format that supports write constraints such as CHECK), each checked on its own; row counts checked on load caught 2 load errors</span>
   <div class="flow3">
     <div><b>bronze (raw)</b><span>9 CSVs loaded as-is, plus when each row was loaded and from which file</span><em>10 tables: one per raw file, plus 1 review table read with default settings, kept to check the load settings</em></div>
     <div class="ar">→</div>
@@ -1224,7 +1224,7 @@ WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;<
   <span class="sub">Prioritize orders about to run late and test the effect with a randomized experiment; add actual delivery time to logistics metrics</span>
   <div class="nexts n3">
     <div><b>① List orders about to run late each day and act early</b><span><i class="pg">Based on: slide 4</i>List orders nearing the estimated date but not yet delivered and ask the carrier to prioritize them; late orders are only 6.66%, but 62.42% of them get 1–2 stars</span></div>
-    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Based on: slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the 1–2 star share across all listed orders in each group (not just the late ones: acting early turns some orders on time). Size, approximated with actually late orders: assuming the 1–2 star share falls from 62.4% to 52.4% (an assumption; the real effect is what the test measures), both groups together need about 766 orders, about 1.6 months</span></div>
+    <div><b>② Test with a randomized experiment whether ① reduces 1–2 star ratings</b><span><i class="pg">Based on: slide 5</i>So far lateness is only associated with low scores, not shown to cause them. Method: randomly split orders about to run late into two groups, act early on one and handle the other as usual, then compare the 1–2 star share across all listed orders in each group (not just the late ones: acting early turns some orders on time). Size, approximated with actually late orders: assuming the 1–2 star share falls from 62.4% to 52.4% (an assumption; the real effect is what the test measures), both groups together need about 766 orders, about 1.6 months (a lower bound: some listed orders end up on time, so more are needed)</span></div>
     <div><b>③ Add actual delivery time to logistics metrics</b><span><i class="pg">Based on: slide 6</i>On-time orders score lower the longer they actually take (4.41 → 3.62); the on-time rate alone misses this gap</span></div>
   </div>
 </div></section>

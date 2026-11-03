@@ -357,7 +357,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="stat"><b>19/19</b><span>「問資料」驗證集通過題數（沒有測試集，成績可能偏高）</span></div>
   <div class="stat"><b>20/20</b><span>「找相關評論」測試集盲測，AI 判斷相不相關與本人一致的則數</span></div>
   <div class="stat"><b>22/25</b><span>「評論分類」測試集盲測，與本人完全一致的則數（88%，未達 90% 門檻）</span></div>
-  <div class="stat"><b>4/4</b><span>「調查」最終版跑 4 次，17 項檢查全過的次數（測試集 2 次也全過）</span></div>
+  <div class="stat"><b>4/4</b><span>「調查」最終版跑 4 次，17 項檢查全過的次數（測試集 2 次，6 項通用檢查也全過）</span></div>
 </div>
 
 <div class="tldr lead">
@@ -548,7 +548,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>各功能評估結果</h2>
   <span class="sub">測試集：找相關評論 20/20、評論分類 22/25（88%）；問資料還沒有測試集；樣本都少，還不能證明準確率達到 90%</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻（評分前訂好的驗收標準）</p>
+    <p class="lg"><i class="v"></i>驗證集 <i class="t"></i>測試集　空心外框＝100%，紅色虛線＝90% 門檻（測試集評分前訂好的驗收標準）</p>
     <div class="r"><div class="nm">問資料<small>19 個問題，數字要跟標準答案 SQL 一致</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 題＝100%</div><div class="b none">沒有測試集：19 題開發時都拿來調整過，成績可能偏高</div></div></div>
     <div class="r"><div class="nm">找相關評論<small>判斷評論相不相關，跟本人一致</small></div>
@@ -713,7 +713,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <h2>Evaluation results by feature</h2>
   <span class="sub">Test sets: Find relevant reviews 20/20, Review classification 22/25 (88%); "Ask the data" has no test set yet; samples are small, so none can yet be shown to reach 90%</span>
   <div class="bars">
-    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold (acceptance standard set before scoring)</p>
+    <p class="lg"><i class="v"></i>Validation set <i class="t"></i>Test set　Empty outline = 100%, red dashed line = 90% threshold (acceptance standard set before scoring the test sets)</p>
     <div class="r"><div class="nm">Ask the data<small>19 questions; numbers must match the reference SQL</small></div>
       <div><div class="b v"><span class="trk"><i style="width:100%"></i><u></u></span>19/19 questions = 100%</div><div class="b none">No test set: all 19 questions were used for tuning, so the score may be inflated</div></div></div>
     <div class="r"><div class="nm">Find relevant reviews<small>Relevance calls match my labels</small></div>
@@ -829,7 +829,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   <div class="stat"><b>19/19</b><span>"Ask the data" validation questions passed (no test set, may be inflated)</span></div>
   <div class="stat"><b>20/20</b><span>"Find relevant reviews" blind test on the test set: relevance calls matching mine</span></div>
   <div class="stat"><b>22/25</b><span>"Review classification" blind test on the test set: exact matches with mine (88%, below the 90% threshold)</span></div>
-  <div class="stat"><b>4/4</b><span>Final "investigation" runs passing all 17 checks (the test question also passed twice)</span></div>
+  <div class="stat"><b>4/4</b><span>Final "investigation" runs passing all 17 checks (the test question passed its 6 general checks twice)</span></div>
 </div>
 
 <div class="tldr lead">

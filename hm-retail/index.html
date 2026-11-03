@@ -1203,7 +1203,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
 
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <h2>發券效果的驗證設計（模擬）</h2>
-  <span class="sub">名單二區間高於回本門檻、名單一跨過；模擬 1,000 次誤判機率 12%／4%，單輪檢定力僅 14%，要累積多輪</span>
+  <span class="sub">名單二區間高於回本門檻、名單一跨過；模擬誤判機率名單一 12%、名單二 4%；名單二單輪檢定力僅 14%</span>
   <div class="two wide">
     <div class="ci">
       <p class="ct">發券組 − 對照組的 180 天回購比例差距（百分點，模擬）</p>
@@ -1215,7 +1215,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     </div>
     <div class="side">
       <p><b>對照組必須隨機分配：</b>若改挑「最不會流失的 2,500 人」當對照組，這組即使沒拿到券，回購比例也比其他人高 2.7 個百分點，超過回本門檻，券的效果會被蓋掉，誤判券無效</p>
-      <p><b>人數用檢定力分析決定：</b>檢定力＝券的效果剛好等於回本門檻時，實驗能看出效果的機率；原本規劃的對照組 2,500 人檢定力只有 54%；換新模型後的這一輪，名單一需 3,500 人才達 80%</p>
+      <p><b>人數用檢定力分析決定：</b>檢定力＝券的效果剛好等於回本門檻時，實驗能看出效果的機率；名單一原本規劃的對照組 2,500 人檢定力只有 54%；換新模型後的這一輪，名單一需 3,500 人才達 80%</p>
       <p><b>效果要看滿 180 天，並累積多輪實驗：</b>名單一發券組比對照組多出的回購比例，第 30 天是 +3.75 個百分點，到第 180 天只剩 +2.46（模擬設定：券會讓之後才回購的人提早買），只看 30 天會高估券的效果</p>
     </div>
   </div>
@@ -1226,7 +1226,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <span class="sub">業績下滑主要來自童裝與部分款式；模型名單比簡單規則準；發券效果要靠隨機對照組、累積多輪確認</span>
   <div class="checks">
     <div><b>業績為什麼下滑</b><span>FY2020 Q1 件數比去年同季少 10.3%：54% 來自童裝，46% 來自成人服飾（主要是深藍、條紋、蕾絲款式減少）。童裝自 2019 年 3 月起驟降，可能是資料收錄範圍改變，需先確認。也檢查了通路（第 4 頁）：購買件數與年齡相同時，只在網路買的去年同季顧客，未回購比例比只在實體店買的高 7.1 個百分點</span></div>
-    <div><b>挽留券該發給誰</b><span>5 萬張券兩份名單各發 2.5 萬張：名單一（依流失機率挑 5 萬人）中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則（先挑半年到一年沒買過、再挑最久沒買的人，73.2%）多找到 3,071 位；名單二（依流失機率 × 過去半年消費挑 5 萬人）流失者過去半年的消費合計是名單一的 3.4 倍，保住的營收較多</span></div>
+    <div><b>挽留券該發給誰</b><span>5 萬張券兩份名單各發 2.5 萬張（各取名單前段）：名單一（依流失機率挑 5 萬人）中 79.4% 之後半年未再購買（隨機抽樣為 35.0%），比最好的簡單規則（先挑半年到一年沒買過、再挑最久沒買的人，73.2%）多找到 3,071 位；名單二（依流失機率 × 過去半年消費挑 5 萬人）流失者過去半年的消費合計是名單一的 3.4 倍，可能保住的營收（以過去消費估）較多</span></div>
     <div><b>怎麼證明有效</b><span>每輪發券時隨機保留不發券的對照組，比較 180 天的回購比例。模擬中名單二的區間整段高於回本門檻（券成本 ÷ 每位回購顧客毛利），名單一的區間跨過門檻；重複 1,000 次，誤判機率名單一約 12%、名單二約 4%。名單二單輪檢定力（效果剛好等於門檻時能看出來的機率）只有 14%，所以兩份都要每輪留對照組、累積多輪</span></div>
   </div>
 </div></section>
@@ -1238,7 +1238,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <div><b>向資料提供單位確認童裝收錄範圍</b><span><i class="pg">根據：第 3 頁</i>確認 2019 年 3 月起童裝交易的收錄範圍有沒有改變；若是資料問題，排除童裝重算業績，否則才投入人力調查童裝業務</span></div>
     <div><b>向商品企劃確認款式減少原因</b><span><i class="pg">根據：第 2 頁</i>深藍、條紋、蕾絲款式少了 48.4%：確認是款式決策還是顧客偏好改變，再決定下一季選品</span></div>
     <div><b>取得網站與物流資料，找出網路顧客未回購的原因</b><span><i class="pg">根據：第 4 頁</i>購買件數與年齡相同時，網路顧客未回購比例高 7.1 個百分點：用網站造訪、轉換率、配送與退貨資料，判斷是引流、結帳流程還是購物後體驗的問題</span></div>
-    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">根據：第 7 頁</i>5 萬張券兩份名單各發 2.5 萬張、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
+    <div><b>依實驗設計發券，每輪保留對照組</b><span><i class="pg">根據：第 7 頁</i>5 萬張券兩份名單各發 2.5 萬張（各取名單前段）、每輪隨機保留不發券的對照組，以 180 天結果決定下一輪預算並累積多輪；換模型就重新驗證</span></div>
   </div>
   <p class="note">限制：資料為部分顧客樣本，不代表 H&amp;M 真實業績；資料只到 2020 年 9 月（疫情期間）；發券效果為模擬，需實際發券後驗證</p>
 </div></section>
@@ -1381,7 +1381,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     </div>
     <div class="side">
       <p><b>Assign the control group at random:</b> if the "2,500 least likely to churn" were picked as controls, their repurchase rate would be 2.7 pp higher than everyone else's even without a coupon, above break-even, so the coupon's effect would be masked and it would wrongly look ineffective</p>
-      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; the originally planned 2,500-person control group has only 54%; in this round, after the model change, list 1 needs 3,500 to reach 80%</p>
+      <p><b>Group size set by power analysis:</b> power = the chance of detecting an effect exactly at break-even; list 1's originally planned 2,500-person control group has only 54%; in this round, after the model change, list 1 needs 3,500 to reach 80%</p>
       <p><b>Measure over 180 days and pool several rounds:</b> list 1's extra repurchase rate was +3.75 pp at day 30 but only +2.46 at day 180 (simulation setting: the coupon makes people who would have come back later buy sooner), so 30 days overstates the effect</p>
     </div>
   </div>
@@ -1392,7 +1392,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
   <span class="sub">The decline mainly came from kidswear and certain styles; the model's list beats simple rules; coupon impact must be confirmed with random control groups over several rounds</span>
   <div class="checks">
     <div><b>Why sales fell</b><span>FY2020 Q1 units fell 10.3% vs the same quarter last year: 54% from kidswear, 46% from adult apparel (mainly fewer dark blue, striped, and lace styles). Kidswear dropped sharply from March 2019, possibly a change in data coverage, which needs confirming first. Channels were also checked (slide 4): with items bought and age held equal, online-only customers among last year's same-quarter customers have a non-return rate 7.1 pp higher than store-only ones</span></div>
-    <div><b>Who should get coupons</b><span>Split the 50,000 coupons, 25,000 to each list: 79.4% of list 1's 50,000 customers (picked by churn probability) did not buy again in six months (35.0% for a random sample), 3,071 more than the best simple rule (no purchase 6–12 months ago, then longest since last purchase: 73.2%); list 2's churners (picked by churn probability × past-6-month spend) spent 3.4× as much as list 1's in the past six months, so it keeps more revenue</span></div>
+    <div><b>Who should get coupons</b><span>Split the 50,000 coupons, 25,000 to each list (from the top of each list): 79.4% of list 1's 50,000 customers (picked by churn probability) did not buy again in six months (35.0% for a random sample), 3,071 more than the best simple rule (no purchase 6–12 months ago, then longest since last purchase: 73.2%); list 2's churners (picked by churn probability × past-6-month spend) spent 3.4× as much as list 1's in the past six months, so it could keep more revenue (estimated from past spend)</span></div>
     <div><b>How to prove they work</b><span>Randomly hold back a no-coupon control group in every round and compare 180-day repurchase rates. In simulation, list 2's whole interval is above break-even (coupon cost ÷ gross profit per repurchasing customer), while list 1's straddles it; over 1,000 repeats, the chance of a wrong call is about 12% for list 1 and 4% for list 2. List 2's one-round power (the chance of seeing an effect exactly at break-even) is only 14%, so both need a control group every round, pooled over several rounds</span></div>
   </div>
 </div></section>
@@ -1404,7 +1404,7 @@ if (!window.HM_REPORT_FIRST) document.documentElement.classList.add('view-slides
     <div><b>Ask the data provider about kidswear coverage</b><span><i class="pg">Based on: slide 3</i>Confirm whether coverage of kidswear transactions changed from March 2019; if it is a data issue, exclude kidswear and recompute sales, only otherwise commit staff to investigating the kidswear business</span></div>
     <div><b>Ask merchandising why styles declined</b><span><i class="pg">Based on: slide 2</i>Dark blue, striped, and lace styles fell 48.4%: confirm whether the drop was a styling decision or a change in customer taste, then plan next season's range</span></div>
     <div><b>Get website and delivery data to find why online customers don't return</b><span><i class="pg">Based on: slide 4</i>With items bought and age held equal, online customers' non-return rate is 7.1 pp higher: use website visit, conversion rate, delivery, and return data to tell whether the problem is traffic, checkout, or the post-purchase experience</span></div>
-    <div><b>Send coupons by the experiment design, with a control group each round</b><span><i class="pg">Based on: slide 7</i>Split the 50,000 coupons, 25,000 to each list, randomly hold back a no-coupon control group every round, set the next budget from 180-day results and pool rounds; re-validate whenever the model changes</span></div>
+    <div><b>Send coupons by the experiment design, with a control group each round</b><span><i class="pg">Based on: slide 7</i>Split the 50,000 coupons, 25,000 to each list (from the top of each list), randomly hold back a no-coupon control group every round, set the next budget from 180-day results and pool rounds; re-validate whenever the model changes</span></div>
   </div>
   <p class="note">Limitations: the data is a partial customer sample and does not represent H&amp;M's actual sales; it only runs to September 2020 (during the pandemic); coupon effects are simulated and must be verified with a real send</p>
 </div></section>
