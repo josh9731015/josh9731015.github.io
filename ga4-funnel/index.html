@@ -827,7 +827,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">BigQuery 依處理量計費：分區（依日期切成小塊）或叢集（依常查欄位排序存放）讓查詢只讀需要的部分，處理量（＝費用）減少約 90%</span>
   <div class="two">
     <div class="cost" aria-label="一般表與分區、叢集表的處理量比較">
-      <p class="ct">同一份資料（4,295,584 列）：一般表 vs 整理後的表（分區表、叢集表），比較處理量</p>
+      <p class="ct">同一份資料：一般表 vs 整理後的表（分區表、叢集表），比較處理量</p>
       <p class="lg"><i class="v"></i>一般表 <i class="t"></i>整理後的表（查詢 A 用分區表、查詢 B 用叢集表）</p>
       <div class="r"><span>查詢 A：只查 7 天<small>依日期分區</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
       <div class="r"><span>查詢 B：只查購買事件<small>依事件名稱叢集</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
@@ -946,7 +946,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
   <span class="sub">BigQuery bills by data processed: partitioning (splitting by date) or clustering (storing sorted by a common filter) lets queries read only what they need, cutting processing (= cost) by about 90%</span>
   <div class="two">
     <div class="cost" aria-label="Data processed: regular table vs. partitioned or clustered table">
-      <p class="ct">Same data (4,295,584 rows): regular table vs organized tables (partitioned, clustered), data processed per query</p>
+      <p class="ct">Same data: regular table vs organized tables (partitioned, clustered), data processed per query</p>
       <p class="lg"><i class="v"></i>Regular table <i class="t"></i>Organized table (A: partitioned, B: clustered)</p>
       <div class="r"><span>Query A: 7 days only<small>partitioned by date</small></span><div><div class="b v"><span class="trk"><i style="width:78.3%"></i></span>117.46 MB</div><div class="b t"><span class="trk"><i style="width:8.1%"></i></span>12.13 MB</div></div></div>
       <div class="r"><span>Query B: purchase events only<small>clustered by event name</small></span><div><div class="b v"><span class="trk"><i style="width:92%"></i></span>138.05 MB</div><div class="b t"><span class="trk"><i style="width:9.2%"></i></span>13.76 MB</div></div></div>
