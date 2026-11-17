@@ -843,7 +843,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>分群轉換率比較</h2>
-  <span class="sub">「看商品→加購」比例在裝置、可辨識的 4 種進站來源之間差不到 3 個百分點；只有新舊訪客差異明顯，依第一次出現的時間分層後，三層中兩層新訪客轉換率明顯較低</span>
+  <span class="sub">「看商品→加購」比例在裝置、可辨識的 4 種進站來源之間差不到 3 個百分點；只有新舊訪客差異明顯，新訪客轉換率明顯較低</span>
   <div class="two">
     <div class="sg2" aria-label="各群看過商品的人中加入購物車的比例">
       <p class="ct">各群轉換率＝看過商品的人中，之後有加入購物車的比例（2020/11/26～2021/1/31；每群各自計算，同一類加起來不是 100%）</p>
@@ -865,7 +865,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     <div class="side">
       <p><b>裝置、可辨識的 4 種進站來源之間差不到 3 個百分點：</b>改善「看商品→加購」不需要先分裝置或進站來源處理</p>
       <p><b>新訪客轉換率明顯較低：</b>新訪客 25.8%，舊訪客 38.2%（舊訪客＝第一次看商品之前沒有 first_visit 事件的人，推論為之前來過；first_visit 有漏記）；新訪客佔看過商品的人 93%，是改善的重點對象</p>
-      <p><b>依第一次出現的時間分層比較：</b>三層中兩層新訪客轉換率明顯較低（低 7.3、11.5 個百分點）；樣本最小的一層（6.6）在誤差內</p>
+      <p><b>差距不一定是商品頁造成的：</b>舊訪客可能本來就比較想買，改版有沒有用，要用 A/B 測試驗證（見第 5 頁）</p>
       <p class="note">first_visit＝GA4 自動記錄的「第一次造訪」事件。進站來源另有兩類在匿名化時被換成代稱、看不出實際來源，不列入（其中 (data deleted) 1,816 人，比例 37.6%）</p>
     </div>
   </div>
@@ -964,7 +964,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>Conversion by segment</h2>
-  <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and the 4 identifiable traffic sources; only new vs. returning visitors differ clearly, and split by when users first appear, new visitors convert clearly lower in 2 of 3 groups</span>
+  <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and the 4 identifiable traffic sources; only new vs. returning visitors differ clearly, with new visitors converting clearly lower</span>
   <div class="two">
     <div class="sg2" aria-label="Share of each group's item viewers who added to cart">
       <p class="ct">Conversion rate = share of each group's item viewers who later added to cart (2020/11/26–2021/1/31; each group computed separately, so a category doesn't sum to 100%)</p>
@@ -986,7 +986,7 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     <div class="side">
       <p><b>Devices and the 4 identifiable traffic sources differ by under 3 points:</b> improving view-to-cart doesn't need to start with a specific device or source</p>
       <p><b>New visitors convert clearly lower:</b> 25.8% for new visitors vs. 38.2% for returning (returning = users with no first_visit event before their first item view, inferred to have visited before; first_visit is sometimes not recorded); new visitors are 93% of item viewers, so they are the main target</p>
-      <p><b>Split by when users first appear in the data:</b> new visitors convert clearly lower in 2 of 3 groups (by 7.3 and 11.5 points); the smallest group (6.6) is within the margin of error</p>
+      <p><b>The gap may not come from the product page:</b> returning visitors may simply be more ready to buy, so whether a redesign works needs an A/B test (see slide 5)</p>
       <p class="note">first_visit = the "first visit" event GA4 records automatically. Two other traffic-source values were replaced with placeholders during anonymization, so their real source is unknown and they are left out (one of them, (data deleted), has 1,816 users at 37.6%)</p>
     </div>
   </div>
