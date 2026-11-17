@@ -295,6 +295,7 @@ if (new URLSearchParams(location.search).get('view') !== 'report') document.docu
   #deck .sg2 .trk { display: block; height: .85em; }
   #deck .sg2 .trk i { display: block; height: 100%; background: var(--mute); border-radius: 0 .2em .2em 0; }
   #deck .sg2 .r.hi .trk i { background: var(--accent); }
+  #deck .sg2 .r.cols b, #deck .sg2 .r.cols em { font-size: .85em; font-weight: 700; color: var(--ink-3); }  /* 欄名列：標出百分比和人數各是什麼 */
   #deck .sg2 .r.hi > span:first-child, #deck .sg2 .r.hi b { color: var(--ink); font-weight: 700; }
   #deck .sg2 .r b { font-weight: 500; font-variant-numeric: tabular-nums; }
   #deck .sg2 .r em { font-style: normal; color: var(--ink-3); font-size: .9em; font-variant-numeric: tabular-nums; text-align: right; }
@@ -681,7 +682,7 @@ ORDER BY win;</code></pre>
   <tr class="hi"><td>11 月其餘</td><td class="num">4,568／37.9%</td><td class="num">864／49.4%</td><td class="num">11.5（±3.6）</td></tr>
   <tr class="hi"><td>12 月以後</td><td class="num">37,095／24.1%</td><td class="num">1,981／31.4%</td><td class="num">7.3（±2.1）</td></tr>
 </table>
-<p><b>結論：裝置、可辨識的 4 種進站來源之間差不到 3 個百分點，改善「看商品→加購」不需要先分裝置或來源；只有新舊訪客差異明顯，分層後三層中兩層舊訪客明顯較高，樣本最小的一層（6.6）在誤差內。</b>新訪客佔看過商品的人 93%，是優先改善的對象；但差距可能來自舊訪客本身購買意願較高，不一定是商品頁的問題，改版效果要用 A/B 測試驗證，所需人數如下（用 Python 依兩比例檢定的樣本數公式計算）：</p>
+<p><b>結論：裝置、可辨識的 4 種進站來源之間差不到 3 個百分點，改善「看商品→加購」不需要先分裝置或來源；只有新舊訪客差異明顯，分層後三層中兩層新訪客轉換率明顯較低，樣本最小的一層（6.6）在誤差內。</b>新訪客佔看過商品的人 93%，是優先改善的對象；但差距可能來自舊訪客本身購買意願較高，不一定是商品頁的問題，改版效果要用 A/B 測試驗證，所需人數如下（用 Python 依兩比例檢定的樣本數公式計算）：</p>
 <table>
   <tr><th>A/B 測試的假設</th><th class="num">數值</th></tr>
   <tr><td>基準：新訪客「看商品→加購」比例</td><td class="num">25.8%</td></tr>
@@ -842,10 +843,11 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <h2>分群轉換率比較</h2>
-  <span class="sub">「看商品→加購」比例在裝置、可辨識的 4 種進站來源之間差不到 3 個百分點；只有新舊訪客差異明顯，依第一次出現的時間分層後，三層中兩層舊訪客明顯較高</span>
+  <span class="sub">「看商品→加購」比例在裝置、可辨識的 4 種進站來源之間差不到 3 個百分點；只有新舊訪客差異明顯，依第一次出現的時間分層後，三層中兩層新訪客轉換率明顯較低</span>
   <div class="two">
     <div class="sg2" aria-label="各群看過商品的人中加入購物車的比例">
-      <p class="ct">各群「看過商品的人中，之後有加入購物車的比例」（2020/11/26～2021/1/31；每群各自計算，同一類加起來不是 100%）；右欄＝看過商品的人數</p>
+      <p class="ct">各群轉換率＝看過商品的人中，之後有加入購物車的比例（2020/11/26～2021/1/31；每群各自計算，同一類加起來不是 100%）</p>
+      <div class="r cols"><span></span><span></span><b>轉換率</b><em>看過商品</em></div>
       <p class="gh">裝置</p>
       <div class="r"><span>電腦</span><span class="trk"><i style="width:52.8%"></i></span><b>26.4%</b><em>26,351 人</em></div>
       <div class="r"><span>手機</span><span class="trk"><i style="width:54.0%"></i></span><b>27.0%</b><em>17,726 人</em></div>
@@ -862,8 +864,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     </div>
     <div class="side">
       <p><b>裝置、可辨識的 4 種進站來源之間差不到 3 個百分點：</b>改善「看商品→加購」不需要先分裝置或進站來源處理</p>
-      <p><b>舊訪客明顯較高：</b>舊訪客＝第一次看商品之前沒有 first_visit 事件的人（推論為之前來過；first_visit 有漏記）；38.2% 對新訪客 25.8%；新訪客佔看過商品的人 93%，是改善的重點對象</p>
-      <p><b>依第一次出現的時間分層比較：</b>三層中兩層舊訪客明顯較高（7.3、11.5 個百分點）；樣本最小的一層（6.6）在誤差內</p>
+      <p><b>新訪客轉換率明顯較低：</b>新訪客 25.8%，舊訪客 38.2%（舊訪客＝第一次看商品之前沒有 first_visit 事件的人，推論為之前來過；first_visit 有漏記）；新訪客佔看過商品的人 93%，是改善的重點對象</p>
+      <p><b>依第一次出現的時間分層比較：</b>三層中兩層新訪客轉換率明顯較低（低 7.3、11.5 個百分點）；樣本最小的一層（6.6）在誤差內</p>
       <p class="note">first_visit＝GA4 自動記錄的「第一次造訪」事件。進站來源另有兩類在匿名化時被換成代稱、看不出實際來源，不列入（其中 (data deleted) 1,816 人，比例 37.6%）</p>
     </div>
   </div>
@@ -962,10 +964,11 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
 
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <h2>Conversion by segment</h2>
-  <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and the 4 identifiable traffic sources; only new vs. returning visitors differ clearly, and split by when users first appear, returning visitors are clearly higher in 2 of 3 groups</span>
+  <span class="sub">The view-to-cart rate differs by under 3 percentage points across devices and the 4 identifiable traffic sources; only new vs. returning visitors differ clearly, and split by when users first appear, new visitors convert clearly lower in 2 of 3 groups</span>
   <div class="two">
     <div class="sg2" aria-label="Share of each group's item viewers who added to cart">
-      <p class="ct">Share of each group's item viewers who later added to cart (2020/11/26–2021/1/31; each group computed separately, so a category doesn't sum to 100%); right column = item viewers</p>
+      <p class="ct">Conversion rate = share of each group's item viewers who later added to cart (2020/11/26–2021/1/31; each group computed separately, so a category doesn't sum to 100%)</p>
+      <div class="r cols"><span></span><span></span><b>Rate</b><em>Viewers</em></div>
       <p class="gh">Device</p>
       <div class="r"><span>Desktop</span><span class="trk"><i style="width:52.8%"></i></span><b>26.4%</b><em>26,351</em></div>
       <div class="r"><span>Mobile</span><span class="trk"><i style="width:54.0%"></i></span><b>27.0%</b><em>17,726</em></div>
@@ -982,8 +985,8 @@ AS SELECT * FROM `josh-bq-learning.ga4_learning.events_plain`;</code></pre>
     </div>
     <div class="side">
       <p><b>Devices and the 4 identifiable traffic sources differ by under 3 points:</b> improving view-to-cart doesn't need to start with a specific device or source</p>
-      <p><b>Returning visitors are clearly higher:</b> returning = users with no first_visit event before their first item view (inferred to have visited before; first_visit is sometimes not recorded); 38.2% vs. 25.8% for new visitors; new visitors are 93% of item viewers, so they are the main target</p>
-      <p><b>Split by when users first appear in the data:</b> returning visitors are clearly higher in 2 of 3 groups (7.3 and 11.5 points); the smallest group (6.6) is within the margin of error</p>
+      <p><b>New visitors convert clearly lower:</b> 25.8% for new visitors vs. 38.2% for returning (returning = users with no first_visit event before their first item view, inferred to have visited before; first_visit is sometimes not recorded); new visitors are 93% of item viewers, so they are the main target</p>
+      <p><b>Split by when users first appear in the data:</b> new visitors convert clearly lower in 2 of 3 groups (by 7.3 and 11.5 points); the smallest group (6.6) is within the margin of error</p>
       <p class="note">first_visit = the "first visit" event GA4 records automatically. Two other traffic-source values were replaced with placeholders during anonymization, so their real source is unknown and they are left out (one of them, (data deleted), has 1,816 users at 37.6%)</p>
     </div>
   </div>
@@ -1337,7 +1340,7 @@ ORDER BY win;</code></pre>
   <tr class="hi"><td>Rest of November</td><td class="num">4,568 / 37.9%</td><td class="num">864 / 49.4%</td><td class="num">11.5 (±3.6)</td></tr>
   <tr class="hi"><td>December onward</td><td class="num">37,095 / 24.1%</td><td class="num">1,981 / 31.4%</td><td class="num">7.3 (±2.1)</td></tr>
 </table>
-<p><b>Conclusion: devices and the 4 identifiable traffic sources differ by under 3 percentage points, so improving view-to-cart doesn't need to start with a specific device or source; only new vs. returning visitors differ clearly, and after the split, returning visitors are clearly higher in 2 of 3 groups, while the smallest group (6.6) is within the margin of error.</b> New visitors are 93% of item viewers and the priority; but the gap may come from returning visitors already leaning toward buying rather than from the product page, so a redesign's effect needs an A/B test; the sample size below was calculated in Python with the standard two-proportion formula:</p>
+<p><b>Conclusion: devices and the 4 identifiable traffic sources differ by under 3 percentage points, so improving view-to-cart doesn't need to start with a specific device or source; only new vs. returning visitors differ clearly, and after the split, new visitors convert clearly lower in 2 of 3 groups, while the smallest group (6.6) is within the margin of error.</b> New visitors are 93% of item viewers and the priority; but the gap may come from returning visitors already leaning toward buying rather than from the product page, so a redesign's effect needs an A/B test; the sample size below was calculated in Python with the standard two-proportion formula:</p>
 <table>
   <tr><th>A/B test assumption</th><th class="num">Value</th></tr>
   <tr><td>Baseline: new visitors' view-to-cart rate</td><td class="num">25.8%</td></tr>
