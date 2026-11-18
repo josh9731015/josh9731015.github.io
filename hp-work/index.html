@@ -88,6 +88,7 @@
   #deck .cap small { font-weight: 400; color: var(--ink-3); }
   /* 左右兩欄：左＝示意圖，右＝我做了什麼 */
   #deck .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.6em; flex: 1; min-height: 0; align-items: start; }
+  #deck .two.rw { grid-template-columns: 1fr 1.3fr; }   /* 右欄流程較長的頁：右欄放寬 */
   #deck .pts { display: flex; flex-direction: column; gap: .6em; }
   #deck .pts > div { border-left: .22em solid var(--mute); padding: .1em 0 .1em .7em; font-size: .92em; }
   #deck .pts b { display: block; }
@@ -100,6 +101,19 @@
   #deck .step b { display: block; margin-bottom: .15em; }
   #deck .step span { color: var(--ink-2); }
   #deck .arr { align-self: center; color: var(--ink-3); }
+  #deck .steps.s4 { grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; }
+  /* 流程階段（ETL、資料對帳）：左邊階段名稱（中文＋英文術語），右邊做了什麼；Josh 2026-11-18：有專業流程的專案用該流程的結構寫 */
+  #deck .etl { display: flex; flex-direction: column; gap: .4em; }
+  #deck .fw { font-size: .82em; color: var(--ink); font-weight: 600; margin: 0 0 .1em; }   /* 「解法：」區塊標籤 */
+  #deck .fw small { font-weight: 400; color: var(--ink-2); }
+  #deck .etl .st { display: grid; grid-template-columns: 5.6em 1fr; gap: .6em; align-items: start; font-size: .84em; line-height: 1.42; }
+  html[lang="en"] #deck .etl .st { grid-template-columns: 6.2em 1fr; }
+  #deck .etl .tg { border: 1px solid var(--ink-3); border-radius: .35em; padding: .15em .3em; text-align: center; font-weight: 700; font-size: .9em; line-height: 1.25; }
+  #deck .etl .tg small { display: block; font-weight: 400; color: var(--ink-2); font-size: .85em; }
+  #deck .etl .st b { display: block; }
+  #deck .etl .st span { color: var(--ink-2); }
+  #deck .etl .fix { display: block; font-size: .92em; margin-top: .15em; }
+  #deck .mine { font-style: normal; font-weight: 600; font-size: .78em; border: 1px solid var(--ink-3); border-radius: .3em; padding: 0 .35em; margin-left: .3em; color: var(--ink); white-space: nowrap; vertical-align: .1em; }
   /* 每月價格資料流：目前這頁的工具用藍框 */
   #deck .flow { display: flex; align-items: center; gap: .5em; font-size: .82em; margin: 0 0 .9em; flex-wrap: wrap; }
   #deck .flow span { border: 1px solid var(--line); border-radius: .4em; padding: .2em .6em; color: var(--ink-2); }
@@ -134,8 +148,10 @@
     #deck .sl, html[lang="en"] #deck .sl { font-size: 15px; padding: 22px 16px 26px; height: auto; }  /* 英文規則權重較高，手機要一起蓋，不然字會變超小 */
     #deck .cover { min-height: calc(100vh - 140px); }
     #deck .cover h1 { font-size: 2.3em; }
-    #deck .roles, #deck .two { grid-template-columns: 1fr; }
-    #deck .steps { grid-template-columns: 1fr; }
+    #deck .roles, #deck .two, #deck .two.rw { grid-template-columns: 1fr; }
+    #deck .steps, #deck .steps.s4 { grid-template-columns: 1fr; }
+    #deck .etl .st { font-size: .95em; }                       /* 流程區的標籤層層縮小，手機會小於 10px */
+    #deck .etl .tg small, #deck .mine, #deck .fw small { font-size: .9em; }
     #deck .arr { display: none; }
     #deck table, html[lang="en"] #deck .ov { font-size: .82em; }
     #deck .ov td:nth-child(2), #deck .ov td:nth-child(3), #deck .ov td:first-child { white-space: normal; }
@@ -180,7 +196,7 @@
     <tr><th>專案</th><th>我的角色</th><th>工具</th><th>成果</th></tr>
     <tr><td>NRE 攤提報表自動化</td><td>主導開發</td><td>Python</td><td>每月更新從約 2 小時縮短到約 10 分鐘</td></tr>
     <tr><td>報價上傳工具</td><td>接手並強化</td><td>Python、SQL Server</td><td>上傳失敗的檔案列出原因，負責人修正後重傳；執行時間從約 3 小時縮短到 1.5 小時</td></tr>
-    <tr><td>報價驗證工具</td><td>接手維護</td><td>Python、SQL Server</td><td>工具更新時修正 3 個讓價格比對出錯的問題</td></tr>
+    <tr><td>報價驗證工具</td><td>接手維護</td><td>Python、SQL Server</td><td>修正 3 個讓價格比對出錯的問題</td></tr>
     <tr><td>報價管理儀表板</td><td>主導開發</td><td>Power BI</td><td>查得到每次改價的修改人，有疑問直接找對的人</td></tr>
     <tr><td>成本節省報表</td><td>接手並強化</td><td>Power BI、Power Query</td><td>逐月區分今年新增與前一年延續的節省，今年的成果不被高估</td></tr>
   </table>
@@ -190,8 +206,8 @@
 <section class="slide" aria-label="第 3 頁"><div class="sl">
   <p class="eyebrow">主導開發 ｜ Python</p>
   <h2>NRE 攤提報表自動化</h2>
-  <p class="sub">每月更新從約 2 小時縮短到約 10 分鐘</p>
-  <p class="ctx"><span class="lbl">背景：</span>NRE 是一次性的開發費用，依出貨量逐步攤提；這份報表讓主管追蹤每個專案攤提到哪裡。原本每月要手動篩選兩份報表、加總再填回攤提報表。</p>
+  <p class="sub"><span class="lbl">成果：</span>每月更新從約 2 小時縮短到約 10 分鐘</p>
+  <p class="ctx"><span class="lbl">痛點：</span>NRE 是一次性的開發費用，依出貨量逐步攤提，這份報表讓主管追蹤每個專案攤提到哪裡；但每月要手動篩選兩份報表、加總再填回，約需 2 小時。</p>
   <div class="two">
     <div class="mock">
       <p class="cap">出貨預測報表 <small>（示意）</small></p>
@@ -204,11 +220,12 @@
         <tr class="x"><td>專案 A</td><td>P-130</td><td class="n">500</td></tr></table>
       <p class="note">刪除線＝這個專案的規則排除 P-130，不計入</p>
     </div>
-    <div class="pts">
-      <div><b>① 依規則篩選料號</b><span>每個專案規則不同：全部料號都算、只算指定料號、排除特定料號，或把多個專案相加</span></div>
-      <div><b>② 加總後寫回攤提報表</b><span>預測與實際出貨數量寫回後，原本的公式自動重算攤提達成率與剩餘攤提金額</span></div>
-      <div><b>③ 產生提醒信草稿</b><span>6 個月內停產、但攤提達成率低於 95% 的專案；以及達成率已到 100%、請主管確認是否結案的專案</span></div>
-      <div><b>其他固定步驟也自動化</b><span>複製範本、新增月份欄、補上新專案；原檔不覆蓋，另存當天日期的新檔</span></div>
+    <div class="etl">
+      <p class="fw">解法：ETL 流程，加上提醒信 <small>（擷取 → 轉換 → 載入：把資料讀進來、依規則整理，再存到目的地）</small></p>
+      <div class="st"><span class="tg">擷取<small>Extract</small></span><div><b>讀入兩份報表</b><span>出貨預測與當月出貨</span></div></div>
+      <div class="st"><span class="tg">轉換<small>Transform</small></span><div><b>依規則篩選、加總</b><span>統一空白與大小寫後，依每個專案的規則篩選：全部料號、只算指定料號、排除特定料號，或多個專案相加</span></div></div>
+      <div class="st"><span class="tg">載入<small>Load</small></span><div><b>寫回攤提報表</b><span>新增月份欄與新專案，另存當天日期的新檔；原本的公式重算達成率與剩餘攤提金額</span></div></div>
+      <div class="st"><span class="tg">通知<small>Notify</small></span><div><b>產生 2 封提醒信草稿</b><span>① 6 個月內停產、達成率仍低於 95% 的專案 ② 達成率已到 100%，請負責人確認是否結案</span></div></div>
     </div>
   </div>
 </div></section>
@@ -216,23 +233,25 @@
 <section class="slide" aria-label="第 4 頁"><div class="sl">
   <p class="eyebrow">接手並強化 ｜ Python、SQL Server</p>
   <h2>報價上傳工具</h2>
-  <p class="sub">上傳失敗的檔案會列出原因，不再被漏掉；執行時間從約 3 小時縮短到 1.5 小時</p>
+  <p class="sub"><span class="lbl">成果：</span>上傳失敗的檔案會列出原因，不再被漏掉；執行時間從約 3 小時縮短到 1.5 小時</p>
   <div class="flow"><span class="fl">每月價格資料流：</span><span class="on">報價上傳工具</span><em>→</em><span>SQL Server 價格資料庫</span><em>→</em><span>報價驗證工具</span><em>→</em><span>負責人審核</span></div>
   <div class="two">
     <div>
-      <p class="ctx"><span class="lbl">問題：</span>每月 100 多份供應商報價檔（約 1 萬筆報價）要上傳；範本填錯的檔案上傳失敗，卻看不出是哪些，到核對價格時才發現缺價格。</p>
+      <p class="ctx"><span class="lbl">痛點：</span>每月 100 多份供應商報價檔（約 1 萬筆報價）要上傳；範本填錯的檔案上傳失敗，卻看不出是哪些，到核對價格時才發現缺價格。</p>
       <div class="mock">
-        <p class="cap">錯誤清單 <small>（我新增；示意）</small></p>
+        <p class="cap">錯誤清單 <small>（示意）</small></p>
         <table class="el"><tr><th>檔案</th><th>位置</th><th>問題</th></tr>
           <tr><td>供應商 B</td><td>標題列</td><td class="err">欄位標題不符規定格式</td></tr>
           <tr><td>供應商 C</td><td>第 7 列</td><td class="err">生效日期填「ASAP」，不是日期或規定代碼</td></tr></table>
         <p class="note">橘字＝錯誤原因。日期規則原本就有，現在沒通過的檔案也一起寫進清單</p>
       </div>
     </div>
-    <div class="pts">
-      <div><b>讀檔更穩</b><span>讀不到供應商名稱時，改從檔名等其他位置判斷，避免整份檔案漏掉</span></div>
-      <div><b>新增檢查與錯誤清單</b><span>新增標題格式、必要工作表是否存在的檢查；沒上傳成功的檔案寫出位置與原因，負責人依清單修正後重新上傳</span></div>
-      <div><b>縮短執行時間</b><span>整個流程只開一次 Excel、只讀需要的欄位、日期欄整塊一次讀取；改完比對產出與原版一致才上線</span></div>
+    <div class="etl">
+      <p class="fw">解法：ETL 流程，加上資料品質檢查與錯誤紀錄</p>
+      <div class="st"><span class="tg">擷取<small>Extract</small></span><div><b>讀入 100 多份報價檔</b><span>讀不到供應商名稱時改從檔名判斷；只開一次 Excel、只讀需要的欄位，改完比對產出與原版一致才上線</span></div></div>
+      <div class="st"><span class="tg">轉換<small>Transform</small></span><div><b>資料品質檢查</b><span>標題格式、必要工作表是否存在，加上原有的日期規則</span></div></div>
+      <div class="st"><span class="tg">載入<small>Load</small></span><div><b>寫入 SQL Server<em class="mine">原有</em></b><span>通過檢查的報價上傳到價格資料庫</span></div></div>
+      <div class="st"><span class="tg">錯誤紀錄<small>Error log</small></span><div><b>錯誤清單</b><span>沒通過的檔案寫出位置與原因，負責人修正後重新上傳</span></div></div>
     </div>
   </div>
 </div></section>
@@ -240,11 +259,11 @@
 <section class="slide" aria-label="第 5 頁"><div class="sl">
   <p class="eyebrow">接手維護 ｜ Python、SQL Server</p>
   <h2>報價驗證工具</h2>
-  <p class="sub">每月核對供應商報價裡每個料號的價格是否跟內部價格一致；工具更新時修正了 3 個讓比對出錯的問題</p>
+  <p class="sub"><span class="lbl">成果：</span>修正 3 個讓價格比對出錯的問題：價差計算正確、機種比對更準確、重複標題會被標出</p>
   <div class="flow"><span class="fl">每月價格資料流：</span><span>報價上傳工具</span><em>→</em><span>SQL Server 價格資料庫</span><em>→</em><span class="on">報價驗證工具</span><em>→</em><span>負責人審核</span></div>
-  <div class="two">
+  <p class="ctx"><span class="lbl">痛點：</span>每月要確認供應商報價裡每個料號的價格是否跟內部價格一致；各家價格欄位位置不同、機種名稱相近、範本誤打重複標題時，比對會出錯。</p>
+  <div class="two rw">
     <div>
-      <p class="ctx"><span class="lbl">運作方式：</span>工具用 SQL 查出最新的內部價格與價格修正紀錄，貼到報價檔、跟供應商的價格並排，有價差的列標色給負責人審核。</p>
       <div class="mock">
         <p class="cap">報價檔核對結果 <small>（示意）</small></p>
         <table><tr><th>料號</th><th class="n">供應商價格</th><th class="n">內部價格</th><th class="n">價差</th></tr>
@@ -253,10 +272,11 @@
         <p class="note">價差＝供應商價格 − 內部價格；橘底＝有價差，需要負責人確認</p>
       </div>
     </div>
-    <div class="pts">
-      <div><b>價差公式修正</b><span>供應商價格與內部價格的差額正確計算</span><span class="why">原因：每家供應商的價格欄位位置不同</span></div>
-      <div><b>機種名稱比對</b><span>機種＝產品型號，一個機種含多個料號。提高比對準確度，減少抓到其他機種的價格</span><span class="why">原因：新的衍生機種，名稱開頭跟原機種相同</span></div>
-      <div><b>重複標題檢查</b><span>報價範本有重複的欄位標題時標出來，請負責人修正</span><span class="why">原因：供應商的範本有時誤打重複標題</span></div>
+    <div class="etl">
+      <p class="fw">解法：資料對帳 Data Reconciliation <small>（比對兩個來源的同一筆資料是否一致）</small></p>
+      <div class="st"><span class="tg">查詢<small>Query</small></span><div><b>取出當月內部價格</b><span>SQL 合併內部價格表與價格修正紀錄，依機種與生效月份篩選，同料號同價格的重複列只留一筆</span><span class="fix">修正：<b style="display:inline">機種名稱比對</b>（新的衍生機種名稱開頭跟原機種相同）</span></div></div>
+      <div class="st"><span class="tg">比對<small>Match</small></span><div><b>依料號並排、算價差</b><span>內部價格貼到報價檔，跟供應商價格並排</span><span class="fix">修正：<b style="display:inline">價差公式</b>（每家供應商的價格欄位位置不同）</span></div></div>
+      <div class="st"><span class="tg">標示例外<small>Flag</small></span><div><b>標出要確認的列</b><span>有價差的列標色給負責人審核</span><span class="fix">修正：<b style="display:inline">重複標題檢查</b>（供應商範本有時誤打重複標題）</span></div></div>
     </div>
   </div>
 </div></section>
@@ -264,8 +284,8 @@
 <section class="slide" aria-label="第 6 頁"><div class="sl">
   <p class="eyebrow">主導開發 ｜ Power BI</p>
   <h2>報價管理儀表板</h2>
-  <p class="sub">查得到每次改價的修改人，有疑問時可以直接找修改人確認</p>
-  <p class="ctx"><span class="lbl">問題：</span>價格的修改人在內部系統不容易查，有疑問時不知道該找誰。</p>
+  <p class="sub"><span class="lbl">成果：</span>查得到每次改價的修改人，有疑問時可以直接找修改人確認</p>
+  <p class="ctx"><span class="lbl">痛點：</span>內部系統查得到價格何時改，但查不到是誰改的；報價與修正紀錄也不在同一處，有疑問時不知道該找誰。</p>
   <div class="two">
     <div>
       <div class="mock">
@@ -275,7 +295,7 @@
           <tr><td>P-2001</td><td>初版</td><td>2026-05</td><td class="n">9.55</td><td>負責人 C</td></tr></table>
       </div>
       <div class="mock">
-        <p class="cap">每位負責人的機種數 <small>（示意；長條長度＝機種數）</small></p>
+        <p class="cap">每位負責人的機種數 <small>（示意；機種＝產品型號；長條長度＝機種數）</small></p>
         <div class="hb">
           <div class="r"><span>負責人 A</span><i style="width:100%"></i><b>38</b></div>
           <div class="r"><span>負責人 B</span><i style="width:71%"></i><b>27</b></div>
@@ -285,6 +305,7 @@
       </div>
     </div>
     <div class="pts">
+      <p class="fw">解法：Power BI 儀表板</p>
       <div><b>看得到修改人</b><span>每筆價格修正都顯示是誰改的</span></div>
       <div><b>集中在一處查詢</b><span>4 個月的初版與最終報價、價格修正紀錄放在一起，可依供應商、機種、料號、報價類型、生效日期篩選</span></div>
       <div><b>每位負責人的工作量</b><span>每人負責的機種數，主管分配工作時可以參考</span></div>
@@ -295,8 +316,8 @@
 <section class="slide" aria-label="第 7 頁"><div class="sl">
   <p class="eyebrow">接手並強化 ｜ Power BI、Power Query</p>
   <h2>成本節省報表</h2>
-  <p class="sub">逐月區分今年新增與前一年延續的節省，今年的成果不被高估</p>
-  <p class="ctx"><span class="lbl">問題：</span>一筆節省會延續 12 個月，可能跨兩個財年。原本依開始日期整筆分類，跨到下一個財年的月份也被算成今年新增的。</p>
+  <p class="sub"><span class="lbl">成果：</span>逐月區分今年新增與前一年延續的節省，今年的成果不被高估</p>
+  <p class="ctx"><span class="lbl">痛點：</span>一筆節省會延續 12 個月，可能跨兩個財年。原本依開始日期整筆分類，跨到下一個財年的月份也被算成今年新增的；節省明細也對不到專案 ID。</p>
   <div class="mock">
     <p class="cap">一筆節省拆成 12 個月逐月判斷 <small>（簡化示意：2025 年 6 月開始，財年從 11 月起算；少數類別另有規則）</small></p>
     <div class="mg">
@@ -306,12 +327,15 @@
     </div>
     <p class="lg"><i class="new"></i>新增＝跟開始月份同一個財年 <i class="car"></i>延續＝跨到下一個財年</p>
   </div>
-  <div class="steps">
-    <div class="step"><i>步驟 1</i><b>逐月標記</b><span>在 Power Query 比對每個月所屬財年與開始的財年</span></div>
+  <p class="fw" style="margin:.8em 0 0">解法：Power Query ETL 流程</p>
+  <div class="steps s4" style="margin-top:.3em">
+    <div class="step"><i>擷取 Extract</i><b>讀入來源資料<em class="mine">原有</em></b><span>節省明細、專案清單與 ID 對照表</span></div>
     <div class="arr">→</div>
-    <div class="step"><i>步驟 2</i><b>對上專案 ID</b><span>節省明細與專案清單的共有欄位（包括步驟 1 的新增／延續）串成一個比對欄位再 left join，每筆節省才能依專案呈現</span></div>
+    <div class="step"><i>轉換 Transform</i><b>逐月標記</b><span>比對每個月所屬財年與開始的財年</span></div>
     <div class="arr">→</div>
-    <div class="step"><i>步驟 3</i><b>新增書籤</b><span>在 Power BI 一鍵切換基準財年，例如站在 FY26 看 FY27 的新增與延續</span></div>
+    <div class="step"><i>轉換 Transform</i><b>對上專案 ID</b><span>共有欄位（含新增／延續）串成比對欄位再 left join，才能依專案呈現</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>載入 Load → 呈現</i><b>書籤切換視角</b><span>載入 Power BI 後，用書籤選擇以哪一年為基準，看某財年的新增與延續</span></div>
   </div>
 </div></section>
 
@@ -341,7 +365,7 @@
     <tr><th>Project</th><th>My role</th><th>Tools</th><th>Result</th></tr>
     <tr><td>NRE amortization automation</td><td>Led</td><td>Python</td><td>Monthly update cut from about 2 hours to about 10 minutes</td></tr>
     <tr><td>Quote upload tool</td><td>Took over and improved</td><td>Python, SQL Server</td><td>Failed files are listed with the reason, and owners fix and re-upload them; run time cut from about 3 hours to 1.5 hours</td></tr>
-    <tr><td>Quote validation tool</td><td>Took over and maintained</td><td>Python, SQL Server</td><td>Tool updates fixed 3 issues that made price checks go wrong</td></tr>
+    <tr><td>Quote validation tool</td><td>Took over and maintained</td><td>Python, SQL Server</td><td>Fixed 3 issues that made price checks go wrong</td></tr>
     <tr><td>Quote management dashboard</td><td>Led</td><td>Power BI</td><td>Shows who made each price change, so questions go straight to the right person</td></tr>
     <tr><td>Cost savings report</td><td>Took over and improved</td><td>Power BI, Power Query</td><td>Separates new savings this year from savings carried over from the previous year, month by month, so this year's results are not overstated</td></tr>
   </table>
@@ -351,8 +375,8 @@
 <section class="slide" aria-label="Slide 3"><div class="sl">
   <p class="eyebrow">Led | Python</p>
   <h2>NRE Amortization Automation</h2>
-  <p class="sub">Monthly update cut from about 2 hours to about 10 minutes</p>
-  <p class="ctx"><span class="lbl">Background:</span> NRE is a one-time development cost amortized over shipments; this report lets managers track how far each project has been amortized. Each month, two reports were filtered, summed and entered back by hand.</p>
+  <p class="sub"><span class="lbl">Result:</span> Monthly update cut from about 2 hours to about 10 minutes</p>
+  <p class="ctx"><span class="lbl">Problem:</span> NRE is a one-time development cost amortized over shipments, and this report lets managers track how far each project has been amortized. But each month, two reports were filtered, summed and entered back by hand, taking about 2 hours.</p>
   <div class="two">
     <div class="mock">
       <p class="cap">Shipment forecast report <small>(illustrative)</small></p>
@@ -365,11 +389,12 @@
         <tr class="x"><td>Project A</td><td>P-130</td><td class="n">500</td></tr></table>
       <p class="note">Strikethrough = this project's rule excludes P-130</p>
     </div>
-    <div class="pts">
-      <div><b>① Filter parts by rule</b><span>Each project has its own rule: all parts, listed parts only, excluded parts, or several projects added together</span></div>
-      <div><b>② Sum and write back</b><span>Once forecast and shipped quantities are written back, the existing formulas recalculate the amortization hit rate and remaining NRE</span></div>
-      <div><b>③ Draft reminder emails</b><span>For projects reaching end of life within 6 months with a hit rate below 95%, and for projects at 100%, asking managers to confirm whether to close them</span></div>
-      <div><b>Routine steps automated too</b><span>Copying the template, adding the month column and new projects; the original is kept and a dated copy saved</span></div>
+    <div class="etl">
+      <p class="fw">Solution: ETL process, plus reminder emails <small>(extract → transform → load: read the data in, apply the rules, write it to the target)</small></p>
+      <div class="st"><span class="tg">Extract</span><div><b>Read two reports</b><span>Shipment forecast and monthly shipments</span></div></div>
+      <div class="st"><span class="tg">Transform</span><div><b>Filter by rule and sum</b><span>After standardizing spaces and case, each project's rule applies: all parts, listed parts only, excluded parts, or several projects added together</span></div></div>
+      <div class="st"><span class="tg">Load</span><div><b>Write back to the report</b><span>Month column and new projects added, saved as a dated copy; existing formulas recalculate the hit rate and remaining NRE</span></div></div>
+      <div class="st"><span class="tg">Notify</span><div><b>Draft 2 reminder emails</b><span>① Projects reaching end of life within 6 months with a hit rate still below 95% ② Projects at 100%, asking owners to confirm closing</span></div></div>
     </div>
   </div>
 </div></section>
@@ -377,23 +402,25 @@
 <section class="slide" aria-label="Slide 4"><div class="sl">
   <p class="eyebrow">Took over and improved | Python, SQL Server</p>
   <h2>Quote Upload Tool</h2>
-  <p class="sub">Failed files are listed with the reason instead of being missed; run time cut from about 3 hours to 1.5 hours</p>
+  <p class="sub"><span class="lbl">Result:</span> Failed files are listed with the reason instead of being missed; run time cut from about 3 hours to 1.5 hours</p>
   <div class="flow"><span class="fl">Monthly price data flow:</span><span class="on">Quote upload tool</span><em>→</em><span>SQL Server price database</span><em>→</em><span>Quote validation tool</span><em>→</em><span>Owner review</span></div>
   <div class="two">
     <div>
       <p class="ctx"><span class="lbl">Problem:</span> 100+ supplier quote files a month (about 10,000 quote records) are uploaded. Files with template errors failed to upload, but no one could see which ones until prices were missing during price checks.</p>
       <div class="mock">
-        <p class="cap">Error list <small>(added by me; illustrative)</small></p>
+        <p class="cap">Error list <small>(illustrative)</small></p>
         <table class="el"><tr><th>File</th><th>Location</th><th>Problem</th></tr>
           <tr><td>Supplier B</td><td>Header row</td><td class="err">Column header not in the required format</td></tr>
           <tr><td>Supplier C</td><td>Row 7</td><td class="err">Effective date says "ASAP", not a date or an allowed code</td></tr></table>
         <p class="note">Orange = error reason. The date rule already existed; files that fail it now also appear in the list</p>
       </div>
     </div>
-    <div class="pts">
-      <div><b>More reliable file reading</b><span>When the supplier name can't be read, it is taken from the file name or other places, so whole files are not skipped</span></div>
-      <div><b>New checks and error list</b><span>New checks for header format and required sheets; files that fail to upload are listed with the location and reason, and owners fix and re-upload them</span></div>
-      <div><b>Shorter run time</b><span>Excel opened once for the whole run, only needed columns read, date columns read as one block; released only after the output matched the original version</span></div>
+    <div class="etl">
+      <p class="fw">Solution: ETL process with data quality checks and error logging</p>
+      <div class="st"><span class="tg">Extract</span><div><b>Read 100+ quote files</b><span>Supplier name taken from the file name when missing; Excel opened once and only needed columns read; released only after the output matched the original</span></div></div>
+      <div class="st"><span class="tg">Transform</span><div><b>Data quality checks</b><span>Header format and required sheets, plus the existing date rule</span></div></div>
+      <div class="st"><span class="tg">Load</span><div><b>Write to SQL Server<em class="mine">Existing</em></b><span>Quotes that pass the checks go into the price database</span></div></div>
+      <div class="st"><span class="tg">Error log</span><div><b>Error list</b><span>Failed files listed with location and reason; owners fix and re-upload them</span></div></div>
     </div>
   </div>
 </div></section>
@@ -401,11 +428,11 @@
 <section class="slide" aria-label="Slide 5"><div class="sl">
   <p class="eyebrow">Took over and maintained | Python, SQL Server</p>
   <h2>Quote Validation Tool</h2>
-  <p class="sub">Each month, it checks whether the price of every part in a supplier's quote matches the internal price; tool updates fixed 3 issues that made the check go wrong</p>
+  <p class="sub"><span class="lbl">Result:</span> Fixed 3 issues behind wrong price checks: correct gaps, better model matching, flagged duplicate headers</p>
   <div class="flow"><span class="fl">Monthly price data flow:</span><span>Quote upload tool</span><em>→</em><span>SQL Server price database</span><em>→</em><span class="on">Quote validation tool</span><em>→</em><span>Owner review</span></div>
-  <div class="two">
+  <p class="ctx"><span class="lbl">Problem:</span> Every part price in a supplier's quote must match the internal price each month; varied column layouts, similar model names and duplicate headers broke the check.</p>
+  <div class="two rw">
     <div>
-      <p class="ctx"><span class="lbl">How it works:</span> The tool uses SQL to pull the latest internal prices and price corrections, pastes them next to the supplier's prices in the quote file, and highlights rows with a price gap for the owner to review.</p>
       <div class="mock">
         <p class="cap">Quote check result <small>(illustrative)</small></p>
         <table><tr><th>Part no.</th><th class="n">Supplier price</th><th class="n">Internal price</th><th class="n">Gap</th></tr>
@@ -414,10 +441,11 @@
         <p class="note">Gap = supplier price − internal price; orange = price gap for the owner to confirm</p>
       </div>
     </div>
-    <div class="pts">
-      <div><b>Price gap formula</b><span>The gap between supplier and internal prices is calculated correctly</span><span class="why">Cause: each supplier puts price columns in different places</span></div>
-      <div><b>Model name matching</b><span>A model is a product model with many parts. More accurate matching, fewer prices pulled from another model</span><span class="why">Cause: new variant models start with the original model's name</span></div>
-      <div><b>Duplicate header check</b><span>Repeated column headers in a quote template are flagged for the owner to fix</span><span class="why">Cause: supplier templates sometimes repeat a header by mistake</span></div>
+    <div class="etl">
+      <p class="fw">Solution: data reconciliation <small>(checking whether the same record matches across two sources)</small></p>
+      <div class="st"><span class="tg">Query</span><div><b>Get this month's internal prices</b><span>SQL combines internal prices and corrections, filtered by model and month, with duplicate part-price rows removed</span><span class="fix">Fixed: <b style="display:inline">model name matching</b> (new variant models start with the original model's name)</span></div></div>
+      <div class="st"><span class="tg">Match</span><div><b>Line up by part and compute gaps</b><span>Internal prices pasted next to the supplier's prices in the quote file</span><span class="fix">Fixed: <b style="display:inline">price gap formula</b> (each supplier puts price columns in different places)</span></div></div>
+      <div class="st"><span class="tg">Flag</span><div><b>Mark rows to confirm</b><span>Rows with a price gap highlighted for the owner to review</span><span class="fix">Fixed: <b style="display:inline">duplicate header check</b> (supplier templates sometimes repeat a header by mistake)</span></div></div>
     </div>
   </div>
 </div></section>
@@ -425,8 +453,8 @@
 <section class="slide" aria-label="Slide 6"><div class="sl">
   <p class="eyebrow">Led | Power BI</p>
   <h2>Quote Management Dashboard</h2>
-  <p class="sub">Shows who made each price change, so anyone with a question can check with that person directly</p>
-  <p class="ctx"><span class="lbl">Problem:</span> Who changed a price was hard to find in the internal system, so people didn't know whom to ask.</p>
+  <p class="sub"><span class="lbl">Result:</span> Shows who made each price change, so anyone with a question can check with that person directly</p>
+  <p class="ctx"><span class="lbl">Problem:</span> The internal system showed when a price changed but not who changed it, and quotes and corrections were not in one place, so people didn't know whom to ask.</p>
   <div class="two">
     <div>
       <div class="mock">
@@ -436,7 +464,7 @@
           <tr><td>P-2001</td><td>Initial</td><td>2026-05</td><td class="n">9.55</td><td>Owner C</td></tr></table>
       </div>
       <div class="mock">
-        <p class="cap">Models per owner <small>(illustrative; bar length = number of models)</small></p>
+        <p class="cap">Models per owner <small>(illustrative; model = product model; bar length = number of models)</small></p>
         <div class="hb">
           <div class="r"><span>Owner A</span><i style="width:100%"></i><b>38</b></div>
           <div class="r"><span>Owner B</span><i style="width:71%"></i><b>27</b></div>
@@ -446,6 +474,7 @@
       </div>
     </div>
     <div class="pts">
+      <p class="fw">Solution: Power BI dashboard</p>
       <div><b>Who made the change</b><span>Every price correction shows who made it</span></div>
       <div><b>One place to look up</b><span>4 months of initial and final quotes and price corrections together, filterable by supplier, model, part number, initial or final, and effective date</span></div>
       <div><b>Each owner's workload</b><span>Number of models per owner, which managers can refer to when assigning work</span></div>
@@ -456,8 +485,8 @@
 <section class="slide" aria-label="Slide 7"><div class="sl">
   <p class="eyebrow">Took over and improved | Power BI, Power Query</p>
   <h2>Cost Savings Report</h2>
-  <p class="sub">Separates new savings this year from savings carried over from the previous year, month by month, so this year's results are not overstated</p>
-  <p class="ctx"><span class="lbl">Problem:</span> A saving runs for 12 months and can span two fiscal years. It used to be classified as a whole by its start date, so months in the next fiscal year were also counted as new this year.</p>
+  <p class="sub"><span class="lbl">Result:</span> Separates new savings this year from savings carried over from the previous year, month by month, so this year's results are not overstated</p>
+  <p class="ctx"><span class="lbl">Problem:</span> A saving runs for 12 months and can span two fiscal years. It used to be classified as a whole by its start date, so later months were also counted as new this year; savings also couldn't be matched to project IDs.</p>
   <div class="mock">
     <p class="cap">One saving split into 12 months, each classified on its own <small>(simplified: starts June 2025; fiscal year starts in November; a few categories have other rules)</small></p>
     <div class="mg">
@@ -467,12 +496,15 @@
     </div>
     <p class="lg"><i class="new"></i>New = same fiscal year as the start month <i class="car"></i>Carryover = in the next fiscal year</p>
   </div>
-  <div class="steps">
-    <div class="step"><i>Step 1</i><b>Label each month</b><span>Power Query compares each month's fiscal year with the start fiscal year</span></div>
+  <p class="fw" style="margin:.8em 0 0">Solution: Power Query ETL process</p>
+  <div class="steps s4" style="margin-top:.3em">
+    <div class="step"><i>Extract</i><b>Read source data<em class="mine">Existing</em></b><span>Savings details, the project list and an ID mapping table</span></div>
     <div class="arr">→</div>
-    <div class="step"><i>Step 2</i><b>Map project IDs</b><span>Fields shared by the savings details and the project list (including the Step 1 new/carryover label) combined into one key, then left joined, so each saving can be shown by project</span></div>
+    <div class="step"><i>Transform</i><b>Label each month</b><span>Compare each month's fiscal year with the start fiscal year</span></div>
     <div class="arr">→</div>
-    <div class="step"><i>Step 3</i><b>Add bookmarks</b><span>Switch the base fiscal year in Power BI with one click, e.g. FY27 savings split into new and carried over, as seen from FY26</span></div>
+    <div class="step"><i>Transform</i><b>Map project IDs</b><span>Shared fields (incl. new/carryover) combined into one key, then left joined, so savings show by project</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>Load → present</i><b>Bookmarks for views</b><span>In Power BI, bookmarks pick the base year for viewing new vs. carried-over savings</span></div>
   </div>
 </div></section>
 </template>
