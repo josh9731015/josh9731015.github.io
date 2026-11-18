@@ -76,7 +76,7 @@
   html[lang="en"] #deck .ov td, html[lang="en"] #deck .ov th { padding: .4em .5em; }
   #deck .ov td:first-child { font-weight: 700; white-space: nowrap; }
   #deck .ov td:nth-child(2), #deck .ov td:nth-child(3) { white-space: nowrap; }
-  #deck table.el td:nth-child(-n+2) { white-space: nowrap; }        /* 錯誤清單：檔案、位置不要擠成兩行 */
+  #deck table.el td:nth-child(-n+2), #deck table.nw td, #deck table.nw th { white-space: nowrap; }        /* 錯誤清單：檔案、位置不要擠成兩行 */
   #deck tr.x td { color: var(--ink-3); text-decoration: line-through; }   /* 被規則排除的列 */
   #deck td.err { color: var(--neg); font-weight: 700; }                    /* 橘色＝錯誤或有價差（全份只代表這件事） */
   #deck tr.gap td { background: var(--neg-soft); }
@@ -84,6 +84,8 @@
   /* 示意圖外框 */
   #deck .mock { border: 1px dashed var(--ink-3); border-radius: .6em; padding: .6em .8em; background: var(--bg); }
   #deck .mock + .mock { margin-top: .6em; }
+  #deck .rule { float: right; font-weight: 700; color: var(--ink); }   /* 示意圖內：這個專案的篩選規則，跟標題同一行、放右邊直接看得到 */
+  #deck .two.lw { grid-template-columns: 1.4fr 1fr; }   /* 左邊示意圖較寬的頁 */
   #deck .flowdown { font-size: .82em; font-weight: 600; color: var(--ink-2); margin: .45em 0 .35em; }   /* 示意圖內：輸入 → 輸出的箭頭說明 */
   #deck .cap { font-size: .82em; font-weight: 600; color: var(--ink); margin: 0 0 .3em; }
   #deck .cap small { font-weight: 400; color: var(--ink-3); }
@@ -149,7 +151,8 @@
     #deck .sl, html[lang="en"] #deck .sl { font-size: 15px; padding: 22px 16px 26px; height: auto; }  /* 英文規則權重較高，手機要一起蓋，不然字會變超小 */
     #deck .cover { min-height: calc(100vh - 140px); }
     #deck .cover h1 { font-size: 2.3em; }
-    #deck .roles, #deck .two, #deck .two.rw { grid-template-columns: 1fr; }
+    #deck .roles, #deck .two, #deck .two.rw, #deck .two.lw { grid-template-columns: 1fr; }
+    #deck .rule { float: none; display: block; }
     #deck .steps, #deck .steps.s4 { grid-template-columns: 1fr; }
     #deck .etl .st { font-size: .95em; }                       /* 流程區的標籤層層縮小，手機會小於 10px */
     #deck .etl .tg small, #deck .mine, #deck .fw small { font-size: .9em; }
@@ -157,7 +160,7 @@
     #deck table, html[lang="en"] #deck .ov { font-size: .82em; }
     #deck .ov td:nth-child(2), #deck .ov td:nth-child(3), #deck .ov td:first-child { white-space: normal; }
     #deck .ov th:nth-child(3), #deck .ov td:nth-child(3) { display: none; }  /* 手機省略工具欄（每頁頂端都有寫） */
-    #deck table.el td:nth-child(-n+2) { white-space: normal; }
+    #deck table.el td:nth-child(-n+2), #deck table.nw td, #deck table.nw th { white-space: normal; }
     #deck .mg, html[lang="en"] #deck .mg { grid-template-columns: repeat(6, 1fr); font-size: .74em; }
     #deck .mg .h { grid-column: 1 / -1; }
   }
@@ -208,25 +211,25 @@
   <p class="eyebrow">主導開發 ｜ Python</p>
   <h2>NRE 攤提報表自動化</h2>
   <p class="sub"><span class="lbl">成果：</span>每月更新從約 2 小時縮短到約 10 分鐘</p>
-  <p class="ctx"><span class="lbl">痛點：</span>NRE 是一次性的開發費用，依出貨量逐步攤提，這份報表讓主管追蹤每個專案攤提到哪裡；但每月要手動篩選兩份報表、加總再填回，約需 2 小時。</p>
-  <div class="two">
+  <p class="ctx"><span class="lbl">痛點：</span>NRE（一次性開發費用）依出貨量攤提；每月要手動篩選兩份報表、加總再填回，約 2 小時。</p>
+  <div class="two lw">
     <div class="mock">
-      <p class="cap">輸入：出貨預測＋當月出貨 <small>（示意；刪除線＝專案 A 的規則排除 P-130）</small></p>
-      <table><tr><th>專案</th><th>料號</th><th class="n">預測數量</th><th class="n">當月出貨</th></tr>
-        <tr><td>專案 A</td><td>P-101</td><td class="n">15,000</td><td class="n">6,200</td></tr>
-        <tr class="x"><td>專案 A</td><td>P-130</td><td class="n">2,000</td><td class="n">500</td></tr></table>
-      <p class="flowdown">↓ 依規則加總，寫回攤提報表</p>
-      <p class="cap">輸出：攤提報表（寫回後） <small>（示意；Hit rate 由原公式重算；藍字＝工具判斷後產生草稿）</small></p>
-      <table><tr><th>專案</th><th class="n">Hit rate</th><th>6 個月內 EOL</th><th class="who">提醒信</th></tr>
-        <tr><td>專案 A</td><td class="n">88%</td><td>是</td><td>① Hit rate 未到 95%</td></tr>
-        <tr><td>專案 B</td><td class="n">100%</td><td>否</td><td>② 確認是否結案</td></tr></table>
+      <p class="cap">輸入：出貨預測＋當月出貨 <small>（示意）</small><span class="rule">專案 A 的規則：排除 P-130</span></p>
+      <table><tr><th>專案</th><th>料號</th><th class="n">預測數量</th><th class="n">當月出貨</th><th>計入</th></tr>
+        <tr><td>專案 A</td><td>P-101</td><td class="n">12,000</td><td class="n">4,500</td><td>✓</td></tr>
+        <tr><td>專案 A</td><td>P-102</td><td class="n">8,000</td><td class="n">2,300</td><td>✓</td></tr>
+        <tr class="x"><td>專案 A</td><td>P-130</td><td class="n">2,000</td><td class="n">500</td><td>✗</td></tr></table>
+      <p class="flowdown">↓ 計入的料號加總，寫回攤提報表</p>
+      <p class="cap">輸出：攤提報表（寫回後） <small>（示意；藍字＝工具寫入，其餘欄位由報表原公式算出）</small></p>
+      <table class="nw"><tr><th>專案</th><th class="n who">預測數量</th><th class="n who">當月出貨</th><th>Hit rate</th><th>6 個月內 EOL</th><th class="who">提醒信草稿</th></tr>
+        <tr><td>專案 A</td><td class="n">20,000</td><td class="n">6,800</td><td>&lt; 95%</td><td>是</td><td>① 請 Owner 注意</td></tr></table>
     </div>
     <div class="etl">
       <p class="fw">解法：ETL 流程，加上提醒信 <small>（擷取 → 轉換 → 載入：把資料讀進來、依規則整理，再存到目的地）</small></p>
       <div class="st"><span class="tg">擷取<small>Extract</small></span><div><b>讀入兩份報表</b><span>出貨預測與當月出貨</span></div></div>
-      <div class="st"><span class="tg">轉換<small>Transform</small></span><div><b>依規則篩選、加總</b><span>統一空白與大小寫後，依每個專案的規則篩選：全部料號、只算指定料號、排除特定料號，或多個專案相加</span></div></div>
-      <div class="st"><span class="tg">載入<small>Load</small></span><div><b>寫回攤提報表</b><span>新增月份欄與新專案，另存當天日期的新檔；原本的公式重算 hit rate 與剩餘攤提金額</span></div></div>
-      <div class="st"><span class="tg">通知<small>Notify</small></span><div><b>產生 2 封提醒信草稿</b><span>① 6 個月內 EOL、hit rate 仍低於 95% 的專案 ② hit rate 已到 100%，請 Owner 確認是否結案</span></div></div>
+      <div class="st"><span class="tg">轉換<small>Transform</small></span><div><b>依規則篩選、加總</b><span>統一空白與大小寫後依專案規則篩選：全部、只算指定、排除特定料號，或多專案相加</span></div></div>
+      <div class="st"><span class="tg">載入<small>Load</small></span><div><b>寫回攤提報表</b><span>新增月份欄與新專案，另存當天日期的新檔；原公式重算 hit rate</span></div></div>
+      <div class="st"><span class="tg">通知<small>Notify</small></span><div><b>產生 2 封提醒信草稿</b><span>① 6 個月內 EOL、hit rate 低於 95% ② hit rate 到 100%，請 Owner 確認結案</span></div></div>
     </div>
   </div>
 </div></section>
@@ -377,25 +380,25 @@
   <p class="eyebrow">Led | Python</p>
   <h2>NRE Amortization Automation</h2>
   <p class="sub"><span class="lbl">Result:</span> Monthly update cut from about 2 hours to about 10 minutes</p>
-  <p class="ctx"><span class="lbl">Problem:</span> NRE is a one-time development cost amortized over shipments, and this report lets managers track how far each project has been amortized. But each month, two reports were filtered, summed and entered back by hand, taking about 2 hours.</p>
-  <div class="two">
+  <p class="ctx"><span class="lbl">Problem:</span> NRE (a one-time development cost) is amortized over shipments. Each month, two reports were filtered, summed and entered back by hand, taking about 2 hours.</p>
+  <div class="two lw">
     <div class="mock">
-      <p class="cap">Input: forecast + monthly shipments <small>(illustrative; strikethrough = Project A's rule excludes P-130)</small></p>
-      <table><tr><th>Project</th><th>Part no.</th><th class="n">Forecast</th><th class="n">Shipped</th></tr>
-        <tr><td>Project A</td><td>P-101</td><td class="n">15,000</td><td class="n">6,200</td></tr>
-        <tr class="x"><td>Project A</td><td>P-130</td><td class="n">2,000</td><td class="n">500</td></tr></table>
-      <p class="flowdown">↓ Summed by rule, written back to the report</p>
-      <p class="cap">Output: amortization report after write-back <small>(illustrative; hit rate from existing formulas; blue = the tool decides and drafts the email)</small></p>
-      <table><tr><th>Project</th><th class="n">Hit rate</th><th>EOL in 6 mo.</th><th class="who">Reminder</th></tr>
-        <tr><td>Project A</td><td class="n">88%</td><td>Yes</td><td>① Below 95%</td></tr>
-        <tr><td>Project B</td><td class="n">100%</td><td>No</td><td>② Confirm closing</td></tr></table>
+      <p class="cap">Input: forecast + shipments <small>(illustrative)</small><span class="rule">Project A's rule: exclude P-130</span></p>
+      <table><tr><th>Project</th><th>Part no.</th><th class="n">Forecast</th><th class="n">Shipped</th><th>Counted</th></tr>
+        <tr><td>Project A</td><td>P-101</td><td class="n">12,000</td><td class="n">4,500</td><td>✓</td></tr>
+        <tr><td>Project A</td><td>P-102</td><td class="n">8,000</td><td class="n">2,300</td><td>✓</td></tr>
+        <tr class="x"><td>Project A</td><td>P-130</td><td class="n">2,000</td><td class="n">500</td><td>✗</td></tr></table>
+      <p class="flowdown">↓ Counted parts summed and written back to the report</p>
+      <p class="cap">Output: amortization report after write-back <small>(illustrative; blue = written by the tool, other columns from the report's existing formulas)</small></p>
+      <table class="nw"><tr><th>Project</th><th class="n who">Forecast</th><th class="n who">Shipped</th><th>Hit rate</th><th>EOL in 6 mo.</th><th class="who">Draft reminder</th></tr>
+        <tr><td>Project A</td><td class="n">20,000</td><td class="n">6,800</td><td>&lt; 95%</td><td>Yes</td><td>① Alert owner</td></tr></table>
     </div>
     <div class="etl">
       <p class="fw">Solution: ETL process, plus reminder emails <small>(extract → transform → load: read the data in, apply the rules, write it to the target)</small></p>
       <div class="st"><span class="tg">Extract</span><div><b>Read two reports</b><span>Shipment forecast and monthly shipments</span></div></div>
-      <div class="st"><span class="tg">Transform</span><div><b>Filter by rule and sum</b><span>After standardizing spaces and case, each project's rule applies: all parts, listed parts only, excluded parts, or several projects added together</span></div></div>
-      <div class="st"><span class="tg">Load</span><div><b>Write back to the report</b><span>Month column and new projects added, saved as a dated copy; existing formulas recalculate the hit rate and remaining NRE</span></div></div>
-      <div class="st"><span class="tg">Notify</span><div><b>Draft 2 reminder emails</b><span>① Projects reaching end of life within 6 months with a hit rate still below 95% ② Projects at 100%, asking owners to confirm closing</span></div></div>
+      <div class="st"><span class="tg">Transform</span><div><b>Filter by rule and sum</b><span>After standardizing spaces and case, each project's rule applies: all, listed only, excluded parts, or projects combined</span></div></div>
+      <div class="st"><span class="tg">Load</span><div><b>Write back to the report</b><span>Month column and new projects added, saved as a dated copy; existing formulas recalculate the hit rate</span></div></div>
+      <div class="st"><span class="tg">Notify</span><div><b>Draft 2 reminder emails</b><span>① EOL within 6 months and hit rate below 95% ② Hit rate at 100%, owners confirm closing</span></div></div>
     </div>
   </div>
 </div></section>
