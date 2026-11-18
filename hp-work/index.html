@@ -262,22 +262,22 @@
   <h2>報價驗證工具</h2>
   <p class="sub"><span class="lbl">成果：</span>修正 3 個讓價格比對出錯的問題：價差計算正確、機種比對更準確、重複標題會被標出</p>
   <div class="flow"><span class="fl">每月價格資料流：</span><span>報價上傳工具</span><em>→</em><span>SQL Server 價格資料庫</span><em>→</em><span class="on">報價驗證工具</span><em>→</em><span>Owner 審核</span></div>
-  <p class="ctx"><span class="lbl">痛點：</span>每月要確認 ODM 報價裡每個料號的價格是否跟內部價格一致；各家價格欄位位置不同、機種名稱相近、範本誤打重複標題時，比對會出錯。</p>
+  <p class="ctx"><span class="lbl">痛點：</span>Owner 每月用這個工具確認 ODM 報價裡每個料號的價格是否跟內部價格一致；但工具的公式和規則跟不上 ODM 範本與機種命名的變化，比對會出錯。</p>
   <div class="two rw">
     <div>
       <div class="mock">
-        <p class="cap">報價檔核對結果 <small>（示意）</small></p>
+        <p class="cap">報價檔核對結果 <small>（示意；工具用 SQL 查出內部價格，貼到報價檔跟 ODM 價格並排）</small></p>
         <table><tr><th>料號</th><th class="n">ODM 價格</th><th class="n">內部價格</th><th class="n">價差</th></tr>
           <tr><td>P-2001</td><td class="n">8.75</td><td class="n">8.75</td><td class="n">0.00</td></tr>
           <tr class="gap"><td>P-2002</td><td class="n">4.60</td><td class="n">4.35</td><td class="n err">0.25</td></tr></table>
         <p class="note">價差＝ODM 價格 − 內部價格；橘底＝有價差，需要 Owner 確認</p>
       </div>
     </div>
-    <div class="etl">
-      <p class="fw">解法：用 SQL 查出內部價格，跟 ODM 報價逐筆比對</p>
-      <div class="st"><span class="tg">查詢<small>Query</small></span><div><b>取出當月內部價格</b><span>SQL 合併內部價格表與價格修正紀錄，依機種與 effective date 篩選，同料號同價格的重複列只留一筆</span><span class="fix">修正：<b style="display:inline">機種名稱比對</b>（新的衍生機種名稱開頭跟原機種相同）</span></div></div>
-      <div class="st"><span class="tg">比對<small>Match</small></span><div><b>依料號並排、算價差</b><span>內部價格貼到報價檔，跟 ODM 價格並排</span><span class="fix">修正：<b style="display:inline">價差公式</b>（每家 ODM 的價格欄位位置不同）</span></div></div>
-      <div class="st"><span class="tg">標示例外<small>Flag</small></span><div><b>標出要確認的列</b><span>有價差的列標色給 Owner 審核</span><span class="fix">修正：<b style="display:inline">重複標題檢查</b>（ODM 範本有時誤打重複標題）</span></div></div>
+    <div class="pts">
+      <p class="fw">解法：依最新規則，修改對應欄位的公式與比對規則</p>
+      <div><b>價差公式</b><span class="why">問題：每家 ODM 的價格欄位位置不同，價差會算錯</span><span>改法：價差欄位的公式改成符合最新的範本規則</span></div>
+      <div><b>機種名稱比對</b><span class="why">問題：新的衍生機種名稱開頭跟原機種相同，會抓錯價格</span><span>改法：更新比對規則，提高比對準確度</span></div>
+      <div><b>重複標題檢查</b><span class="why">問題：ODM 範本有時誤打重複標題</span><span>改法：新增檢查，標出來請 Owner 修正</span></div>
     </div>
   </div>
 </div></section>
@@ -431,22 +431,22 @@
   <h2>Quote Validation Tool</h2>
   <p class="sub"><span class="lbl">Result:</span> Fixed 3 issues behind wrong price checks: correct gaps, better model matching, flagged duplicate headers</p>
   <div class="flow"><span class="fl">Monthly price data flow:</span><span>Quote upload tool</span><em>→</em><span>SQL Server price database</span><em>→</em><span class="on">Quote validation tool</span><em>→</em><span>Owner review</span></div>
-  <p class="ctx"><span class="lbl">Problem:</span> Every part price in a supplier's quote must match the internal price each month; varied column layouts, similar model names and duplicate headers broke the check.</p>
+  <p class="ctx"><span class="lbl">Problem:</span> Owners use this tool each month to check every part price in an ODM quote against the internal price, but its formulas and rules fell behind changes in ODM templates and model naming, so checks went wrong.</p>
   <div class="two rw">
     <div>
       <div class="mock">
-        <p class="cap">Quote check result <small>(illustrative)</small></p>
-        <table><tr><th>Part no.</th><th class="n">Supplier price</th><th class="n">Internal price</th><th class="n">Gap</th></tr>
+        <p class="cap">Quote check result <small>(illustrative; the tool pulls internal prices with SQL and pastes them next to the ODM's prices)</small></p>
+        <table><tr><th>Part no.</th><th class="n">ODM price</th><th class="n">Internal price</th><th class="n">Gap</th></tr>
           <tr><td>P-2001</td><td class="n">8.75</td><td class="n">8.75</td><td class="n">0.00</td></tr>
           <tr class="gap"><td>P-2002</td><td class="n">4.60</td><td class="n">4.35</td><td class="n err">0.25</td></tr></table>
-        <p class="note">Gap = supplier price − internal price; orange = price gap for the owner to confirm</p>
+        <p class="note">Gap = ODM price − internal price; orange = price gap for the owner to confirm</p>
       </div>
     </div>
-    <div class="etl">
-      <p class="fw">Solution: pull internal prices with SQL and check them against the supplier's quote line by line</p>
-      <div class="st"><span class="tg">Query</span><div><b>Get this month's internal prices</b><span>SQL combines internal prices and corrections, filtered by model and month, with duplicate part-price rows removed</span><span class="fix">Fixed: <b style="display:inline">model name matching</b> (new variant models start with the original model's name)</span></div></div>
-      <div class="st"><span class="tg">Match</span><div><b>Line up by part and compute gaps</b><span>Internal prices pasted next to the supplier's prices in the quote file</span><span class="fix">Fixed: <b style="display:inline">price gap formula</b> (each supplier puts price columns in different places)</span></div></div>
-      <div class="st"><span class="tg">Flag</span><div><b>Mark rows to confirm</b><span>Rows with a price gap highlighted for the owner to review</span><span class="fix">Fixed: <b style="display:inline">duplicate header check</b> (supplier templates sometimes repeat a header by mistake)</span></div></div>
+    <div class="pts">
+      <p class="fw">Solution: update the formulas and matching rules for the affected fields to the latest rules</p>
+      <div><b>Price gap formula</b><span class="why">Problem: each ODM puts price columns in different places, so gaps were wrong</span><span>Fix: the gap formula now follows the latest template rules</span></div>
+      <div><b>Model name matching</b><span class="why">Problem: new variant models start with the original model's name, so wrong prices could be pulled</span><span>Fix: updated matching rules for more accurate matches</span></div>
+      <div><b>Duplicate header check</b><span class="why">Problem: ODM templates sometimes repeat a header by mistake</span><span>Fix: a new check flags it for the owner to fix</span></div>
     </div>
   </div>
 </div></section>
