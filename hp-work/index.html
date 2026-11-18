@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HP 實務專案</title>
+<meta name="description" content="余家丞在 HP 擔任 Cost Operation Analyst 時的 5 個專案：用 Python、SQL Server、Power BI 把每月的報價與成本流程自動化。畫面皆為示意資料。">
+<style>
+  /* 顏色一律用變數，深色模式換一組（跟其他作品頁同一套） */
+  :root {
+    color-scheme: light;
+    --bg: #fcfcfb; --card: #ffffff; --line: #e6e5e0;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+    --accent: #2a78d6; --accent-soft: #e8f1fc; --mute: #c9c8c2; --neg: #eb6834; --neg-soft: #fdeee6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+      --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926; --neg-soft: #3a2419;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1a19; --card: #232322; --line: #3a3a38;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --accent: #3987e5; --accent-soft: #1f2d40; --mute: #55544f; --neg: #d95926; --neg-soft: #3a2419;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; overflow: hidden; }
+  /* 上方：回首頁＋語言 */
+  .top-ctrls { position: fixed; top: 12px; right: 16px; left: 16px; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .top-ctrls a { color: var(--ink-2); font-size: 15px; text-decoration: none; }
+  .top-ctrls a:hover { color: var(--accent); }
+  .top-ctrls select { font: inherit; font-size: 15px; padding: 5px 8px; min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+
+  /* ===== 簡報（這頁只有簡報、沒有報告版；版型沿用其他作品頁的簡報模式） =====
+     顏色一色一義（美術審查 11-18）：藍＝這頁的重點（資料流中目前的工具、新增欄位、今年新增的節省），橘＝錯誤或價差，其餘裝飾一律中性色 */
+  #deck .stage { position: fixed; inset: 0 0 56px 0; display: grid; place-items: center; padding-top: 52px; }
+  #deck .slide { display: none; width: min(94vw, calc((100vh - 128px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.06); overflow: hidden; }
+  #deck .slide.on { display: block; }
+  /* 投影片內尺寸一律用 em，跟著 .sl 的字級（＝投影片寬度的 1.7%）等比例縮放 */
+  #deck .sl { height: 100%; display: flex; flex-direction: column; padding: 2.2em 3em; font-size: 1.7cqw; line-height: 1.5; }
+  html[lang="en"] #deck .sl { font-size: 1.55cqw; }  /* 英文句子較長，字級小一點才放得下 */
+  #deck p { margin: 0; }
+  #deck .eyebrow { color: var(--ink-2); font-weight: 600; font-size: .9em; margin: 0 0 .2em; }
+  #deck h2 { font-size: 1.9em; line-height: 1.25; margin: 0 0 .15em; }
+  #deck .sub { color: var(--ink); font-size: 1.1em; margin: 0 0 .8em; }
+  #deck .note { color: var(--ink-3); font-size: .8em; margin-top: .6em; }
+  #deck .lbl { font-weight: 700; }
+  #deck .ctx { font-size: .95em; margin: 0 0 .8em; }
+  /* 封面 */
+  #deck .cover { justify-content: center; }
+  #deck .kicker { color: var(--ink-2); font-size: .95em; margin: 0 0 .5em; }
+  #deck .cover h1 { font-size: 3.2em; line-height: 1.15; margin: 0 0 .35em; }
+  #deck .lead { font-size: 1.3em; margin: 0 0 1em; }
+  #deck .chips { display: flex; flex-wrap: wrap; gap: .5em; margin: 0 0 1.4em; }
+  #deck .chips span { border: 1px solid var(--ink-3); color: var(--ink-2); border-radius: 999px; padding: .15em .8em; font-size: .9em; font-weight: 600; }
+  #deck .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8em; margin: 0 0 1em; }
+  #deck .roles div { border: 1px solid var(--line); border-radius: .6em; padding: .6em .9em; }
+  #deck .roles b { display: block; }
+  #deck .roles span { color: var(--ink-2); font-size: .92em; }
+  #deck .how { font-size: .92em; margin: 0 0 1em; }
+  #deck .disclaim { color: var(--ink-2); font-size: .88em; border-left: .25em solid var(--mute); padding-left: .8em; }
+  /* 表格（總覽與示意圖共用） */
+  #deck table { width: 100%; border-collapse: collapse; font-size: .9em; }
+  #deck th { text-align: left; font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); padding: .3em .5em; }
+  #deck td { border-bottom: 1px solid var(--line); padding: .3em .5em; vertical-align: top; }
+  #deck td.n, #deck th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #deck .ov { font-size: 1em; }
+  #deck .ov td, #deck .ov th { padding: .55em .5em; }
+  html[lang="en"] #deck .ov { font-size: .88em; }  /* 英文總覽表句子較長，縮一級才放得下 */
+  html[lang="en"] #deck .ov td, html[lang="en"] #deck .ov th { padding: .4em .5em; }
+  #deck .ov td:first-child { font-weight: 700; white-space: nowrap; }
+  #deck .ov td:nth-child(2), #deck .ov td:nth-child(3) { white-space: nowrap; }
+  #deck table.el td:nth-child(-n+2) { white-space: nowrap; }        /* 錯誤清單：檔案、位置不要擠成兩行 */
+  #deck tr.x td { color: var(--ink-3); text-decoration: line-through; }   /* 被規則排除的列 */
+  #deck td.err { color: var(--neg); font-weight: 700; }                    /* 橘色＝錯誤或有價差（全份只代表這件事） */
+  #deck tr.gap td { background: var(--neg-soft); }
+  #deck .who { color: var(--accent); font-weight: 700; }                   /* 藍字＝新增的欄位 */
+  /* 示意圖外框 */
+  #deck .mock { border: 1px dashed var(--ink-3); border-radius: .6em; padding: .6em .8em; background: var(--bg); }
+  #deck .mock + .mock { margin-top: .6em; }
+  #deck .cap { font-size: .82em; font-weight: 600; color: var(--ink); margin: 0 0 .3em; }
+  #deck .cap small { font-weight: 400; color: var(--ink-3); }
+  /* 左右兩欄：左＝示意圖，右＝我做了什麼 */
+  #deck .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.6em; flex: 1; min-height: 0; align-items: start; }
+  #deck .pts { display: flex; flex-direction: column; gap: .6em; }
+  #deck .pts > div { border-left: .22em solid var(--mute); padding: .1em 0 .1em .7em; font-size: .92em; }
+  #deck .pts b { display: block; }
+  #deck .pts span { color: var(--ink-2); }
+  #deck .pts .why { display: block; color: var(--ink-2); font-size: .92em; }
+  /* 步驟列 */
+  #deck .steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: .5em; align-items: stretch; margin-top: .9em; }
+  #deck .step { border: 1px solid var(--line); border-top: .22em solid var(--ink-3); border-radius: .4em; padding: .5em .7em; font-size: .88em; background: var(--card); }
+  #deck .step i { display: block; font-style: normal; color: var(--ink-2); font-weight: 700; font-size: .85em; }
+  #deck .step b { display: block; margin-bottom: .15em; }
+  #deck .step span { color: var(--ink-2); }
+  #deck .arr { align-self: center; color: var(--ink-3); }
+  /* 每月價格資料流：目前這頁的工具用藍框 */
+  #deck .flow { display: flex; align-items: center; gap: .5em; font-size: .82em; margin: 0 0 .9em; flex-wrap: wrap; }
+  #deck .flow span { border: 1px solid var(--line); border-radius: .4em; padding: .2em .6em; color: var(--ink-2); }
+  #deck .flow span.on { border: 2px solid var(--accent); color: var(--ink); font-weight: 700; background: var(--accent-soft); }
+  #deck .flow em { font-style: normal; color: var(--ink-3); }
+  #deck .flow .fl { border: 0; padding: 0; color: var(--ink-3); }
+  /* 長條：每位負責人的機種數（計數，不是占比，每條標數值） */
+  #deck .hb .r { display: grid; grid-template-columns: 5.5em 1fr 2.2em; gap: .5em; align-items: center; font-size: .85em; padding: .1em 0; }
+  html[lang="en"] #deck .hb .r { grid-template-columns: 4.5em 1fr 2.2em; }
+  #deck .hb i { display: block; height: .85em; background: var(--mute); border-radius: 0 .2em .2em 0; }
+  #deck .hb b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  /* 月份格：一筆節省延續 12 個月 */
+  #deck .mg { display: grid; grid-template-columns: 6.5em repeat(12, 1fr); gap: .2em; font-size: .78em; text-align: center; }
+  html[lang="en"] #deck .mg { grid-template-columns: 6.5em repeat(12, 1fr); font-size: .74em; }
+  #deck .mg .h { text-align: left; font-weight: 600; color: var(--ink-2); }
+  #deck .mg .new { background: var(--accent); color: #fff; border-radius: .25em; font-weight: 600; }
+  #deck .mg .car { background: var(--card); border: 1px solid var(--ink-3); border-radius: .25em; }
+  #deck .lg { font-size: .8em; color: var(--ink-2); margin-top: .4em; }
+  #deck .lg i { display: inline-block; width: 1em; height: .8em; border-radius: .2em; vertical-align: -.05em; margin: 0 .3em 0 .8em; }
+  #deck .lg i:first-child { margin-left: 0; }
+  #deck .lg i.new { background: var(--accent); }
+  #deck .lg i.car { background: var(--card); border: 1px solid var(--ink-3); }
+  /* 下方導覽列 */
+  #deck .deck-nav { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; justify-content: center; align-items: center; gap: 18px; background: var(--bg); }
+  #deck .deck-nav button { font: inherit; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  #deck .deck-nav button:disabled { opacity: .35; cursor: default; }
+  #deck .deck-nav .count { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; min-width: 4.5em; text-align: center; }
+  /* 手機直向：16:9 縮到手機寬會看不清，改成整頁寬、可上下捲的卡片，多欄改單欄 */
+  @media (max-width: 760px) and (orientation: portrait) {
+    #deck .stage { display: block; overflow-y: auto; padding: 60px 0 8px; }
+    #deck .slide { width: 100%; aspect-ratio: auto; border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
+    #deck .sl, html[lang="en"] #deck .sl { font-size: 15px; padding: 22px 16px 26px; height: auto; }  /* 英文規則權重較高，手機要一起蓋，不然字會變超小 */
+    #deck .cover { min-height: calc(100vh - 140px); }
+    #deck .cover h1 { font-size: 2.3em; }
+    #deck .roles, #deck .two { grid-template-columns: 1fr; }
+    #deck .steps { grid-template-columns: 1fr; }
+    #deck .arr { display: none; }
+    #deck table, html[lang="en"] #deck .ov { font-size: .82em; }
+    #deck .ov td:nth-child(2), #deck .ov td:nth-child(3), #deck .ov td:first-child { white-space: normal; }
+    #deck .ov th:nth-child(3), #deck .ov td:nth-child(3) { display: none; }  /* 手機省略工具欄（每頁頂端都有寫） */
+    #deck table.el td:nth-child(-n+2) { white-space: normal; }
+    #deck .mg, html[lang="en"] #deck .mg { grid-template-columns: repeat(6, 1fr); font-size: .74em; }
+    #deck .mg .h { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<div class="top-ctrls">
+  <a href="../" id="home-link">← 作品集首頁</a>
+  <select id="lang-select" aria-label="語言 Language">
+    <option value="zh">繁體中文 Traditional Chinese</option>
+    <option value="en">英文 English</option>
+  </select>
+</div>
+
+<!-- 2026-11-18 新增。公開版去識別化：不放內部系統與報表名稱、真實欄位名、供應商名稱、同事名字；示意圖全為新編的假資料 -->
+<div id="deck">
+<div class="stage">
+
+<section class="slide" aria-label="第 1 頁"><div class="sl cover">
+  <p class="kicker">工作經歷 ｜ HP Cost Operation Analyst ｜ 2025 年 3 月～2026 年 7 月 ｜ 余家丞</p>
+  <h1>HP 實務專案</h1>
+  <p class="lead">用 Python、SQL Server 和 Power BI，把每月的報價與成本流程自動化，讓價格資料更完整、改價查得到修改人、節省金額分類正確</p>
+  <div class="chips"><span>Python</span><span>SQL Server</span><span>Power BI</span><span>Power Query</span></div>
+  <div class="roles">
+    <div><b>主導開發 2 項</b><span>NRE 攤提報表自動化、報價管理儀表板</span></div>
+    <div><b>接手並強化 2 項</b><span>報價上傳工具、成本節省報表</span></div>
+    <div><b>接手維護 1 項</b><span>報價驗證工具</span></div>
+  </div>
+  <p class="how"><span class="lbl">開發方式：</span>本人釐清需求、把規則寫成程式與資料邏輯，結果請同事驗證；程式由 AI 協助撰寫</p>
+  <p class="disclaim">畫面皆為示意：資料是假的，欄位改用一般名稱；不含 HP 內部資料、系統名稱或程式碼</p>
+</div></section>
+
+<section class="slide" aria-label="第 2 頁"><div class="sl">
+  <h2>專案總覽</h2>
+  <p class="sub">5 個專案涵蓋每月的報價與成本工作：NRE 攤提、報價上傳與核對、改價查詢，到節省金額報告</p>
+  <table class="ov">
+    <tr><th>專案</th><th>我的角色</th><th>工具</th><th>成果</th></tr>
+    <tr><td>NRE 攤提報表自動化</td><td>主導開發</td><td>Python</td><td>每月更新從約 2 小時縮短到約 10 分鐘</td></tr>
+    <tr><td>報價上傳工具</td><td>接手並強化</td><td>Python、SQL Server</td><td>上傳失敗的檔案列出原因，負責人修正後重傳；執行時間從約 3 小時縮短到 1.5 小時</td></tr>
+    <tr><td>報價驗證工具</td><td>接手維護</td><td>Python、SQL Server</td><td>工具更新時修正 3 個讓價格比對出錯的問題</td></tr>
+    <tr><td>報價管理儀表板</td><td>主導開發</td><td>Power BI</td><td>查得到每次改價的修改人，有疑問直接找對的人</td></tr>
+    <tr><td>成本節省報表</td><td>接手並強化</td><td>Power BI、Power Query</td><td>逐月區分今年新增與前一年延續的節省，今年的成果不被高估</td></tr>
+  </table>
+  <p class="note">報價上傳工具、報價驗證工具、報價管理儀表板共用同一份 SQL Server 價格資料</p>
+</div></section>
+
+<section class="slide" aria-label="第 3 頁"><div class="sl">
+  <p class="eyebrow">主導開發 ｜ Python</p>
+  <h2>NRE 攤提報表自動化</h2>
+  <p class="sub">每月更新從約 2 小時縮短到約 10 分鐘</p>
+  <p class="ctx"><span class="lbl">背景：</span>NRE 是一次性的開發費用，依出貨量逐步攤提；這份報表讓主管追蹤每個專案攤提到哪裡。原本每月要手動篩選兩份報表、加總再填回攤提報表。</p>
+  <div class="two">
+    <div class="mock">
+      <p class="cap">出貨預測報表 <small>（示意）</small></p>
+      <table><tr><th>專案</th><th>料號</th><th class="n">預測數量</th></tr>
+        <tr><td>專案 A</td><td>P-101</td><td class="n">15,000</td></tr>
+        <tr class="x"><td>專案 A</td><td>P-130</td><td class="n">2,000</td></tr></table>
+      <p class="cap" style="margin-top:.6em">當月出貨報表 <small>（示意）</small></p>
+      <table><tr><th>專案</th><th>料號</th><th class="n">出貨數量</th></tr>
+        <tr><td>專案 A</td><td>P-101</td><td class="n">6,200</td></tr>
+        <tr class="x"><td>專案 A</td><td>P-130</td><td class="n">500</td></tr></table>
+      <p class="note">刪除線＝這個專案的規則排除 P-130，不計入</p>
+    </div>
+    <div class="pts">
+      <div><b>① 依規則篩選料號</b><span>每個專案規則不同：全部料號都算、只算指定料號、排除特定料號，或把多個專案相加</span></div>
+      <div><b>② 加總後寫回攤提報表</b><span>預測與實際出貨數量寫回後，原本的公式自動重算攤提達成率與剩餘攤提金額</span></div>
+      <div><b>③ 產生提醒信草稿</b><span>6 個月內停產、但攤提達成率低於 95% 的專案；以及達成率已到 100%、請主管確認是否結案的專案</span></div>
+      <div><b>其他固定步驟也自動化</b><span>複製範本、新增月份欄、補上新專案；原檔不覆蓋，另存當天日期的新檔</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 4 頁"><div class="sl">
+  <p class="eyebrow">接手並強化 ｜ Python、SQL Server</p>
+  <h2>報價上傳工具</h2>
+  <p class="sub">上傳失敗的檔案會列出原因，不再被漏掉；執行時間從約 3 小時縮短到 1.5 小時</p>
+  <div class="flow"><span class="fl">每月價格資料流：</span><span class="on">報價上傳工具</span><em>→</em><span>SQL Server 價格資料庫</span><em>→</em><span>報價驗證工具</span><em>→</em><span>負責人審核</span></div>
+  <div class="two">
+    <div>
+      <p class="ctx"><span class="lbl">問題：</span>每月 100 多份供應商報價檔（約 1 萬筆報價）要上傳；範本填錯的檔案上傳失敗，卻看不出是哪些，到核對價格時才發現缺價格。</p>
+      <div class="mock">
+        <p class="cap">錯誤清單 <small>（我新增；示意）</small></p>
+        <table class="el"><tr><th>檔案</th><th>位置</th><th>問題</th></tr>
+          <tr><td>供應商 B</td><td>標題列</td><td class="err">欄位標題不符規定格式</td></tr>
+          <tr><td>供應商 C</td><td>第 7 列</td><td class="err">生效日期填「ASAP」，不是日期或規定代碼</td></tr></table>
+        <p class="note">橘字＝錯誤原因。日期規則原本就有，現在沒通過的檔案也一起寫進清單</p>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>讀檔更穩</b><span>讀不到供應商名稱時，改從檔名等其他位置判斷，避免整份檔案漏掉</span></div>
+      <div><b>新增檢查與錯誤清單</b><span>新增標題格式、必要工作表是否存在的檢查；沒上傳成功的檔案寫出位置與原因，負責人依清單修正後重新上傳</span></div>
+      <div><b>縮短執行時間</b><span>整個流程只開一次 Excel、只讀需要的欄位、日期欄整塊一次讀取；改完比對產出與原版一致才上線</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 5 頁"><div class="sl">
+  <p class="eyebrow">接手維護 ｜ Python、SQL Server</p>
+  <h2>報價驗證工具</h2>
+  <p class="sub">每月核對供應商報價裡每個料號的價格是否跟內部價格一致；工具更新時修正了 3 個讓比對出錯的問題</p>
+  <div class="flow"><span class="fl">每月價格資料流：</span><span>報價上傳工具</span><em>→</em><span>SQL Server 價格資料庫</span><em>→</em><span class="on">報價驗證工具</span><em>→</em><span>負責人審核</span></div>
+  <div class="two">
+    <div>
+      <p class="ctx"><span class="lbl">運作方式：</span>工具用 SQL 查出最新的內部價格與價格修正紀錄，貼到報價檔、跟供應商的價格並排，有價差的列標色給負責人審核。</p>
+      <div class="mock">
+        <p class="cap">報價檔核對結果 <small>（示意）</small></p>
+        <table><tr><th>料號</th><th class="n">供應商價格</th><th class="n">內部價格</th><th class="n">價差</th></tr>
+          <tr><td>P-2001</td><td class="n">8.75</td><td class="n">8.75</td><td class="n">0.00</td></tr>
+          <tr class="gap"><td>P-2002</td><td class="n">4.60</td><td class="n">4.35</td><td class="n err">0.25</td></tr></table>
+        <p class="note">價差＝供應商價格 − 內部價格；橘底＝有價差，需要負責人確認</p>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>價差公式修正</b><span>供應商價格與內部價格的差額正確計算</span><span class="why">原因：每家供應商的價格欄位位置不同</span></div>
+      <div><b>機種名稱比對</b><span>機種＝產品型號，一個機種含多個料號。提高比對準確度，減少抓到其他機種的價格</span><span class="why">原因：新的衍生機種，名稱開頭跟原機種相同</span></div>
+      <div><b>重複標題檢查</b><span>報價範本有重複的欄位標題時標出來，請負責人修正</span><span class="why">原因：供應商的範本有時誤打重複標題</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 6 頁"><div class="sl">
+  <p class="eyebrow">主導開發 ｜ Power BI</p>
+  <h2>報價管理儀表板</h2>
+  <p class="sub">查得到每次改價的修改人，有疑問時可以直接找修改人確認</p>
+  <p class="ctx"><span class="lbl">問題：</span>價格的修改人在內部系統不容易查，有疑問時不知道該找誰。</p>
+  <div class="two">
+    <div>
+      <div class="mock">
+        <p class="cap">價格紀錄 <small>（示意；藍字＝新增的修改人欄位）</small></p>
+        <table><tr><th>料號</th><th>報價類型</th><th>生效月</th><th class="n">價格</th><th class="who">修改人</th></tr>
+          <tr><td>P-2001</td><td>最終</td><td>2026-06</td><td class="n">9.80</td><td>負責人 A</td></tr>
+          <tr><td>P-2001</td><td>初版</td><td>2026-05</td><td class="n">9.55</td><td>負責人 C</td></tr></table>
+      </div>
+      <div class="mock">
+        <p class="cap">每位負責人的機種數 <small>（示意；長條長度＝機種數）</small></p>
+        <div class="hb">
+          <div class="r"><span>負責人 A</span><i style="width:100%"></i><b>38</b></div>
+          <div class="r"><span>負責人 B</span><i style="width:71%"></i><b>27</b></div>
+          <div class="r"><span>負責人 C</span><i style="width:55%"></i><b>21</b></div>
+          <div class="r"><span>負責人 D</span><i style="width:24%"></i><b>9</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>看得到修改人</b><span>每筆價格修正都顯示是誰改的</span></div>
+      <div><b>集中在一處查詢</b><span>4 個月的初版與最終報價、價格修正紀錄放在一起，可依供應商、機種、料號、報價類型、生效日期篩選</span></div>
+      <div><b>每位負責人的工作量</b><span>每人負責的機種數，主管分配工作時可以參考</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="第 7 頁"><div class="sl">
+  <p class="eyebrow">接手並強化 ｜ Power BI、Power Query</p>
+  <h2>成本節省報表</h2>
+  <p class="sub">逐月區分今年新增與前一年延續的節省，今年的成果不被高估</p>
+  <p class="ctx"><span class="lbl">問題：</span>一筆節省會延續 12 個月，可能跨兩個財年。原本依開始日期整筆分類，跨到下一個財年的月份也被算成今年新增的。</p>
+  <div class="mock">
+    <p class="cap">一筆節省拆成 12 個月逐月判斷 <small>（簡化示意：2025 年 6 月開始，財年從 11 月起算；少數類別另有規則）</small></p>
+    <div class="mg">
+      <span class="h">月份</span><span>25-06</span><span>25-07</span><span>25-08</span><span>25-09</span><span>25-10</span><span>25-11</span><span>25-12</span><span>26-01</span><span>26-02</span><span>26-03</span><span>26-04</span><span>26-05</span>
+      <span class="h">所屬財年</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span>
+      <span class="h">分類</span><span class="new">新增</span><span class="new">新增</span><span class="new">新增</span><span class="new">新增</span><span class="new">新增</span><span class="car">延續</span><span class="car">延續</span><span class="car">延續</span><span class="car">延續</span><span class="car">延續</span><span class="car">延續</span><span class="car">延續</span>
+    </div>
+    <p class="lg"><i class="new"></i>新增＝跟開始月份同一個財年 <i class="car"></i>延續＝跨到下一個財年</p>
+  </div>
+  <div class="steps">
+    <div class="step"><i>步驟 1</i><b>逐月標記</b><span>在 Power Query 比對每個月所屬財年與開始的財年</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>步驟 2</i><b>對上專案 ID</b><span>節省明細與專案清單的共有欄位（包括步驟 1 的新增／延續）串成一個比對欄位再 left join，每筆節省才能依專案呈現</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>步驟 3</i><b>新增書籤</b><span>在 Power BI 一鍵切換基準財年，例如站在 FY26 看 FY27 的新增與延續</span></div>
+  </div>
+</div></section>
+
+</div>
+<nav class="deck-nav" aria-label="簡報導覽"><button type="button" class="prev" aria-label="上一頁">‹</button><span class="count"></span><button type="button" class="next" aria-label="下一頁">›</button></nav>
+</div>
+
+<template id="deck-en">
+<section class="slide" aria-label="Slide 1"><div class="sl cover">
+  <p class="kicker">Work experience | HP Cost Operation Analyst | Mar 2025 – Jul 2026 | Jia Cheng Yu</p>
+  <h1>HP Projects</h1>
+  <p class="lead">Automating monthly quotation and cost processes with Python, SQL Server and Power BI, so price data is more complete, price changes show who made them, and cost savings are classified correctly</p>
+  <div class="chips"><span>Python</span><span>SQL Server</span><span>Power BI</span><span>Power Query</span></div>
+  <div class="roles">
+    <div><b>Led 2 projects</b><span>NRE amortization automation, quote management dashboard</span></div>
+    <div><b>Took over and improved 2</b><span>Quote upload tool, cost savings report</span></div>
+    <div><b>Took over and maintained 1</b><span>Quote validation tool</span></div>
+  </div>
+  <p class="how"><span class="lbl">How they were built:</span> I clarified requirements and turned the rules into code and data logic, and colleagues verified the results; AI helped write the code</p>
+  <p class="disclaim">All visuals are illustrative: the data is made up and field names are generic. No HP internal data, system names or code are shown.</p>
+</div></section>
+
+<section class="slide" aria-label="Slide 2"><div class="sl">
+  <h2>Project Overview</h2>
+  <p class="sub">Five projects across the monthly quotation and cost work: NRE amortization, uploading and checking quotes, tracing price changes, and reporting savings</p>
+  <table class="ov">
+    <tr><th>Project</th><th>My role</th><th>Tools</th><th>Result</th></tr>
+    <tr><td>NRE amortization automation</td><td>Led</td><td>Python</td><td>Monthly update cut from about 2 hours to about 10 minutes</td></tr>
+    <tr><td>Quote upload tool</td><td>Took over and improved</td><td>Python, SQL Server</td><td>Failed files are listed with the reason, and owners fix and re-upload them; run time cut from about 3 hours to 1.5 hours</td></tr>
+    <tr><td>Quote validation tool</td><td>Took over and maintained</td><td>Python, SQL Server</td><td>Tool updates fixed 3 issues that made price checks go wrong</td></tr>
+    <tr><td>Quote management dashboard</td><td>Led</td><td>Power BI</td><td>Shows who made each price change, so questions go straight to the right person</td></tr>
+    <tr><td>Cost savings report</td><td>Took over and improved</td><td>Power BI, Power Query</td><td>Separates new savings this year from savings carried over from the previous year, month by month, so this year's results are not overstated</td></tr>
+  </table>
+  <p class="note">The quote upload tool, quote validation tool and quote management dashboard share the same SQL Server price data</p>
+</div></section>
+
+<section class="slide" aria-label="Slide 3"><div class="sl">
+  <p class="eyebrow">Led | Python</p>
+  <h2>NRE Amortization Automation</h2>
+  <p class="sub">Monthly update cut from about 2 hours to about 10 minutes</p>
+  <p class="ctx"><span class="lbl">Background:</span> NRE is a one-time development cost amortized over shipments; this report lets managers track how far each project has been amortized. Each month, two reports were filtered, summed and entered back by hand.</p>
+  <div class="two">
+    <div class="mock">
+      <p class="cap">Shipment forecast report <small>(illustrative)</small></p>
+      <table><tr><th>Project</th><th>Part no.</th><th class="n">Forecast qty</th></tr>
+        <tr><td>Project A</td><td>P-101</td><td class="n">15,000</td></tr>
+        <tr class="x"><td>Project A</td><td>P-130</td><td class="n">2,000</td></tr></table>
+      <p class="cap" style="margin-top:.6em">Monthly shipment report <small>(illustrative)</small></p>
+      <table><tr><th>Project</th><th>Part no.</th><th class="n">Shipped qty</th></tr>
+        <tr><td>Project A</td><td>P-101</td><td class="n">6,200</td></tr>
+        <tr class="x"><td>Project A</td><td>P-130</td><td class="n">500</td></tr></table>
+      <p class="note">Strikethrough = this project's rule excludes P-130</p>
+    </div>
+    <div class="pts">
+      <div><b>① Filter parts by rule</b><span>Each project has its own rule: all parts, listed parts only, excluded parts, or several projects added together</span></div>
+      <div><b>② Sum and write back</b><span>Once forecast and shipped quantities are written back, the existing formulas recalculate the amortization hit rate and remaining NRE</span></div>
+      <div><b>③ Draft reminder emails</b><span>For projects reaching end of life within 6 months with a hit rate below 95%, and for projects at 100%, asking managers to confirm whether to close them</span></div>
+      <div><b>Routine steps automated too</b><span>Copying the template, adding the month column and new projects; the original is kept and a dated copy saved</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 4"><div class="sl">
+  <p class="eyebrow">Took over and improved | Python, SQL Server</p>
+  <h2>Quote Upload Tool</h2>
+  <p class="sub">Failed files are listed with the reason instead of being missed; run time cut from about 3 hours to 1.5 hours</p>
+  <div class="flow"><span class="fl">Monthly price data flow:</span><span class="on">Quote upload tool</span><em>→</em><span>SQL Server price database</span><em>→</em><span>Quote validation tool</span><em>→</em><span>Owner review</span></div>
+  <div class="two">
+    <div>
+      <p class="ctx"><span class="lbl">Problem:</span> 100+ supplier quote files a month (about 10,000 quote records) are uploaded. Files with template errors failed to upload, but no one could see which ones until prices were missing during price checks.</p>
+      <div class="mock">
+        <p class="cap">Error list <small>(added by me; illustrative)</small></p>
+        <table class="el"><tr><th>File</th><th>Location</th><th>Problem</th></tr>
+          <tr><td>Supplier B</td><td>Header row</td><td class="err">Column header not in the required format</td></tr>
+          <tr><td>Supplier C</td><td>Row 7</td><td class="err">Effective date says "ASAP", not a date or an allowed code</td></tr></table>
+        <p class="note">Orange = error reason. The date rule already existed; files that fail it now also appear in the list</p>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>More reliable file reading</b><span>When the supplier name can't be read, it is taken from the file name or other places, so whole files are not skipped</span></div>
+      <div><b>New checks and error list</b><span>New checks for header format and required sheets; files that fail to upload are listed with the location and reason, and owners fix and re-upload them</span></div>
+      <div><b>Shorter run time</b><span>Excel opened once for the whole run, only needed columns read, date columns read as one block; released only after the output matched the original version</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 5"><div class="sl">
+  <p class="eyebrow">Took over and maintained | Python, SQL Server</p>
+  <h2>Quote Validation Tool</h2>
+  <p class="sub">Each month, it checks whether the price of every part in a supplier's quote matches the internal price; tool updates fixed 3 issues that made the check go wrong</p>
+  <div class="flow"><span class="fl">Monthly price data flow:</span><span>Quote upload tool</span><em>→</em><span>SQL Server price database</span><em>→</em><span class="on">Quote validation tool</span><em>→</em><span>Owner review</span></div>
+  <div class="two">
+    <div>
+      <p class="ctx"><span class="lbl">How it works:</span> The tool uses SQL to pull the latest internal prices and price corrections, pastes them next to the supplier's prices in the quote file, and highlights rows with a price gap for the owner to review.</p>
+      <div class="mock">
+        <p class="cap">Quote check result <small>(illustrative)</small></p>
+        <table><tr><th>Part no.</th><th class="n">Supplier price</th><th class="n">Internal price</th><th class="n">Gap</th></tr>
+          <tr><td>P-2001</td><td class="n">8.75</td><td class="n">8.75</td><td class="n">0.00</td></tr>
+          <tr class="gap"><td>P-2002</td><td class="n">4.60</td><td class="n">4.35</td><td class="n err">0.25</td></tr></table>
+        <p class="note">Gap = supplier price − internal price; orange = price gap for the owner to confirm</p>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>Price gap formula</b><span>The gap between supplier and internal prices is calculated correctly</span><span class="why">Cause: each supplier puts price columns in different places</span></div>
+      <div><b>Model name matching</b><span>A model is a product model with many parts. More accurate matching, fewer prices pulled from another model</span><span class="why">Cause: new variant models start with the original model's name</span></div>
+      <div><b>Duplicate header check</b><span>Repeated column headers in a quote template are flagged for the owner to fix</span><span class="why">Cause: supplier templates sometimes repeat a header by mistake</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 6"><div class="sl">
+  <p class="eyebrow">Led | Power BI</p>
+  <h2>Quote Management Dashboard</h2>
+  <p class="sub">Shows who made each price change, so anyone with a question can check with that person directly</p>
+  <p class="ctx"><span class="lbl">Problem:</span> Who changed a price was hard to find in the internal system, so people didn't know whom to ask.</p>
+  <div class="two">
+    <div>
+      <div class="mock">
+        <p class="cap">Price history <small>(illustrative; blue = the new "changed by" column)</small></p>
+        <table><tr><th>Part no.</th><th>Type</th><th>Effective</th><th class="n">Price</th><th class="who">Changed by</th></tr>
+          <tr><td>P-2001</td><td>Final</td><td>2026-06</td><td class="n">9.80</td><td>Owner A</td></tr>
+          <tr><td>P-2001</td><td>Initial</td><td>2026-05</td><td class="n">9.55</td><td>Owner C</td></tr></table>
+      </div>
+      <div class="mock">
+        <p class="cap">Models per owner <small>(illustrative; bar length = number of models)</small></p>
+        <div class="hb">
+          <div class="r"><span>Owner A</span><i style="width:100%"></i><b>38</b></div>
+          <div class="r"><span>Owner B</span><i style="width:71%"></i><b>27</b></div>
+          <div class="r"><span>Owner C</span><i style="width:55%"></i><b>21</b></div>
+          <div class="r"><span>Owner D</span><i style="width:24%"></i><b>9</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="pts">
+      <div><b>Who made the change</b><span>Every price correction shows who made it</span></div>
+      <div><b>One place to look up</b><span>4 months of initial and final quotes and price corrections together, filterable by supplier, model, part number, initial or final, and effective date</span></div>
+      <div><b>Each owner's workload</b><span>Number of models per owner, which managers can refer to when assigning work</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" aria-label="Slide 7"><div class="sl">
+  <p class="eyebrow">Took over and improved | Power BI, Power Query</p>
+  <h2>Cost Savings Report</h2>
+  <p class="sub">Separates new savings this year from savings carried over from the previous year, month by month, so this year's results are not overstated</p>
+  <p class="ctx"><span class="lbl">Problem:</span> A saving runs for 12 months and can span two fiscal years. It used to be classified as a whole by its start date, so months in the next fiscal year were also counted as new this year.</p>
+  <div class="mock">
+    <p class="cap">One saving split into 12 months, each classified on its own <small>(simplified: starts June 2025; fiscal year starts in November; a few categories have other rules)</small></p>
+    <div class="mg">
+      <span class="h">Month</span><span>25-06</span><span>25-07</span><span>25-08</span><span>25-09</span><span>25-10</span><span>25-11</span><span>25-12</span><span>26-01</span><span>26-02</span><span>26-03</span><span>26-04</span><span>26-05</span>
+      <span class="h">Fiscal year</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY25</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span><span>FY26</span>
+      <span class="h">Category</span><span class="new">New</span><span class="new">New</span><span class="new">New</span><span class="new">New</span><span class="new">New</span><span class="car">Carryover</span><span class="car">Carryover</span><span class="car">Carryover</span><span class="car">Carryover</span><span class="car">Carryover</span><span class="car">Carryover</span><span class="car">Carryover</span>
+    </div>
+    <p class="lg"><i class="new"></i>New = same fiscal year as the start month <i class="car"></i>Carryover = in the next fiscal year</p>
+  </div>
+  <div class="steps">
+    <div class="step"><i>Step 1</i><b>Label each month</b><span>Power Query compares each month's fiscal year with the start fiscal year</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>Step 2</i><b>Map project IDs</b><span>Fields shared by the savings details and the project list (including the Step 1 new/carryover label) combined into one key, then left joined, so each saving can be shown by project</span></div>
+    <div class="arr">→</div>
+    <div class="step"><i>Step 3</i><b>Add bookmarks</b><span>Switch the base fiscal year in Power BI with one click, e.g. FY27 savings split into new and carried over, as seen from FY26</span></div>
+  </div>
+</div></section>
+</template>
+
+<script>
+// 語言切換＋換頁：中文投影片寫在 .stage，英文在 template#deck-en；?lang=en 開英文、#3 開第 3 頁；語言記在 localStorage（跟其他作品頁共用）
+(function () {
+  const html = document.documentElement, deck = document.getElementById('deck'), stage = deck.querySelector('.stage');
+  const sel = document.getElementById('lang-select'), home = document.getElementById('home-link');
+  const meta = document.querySelector('meta[name="description"]');
+  const prev = deck.querySelector('.prev'), next = deck.querySelector('.next'), count = deck.querySelector('.count');
+  const P = {
+    zh: { html: stage.innerHTML, lang: 'zh-Hant', title: document.title, desc: meta.content, home: '← 作品集首頁', prev: '上一頁', next: '下一頁', nav: '簡報導覽' },
+    en: { html: document.getElementById('deck-en').innerHTML, lang: 'en', title: 'HP Projects', desc: "Five projects from Jia Cheng Yu's time as a Cost Operation Analyst at HP: automating monthly quotation and cost processes with Python, SQL Server and Power BI. All visuals are illustrative.", home: '← Portfolio home', prev: 'Previous slide', next: 'Next slide', nav: 'Slide navigation' }
+  };
+  let slides = [], i = 0;
+  function save(l) { try { localStorage.setItem('lang', l); } catch (e) {} }
+  function initial() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') { save(q); return q; }
+    try { return localStorage.getItem('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+  }
+  function render(l) {
+    const p = P[l];
+    stage.innerHTML = p.html; slides = [...stage.querySelectorAll('.slide')];
+    html.lang = p.lang; document.title = p.title; meta.content = p.desc; sel.value = l;
+    home.textContent = p.home; home.setAttribute('href', l === 'en' ? '../?lang=en' : '../');
+    prev.setAttribute('aria-label', p.prev); next.setAttribute('aria-label', p.next);
+    deck.querySelector('.deck-nav').setAttribute('aria-label', p.nav);
+  }
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    count.textContent = `${i + 1} / ${slides.length}`;
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
+    stage.scrollTop = 0;
+    history.replaceState(null, '', location.pathname + location.search + '#' + (i + 1));
+  }
+  sel.addEventListener('change', () => {
+    save(sel.value);
+    const u = new URL(location.href);
+    if (sel.value === 'en') u.searchParams.set('lang', 'en'); else u.searchParams.delete('lang');
+    history.replaceState(null, '', u);
+    render(sel.value); go(i);   // 換語言停在同一頁
+  });
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  document.addEventListener('keydown', e => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target === sel) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+  });
+  // 手機左右滑：橫向位移明顯大於直向才換頁，避免跟上下捲動衝突
+  let x0 = null, y0 = null;
+  stage.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  });
+  window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (n) go(n - 1); });
+  render(initial());
+  go((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>

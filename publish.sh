@@ -11,6 +11,8 @@ mkdir -p olist-lakehouse
 cp ../portfolio/olist-lakehouse/index.html olist-lakehouse/index.html   # Databricks 湖倉作品頁（2026-10-14 新增）
 mkdir -p olist-ai-assistant
 cp ../portfolio/olist-ai-assistant/{index.html,shot-ask.jpg,shot-agent.jpg,slide-ask.jpg,slide-agent.jpg} olist-ai-assistant/   # AI 資料助理作品頁＋截圖（2026-10-23 新增；slide-* 是簡報模式用的裁切圖，2026-11-02）
+mkdir -p hp-work
+cp ../portfolio/hp-work/index.html hp-work/index.html   # HP 實務專案簡報（2026-11-18 新增）；只複製 index.html，同資料夾的 check_hp.py 含敏感詞清單，不可公開
 git add -A
 git diff --cached --quiet && { echo "沒有變更"; exit 0; }
 git commit -m "${1:-更新作品頁}"
